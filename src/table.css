@@ -1,0 +1,22 @@
+#table-container .status-bar {
+  border-top: none;
+  border-bottom: 1px solid #555;
+}
+
+.ansi-codes {
+  padding: 1em 0;
+  width: 100%;
+  border-collapse: collapse;
+  max-width: fit-content;
+}
+
+.ansi-codes th,
+.ansi-codes td {
+  padding: 0.5em;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.ansi-codes code {
+  padding: 0.2em 0.4em;
+}

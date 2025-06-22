@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ANSI Escape Codes</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="View, analyze, and inspect ANSI escape codes. See a visual rendering and a detailed breakdown of all control sequences."
+    />
+    <meta property="og:title" content="ANSI Escape Codes" />
+    <meta
+      property="og:description"
+      content="View, analyze, and inspect ANSI escape codes. See a visual rendering and a detailed breakdown of all control sequences."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ansi.tools/" />
+    <meta property="og:image" content="https://ansi.tools/ansi.tools.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="twitter:domain" content="ansi.tools" />
+    <meta property="twitter:url" content="https://ansi.tools/" />
+    <meta name="twitter:title" content="ANSI Escape Codes" />
+    <meta
+      name="twitter:description"
+      content="View, analyze, and inspect ANSI escape codes. See a visual rendering and a detailed breakdown of all control sequences."
+    />
+    <meta name="twitter:image" content="https://ansi.tools/ansi.tools.png" />
+  </head>
+  <body>
+    <header>
+      <a href="/">
+        <img src="/logo.svg" alt="ANSI.tools" class="logo" width="64" height="64" />
+      </a>
+
+      <h1>ANSI Escape Codes</h1>
+
+      <nav>
+        <ul>
+          <li><a href="/">Inspector</a></li>
+          <li><a href="/lookup.html">Lookup</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="grid">
+      <div id="input-container"></div>
+
+      <div id="output-container"></div>
+
+      <div id="table-container"></div>
+
+      <div id="tools-container"></div>
+    </main>
+
+    <footer role="contentinfo">
+      <p>No worries, your data won't leave your browser.</p>
+
+      <p>
+        Special thanks to
+        <a href="https://github.com/rburns/ansi-to-html">ansi-to-html</a>
+        and
+        <a href="https://github.com/fabiospampinato/fast-string-truncated-width">fast-string-truncated-width</a>.
+      </p>
+
+      <p>
+        <span>
+          Made by
+          <a href="https://webpro.nl" title="webpro.nl"
+            ><img src="https://webpro.nl/img/logo.svg" alt="WebPro logo" width="32" /></a
+        ></span>
+        <span>
+          Code on
+          <a href="https://github.com/webpro/ANSI.tools" title="ANSI.tools on GitHub"
+            ><img src="/github-mark.svg" alt="GitHub logo" /></a
+        ></span>
+      </p>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+    <script async defer src="https://smplnltcs.knip.dev/latest.js"></script>
+    <noscript>
+      <img src="https://smplnltcs.knip.dev/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" />
+    </noscript>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+.truncate {
+  margin-top: 1rem;
+}
+
+.tools-grid pre {
+  padding: 0.12em;
+  margin: 0;
+  text-wrap: unset;
+  overflow-wrap: anywhere;
+  font-size: 1.2em;
+  border: 1px solid #ccc;
+}
+
+#truncate-width {
+  width: 5ch;
+  text-align: right;
+}
+
+.utility-output {
+  margin: 1.5em 0;
+  color: #222;
+  font-family: inherit;
+  font-size: 1em;
+  padding: 0;
+}
+
+.mark {
+  color: #000;
+  background-color: yellow;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  grid-template-rows: auto auto;
+  gap: 1rem;
+  align-items: start;
+  margin: 1.5em 0;
+}
+
+.tools-grid input[type="number"] {
+  text-align: right;
+  font-size: 1em;
+  margin: 0;
+  padding: 0.2em 0.5em 0.2em 0.2em;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.tools-grid output {
+  border: 1px solid #ccc;
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+  text-align: center;
+}
