@@ -1,7 +1,13 @@
 body {
-  margin: 2em;
+  margin: 1em;
   font-family: monospace;
   font-family: sans-serif;
+}
+
+@media screen and (min-width: 600px) {
+  body {
+    margin: 2em;
+  }
 }
 
 header {
@@ -48,9 +54,16 @@ nav ul {
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(max(500px, 40%), 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
+}
+
+@media screen and (min-width: 600px) {
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(max(500px, 40%), 1fr));
+  }
 }
 
 footer {

@@ -1,3 +1,7 @@
+#table-container {
+  overflow-x: auto;
+}
+
 #table-container .status-bar {
   border-top: none;
   border-bottom: 1px solid #555;

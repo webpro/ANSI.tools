@@ -3,6 +3,10 @@
   color: #e0e0e0;
 }
 
+#output-container .status-bar {
+  overflow-x: auto;
+}
+
 #output-container.light-bg {
   background-color: transparent;
   color: unset;
