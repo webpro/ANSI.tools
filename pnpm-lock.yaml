@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      ansi-to-html:
-        specifier: ^0.7.2
-        version: 0.7.2
+      ansi_up:
+        specifier: ^6.0.6
+        version: 6.0.6
       fast-string-truncated-width:
         specifier: ^1.2.1
         version: 1.2.1
@@ -174,10 +174,8 @@ packages:
   '@webreflection/uparser@0.4.0':
     resolution: {integrity: sha512-kAFWUEw5eool295y01VDr+DOsyog6lURX9l288JCJAD2gxc0tFk34dYaAi6O3BbJyfSoncVEV+nw87bsssdppQ==}
 
-  ansi-to-html@0.7.2:
-    resolution: {integrity: sha512-v6MqmEpNlxF+POuyhKkidusCHWWkaLcGRURzivcU3I9tv7k4JVhFcnukrM5Rlk2rUywdZuzYAZ+kbZqWCnfN3g==}
-    engines: {node: '>=8.0.0'}
-    hasBin: true
+  ansi_up@6.0.6:
+    resolution: {integrity: sha512-yIa1x3Ecf8jWP4UWEunNjqNX6gzE4vg2gGz+xqRGY+TBSucnYp6RRdPV4brmtg6bQ1ljD48mZ5iGSEj7QEpRKA==}
 
   custom-function@2.0.0:
     resolution: {integrity: sha512-2OPHkZzq3mK1nWpJqWWkGD6Z+0AajNeIxmXl+MRVL8Vysjjf5tf9B5mo713/X2khEwBn/3BKQ7NphpP1vpVKug==}
@@ -197,9 +195,6 @@ packages:
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
-
-  entities@2.2.0:
-    resolution: {integrity: sha512-p92if5Nz619I0w+akJrLZH0MX0Pb5DX39XOwQTtXSdQQOaYH03S1uIQp4mhOZtAXrxq4ViO67YTiLBo2638o9A==}
 
   entities@4.5.0:
     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
@@ -372,9 +367,7 @@ snapshots:
     dependencies:
       domconstants: 1.1.6
 
-  ansi-to-html@0.7.2:
-    dependencies:
-      entities: 2.2.0
+  ansi_up@6.0.6: {}
 
   custom-function@2.0.0: {}
 
@@ -397,8 +390,6 @@ snapshots:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
       domhandler: 5.0.3
-
-  entities@2.2.0: {}
 
   entities@4.5.0: {}
 

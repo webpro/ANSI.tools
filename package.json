@@ -16,7 +16,7 @@
   "author": "Lars Kappert <lars@webpro.nl>",
   "license": "ISC",
   "dependencies": {
-    "ansi-to-html": "^0.7.2",
+    "ansi_up": "^6.0.6",
     "fast-string-truncated-width": "^1.2.1",
     "typescript": "^5.0.0",
     "uhtml": "^4.7.1",

@@ -1,5 +1,5 @@
 import { html, render } from "uhtml";
-import Convert from "ansi-to-html";
+import { AnsiUp } from "ansi_up";
 import { getWidth, raw } from "./util/string";
 import "./output.css";
 import type { State } from "./app";
@@ -8,13 +8,13 @@ import { Settings } from "./util/settings";
 
 export class Output {
   #container: HTMLElement;
-  #convert: Convert;
+  #convert: AnsiUp;
   #state?: State;
   #settings = new Settings("output", { isLightMode: false, isGridVisible: false });
 
   constructor() {
     this.#container = document.getElementById("output-container") as HTMLElement;
-    this.#convert = new Convert();
+    this.#convert = new AnsiUp();
   }
 
   update(state: State) {
@@ -31,7 +31,7 @@ export class Output {
     if (!this.#state) return;
     const rawAnsi = this.#state.unescaped;
     const textToRender = rawAnsi.endsWith("\n") ? `${rawAnsi}\u200b` : rawAnsi;
-    const outputHtml = this.#convert.toHtml(stripNonSgrCodes(textToRender));
+    const outputHtml = this.#convert.ansi_to_html(stripNonSgrCodes(textToRender));
     const whitespaceStart = outputHtml.match(/^\s+/)?.[0] ?? "";
     const lines = this.#state.plain.split("\n");
     const columns = lines.reduce((max, line) => Math.max(max, getWidth(line)), 0);

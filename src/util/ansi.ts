@@ -11,9 +11,11 @@ export function stripAllAnsiCodes(text: string): string {
 }
 
 export function stripNonSgrCodes(text: string): string {
-  const normalizedText = text.replace(/\u009b/g, "\u001b[");
-  return normalizedText.replace(ANSI_RAW_REGEX_GLOBAL, (match, _csiParams, csiFinalChar) => {
-    return csiFinalChar === "m" ? match : "";
+  const allAnsiCodes = /\u001b(?:\[[?;\d]*[A-Za-z]|].*?(?:\u0007|\u001b\\)|c)/g;
+  return text.replace(/\u009b/g, "\u001b[").replace(allAnsiCodes, (match) => {
+    if (match.endsWith("m")) return match;
+    if (match.startsWith("\u001b]8;")) return match;
+    return "";
   });
 }
 

@@ -1,4 +1,4 @@
-import Convert from "ansi-to-html";
+import { AnsiUp } from "ansi_up";
 import { controlCodes, privateModes, sgrParameters } from "../codes";
 import { escapeHtmlEntities } from "./string";
 import { escape, formatCodeForDisplay, unescape } from "./ansi";
@@ -11,7 +11,7 @@ interface TableRow {
   example: string;
 }
 
-const convert = new Convert();
+const convert = new AnsiUp();
 
 const ESC_LITERAL = "(?:\\\\u001[bB]|\\\\x1[bB]|\\\\033)";
 const CSI8_LITERAL = "(?:\\\\u009b)";
@@ -159,7 +159,7 @@ export function analyzeAnsi(text: string): TableRow[] {
       }
 
       const sampleText = isBackgroundColor ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" : "Sample";
-      example = convert.toHtml(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${sampleText}\u001b[0m`);
+      example = convert.ansi_to_html(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${sampleText}\u001b[0m`);
     } else if (csiFinalChar) {
       const codeInfo = controlCodes[csiFinalChar];
       const params = csiParamsStr || "";
@@ -215,7 +215,6 @@ export function analyzeAnsi(text: string): TableRow[] {
 }
 
 export function getAllKnownCodes(): TableRow[] {
-  const convert = new Convert();
   const rows: TableRow[] = [];
 
   for (const key in sgrParameters) {
@@ -229,7 +228,7 @@ export function getAllKnownCodes(): TableRow[] {
       raw: fullCode,
       mnemonic: "",
       description,
-      example: convert.toHtml(exampleAnsiString),
+      example: convert.ansi_to_html(exampleAnsiString),
     });
   }
 
