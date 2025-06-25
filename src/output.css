@@ -21,6 +21,10 @@
   overflow: hidden;
 }
 
+#visual-output a {
+  color: inherit;
+}
+
 .grid-visible #visual-output {
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.2) 1px, transparent 1px),

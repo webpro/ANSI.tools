@@ -1,10 +1,10 @@
 import { html, render } from "uhtml";
 import { AnsiUp } from "ansi_up";
-import { getWidth, raw } from "./util/string";
+import { getWidth, raw } from "./util/string.ts";
+import { stripNonSgrCodes } from "./util/ansi.ts";
+import { Settings } from "./util/settings.ts";
+import type { State } from "./app.ts";
 import "./output.css";
-import type { State } from "./app";
-import { stripNonSgrCodes } from "./util/ansi";
-import { Settings } from "./util/settings";
 
 export class Output {
   #container: HTMLElement;

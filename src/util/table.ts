@@ -161,7 +161,7 @@ export function analyzeAnsi(text: string): TableRow[] {
         }
       }
 
-      const sampleText = isBackgroundColor ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" : "Sample";
+      const sampleText = isBackgroundColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
       example = convert.ansi_to_html(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${sampleText}\u001b[0m`);
     } else if (csiFinalChar) {
       const codeInfo = controlCodes[csiFinalChar];
@@ -237,7 +237,7 @@ export function getAllKnownCodes(PREFIX = "ESC") {
 
   for (const key of Object.keys(sgrParameters)) {
     const isBgColor = (Number(key) >= 40 && Number(key) <= 49) || (Number(key) >= 100 && Number(key) <= 107);
-    const sampleText = isBgColor ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" : "Sample";
+    const sampleText = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
     const exampleAnsiString = `${rawPrefix}[${key}m${sampleText}\u001b[0m`;
     rows.push({
       code: escapeHtmlEntities(`${PREFIX}[${key}m`),

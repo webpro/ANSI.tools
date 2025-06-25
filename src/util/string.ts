@@ -56,5 +56,5 @@ export const truncate = (input: string, limit: number) => {
 };
 
 export const getWidth = (input: string) => {
-  return truncatedWidth(input, { limit: Infinity }, widthOptions).width;
+  return truncate(input, Infinity).width;
 };

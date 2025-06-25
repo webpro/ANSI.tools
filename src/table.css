@@ -19,6 +19,7 @@
   padding: 0.5em;
   text-align: left;
   border-bottom: 1px solid #444;
+  white-space: nowrap;
 }
 
 .ansi-codes code {
