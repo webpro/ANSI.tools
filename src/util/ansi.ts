@@ -1,4 +1,4 @@
-import { escapeHtmlEntities as escapeHtmlEntities } from "./string";
+import { escapeHtmlEntities } from "./string";
 
 const ANSI_RAW_REGEX_GLOBAL = /(?:\u001b\[|\u009b)([?0-9;]*)?([@-~])|\u001b](.*?)(?:\u0007|\u001b\\)|\u001b([a-zA-Z])/g;
 
@@ -80,9 +80,4 @@ export function unescapeWithMap(literal: string): { raw: string; map: number[] }
   }
   map.push(i);
   return { raw, map };
-}
-
-export function formatCodeForDisplay(code: string): string {
-  const escapedAnsi = code.replace(/\u001b/g, "\\u001b").replace(/\u009b/g, "\\u009b");
-  return escapeHtmlEntities(escapedAnsi);
 }

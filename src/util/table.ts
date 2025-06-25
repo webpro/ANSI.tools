@@ -1,14 +1,17 @@
 import { AnsiUp } from "ansi_up";
-import { controlCodes, privateModes, sgrParameters } from "../codes";
-import { escapeHtmlEntities } from "./string";
-import { escape, formatCodeForDisplay, unescape } from "./ansi";
+import { controlCodes, privateModes, sgrParameters, oscCodes } from "../codes.ts";
+import { escapeHtmlEntities } from "./string.ts";
+import { escape, unescape } from "./ansi.ts";
 
-interface TableRow {
+interface LookupTableRow {
   code: string;
-  raw: string;
   mnemonic: string;
   description: string;
   example: string;
+}
+
+interface TableRow extends LookupTableRow {
+  raw: string;
 }
 
 const convert = new AnsiUp();
@@ -186,7 +189,7 @@ export function analyzeAnsi(text: string): TableRow[] {
       } else {
         description = `unknown csi sequence (terminator '${csiFinalChar}')`;
       }
-      example = "<span>N/A</span>";
+      example = "N/A";
     } else if (oscCommand !== undefined) {
       mnemonic = "OSC";
       description = oscCommand;
@@ -199,7 +202,7 @@ export function analyzeAnsi(text: string): TableRow[] {
       } else {
         description = `unknown control character '${singleCharCode}'`;
       }
-      example = "<span>N/A</span>";
+      example = "N/A";
     }
 
     rows.push({
@@ -214,88 +217,76 @@ export function analyzeAnsi(text: string): TableRow[] {
   return rows;
 }
 
-export function getAllKnownCodes(): TableRow[] {
-  const rows: TableRow[] = [];
+export function getAllKnownCodes(PREFIX = "ESC") {
+  const rows: LookupTableRow[] = [];
+  const rawPrefix = "\u001b";
 
-  for (const key in sgrParameters) {
-    const fullCode = `\u001b[${key}m`;
-    const description = sgrParameters[key].description;
+  for (const key of Object.keys(sgrParameters)) {
     const isBgColor = (Number(key) >= 40 && Number(key) <= 49) || (Number(key) >= 100 && Number(key) <= 107);
     const sampleText = isBgColor ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" : "Sample";
-    const exampleAnsiString = `${fullCode}${sampleText}\u001b[0m`;
+    const exampleAnsiString = `${rawPrefix}[${key}m${sampleText}\u001b[0m`;
     rows.push({
-      code: formatCodeForDisplay(fullCode),
-      raw: fullCode,
+      code: escapeHtmlEntities(`${PREFIX}[${key}m`),
       mnemonic: "",
-      description,
+      description: sgrParameters[key].description,
       example: convert.ansi_to_html(exampleAnsiString),
     });
   }
 
-  for (const key in controlCodes) {
+  for (const key of Object.keys(controlCodes)) {
     const info = controlCodes[key];
     const mnemonic = info.mnemonic || "";
-
     const isCsi = key !== "c";
 
     if (isCsi) {
       if (info.params) {
-        for (const param in info.params) {
-          const fullCode = `\u001b[${param}${key}`;
-          const description = `${info.description}: ${info.params[param]}`;
+        for (const param of Object.keys(info.params)) {
           rows.push({
-            code: formatCodeForDisplay(fullCode),
-            raw: fullCode,
+            code: escapeHtmlEntities(`${PREFIX}[${param}${key}`),
             mnemonic,
-            description,
-            example: "<span>N/A</span>",
+            description: `${info.description}: ${info.params[param]}`,
+            example: "N/A",
           });
         }
       } else {
-        let fullCode: string;
+        let displayCode: string;
         let description = info.description;
 
         if ("Hf".includes(key)) {
-          fullCode = `\u001b[n;m${key}`;
+          displayCode = `${PREFIX}[n;m${key}`;
           description = `${info.description} (to row n, column m)`;
         } else if ("ABCDEFGST".includes(key)) {
-          fullCode = `\u001b[n${key}`;
+          displayCode = `${PREFIX}[n${key}`;
           description = `${info.description} (by n lines/columns)`;
         } else {
-          fullCode = `\u001b[${key}`;
+          displayCode = `${PREFIX}[${key}`;
         }
 
         rows.push({
-          code: formatCodeForDisplay(fullCode),
-          raw: fullCode,
+          code: escapeHtmlEntities(displayCode),
           mnemonic,
           description,
-          example: "<span>N/A</span>",
+          example: "N/A",
         });
       }
     } else {
-      const fullCode = `\u001b${key}`;
       rows.push({
-        code: formatCodeForDisplay(fullCode),
-        raw: fullCode,
+        code: escapeHtmlEntities(`${PREFIX}${key}`),
         mnemonic,
         description: info.description,
-        example: "<span>N/A</span>",
+        example: "N/A",
       });
     }
   }
 
-  for (const key in privateModes) {
+  for (const key of Object.keys(privateModes)) {
     const { description, mnemonic } = privateModes[key];
     for (const action of ["h", "l"]) {
-      const fullCode = `\u001b[?${key}${action}`;
-      const actionDesc = action === "h" ? "enable" : "disable";
       rows.push({
-        code: formatCodeForDisplay(fullCode),
-        raw: fullCode,
+        code: escapeHtmlEntities(`${PREFIX}[?${key}${action}`),
         mnemonic: mnemonic ?? (action === "h" ? "DECSET" : "DECRST"),
-        description: `${actionDesc} ${description}`,
-        example: "<span>N/A</span>",
+        description: `${action === "h" ? "enable" : "disable"} ${description}`,
+        example: "N/A",
       });
     }
   }
