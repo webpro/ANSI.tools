@@ -22,6 +22,7 @@ export function stripNonSgrCodes(text: string): string {
 export function escape(text: string) {
   return text
     .replace(/\u001b/g, "\\u001b")
+    .replace(/\u0007/g, "\\u0007")
     .replace(/\u009b/g, "\\u009b")
     .replace(/\n/g, "\\n")
     .replace(/\r/g, "\\r");
@@ -30,6 +31,7 @@ export function escape(text: string) {
 export function unescape(text: string) {
   return text
     .replace(/\\u001[bB]/g, "\u001b")
+    .replace(/\\u0007/g, "\u0007")
     .replace(/\\x1[bB]/g, "\x1b")
     .replace(/\\033/g, "\u001b")
     .replace(/\\u009b/g, "\u009b")
@@ -55,6 +57,9 @@ export function unescapeWithMap(literal: string): { raw: string; map: number[] }
       i += 6;
     } else if (sub6 === "\\u009b") {
       raw += "\u009b";
+      i += 6;
+    } else if (sub6 === "\\u0007") {
+      raw += "\u0007";
       i += 6;
     } else if (sub4 === "\\x1b") {
       raw += "\x1b";
