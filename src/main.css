@@ -67,7 +67,7 @@ nav ul {
 }
 
 footer {
-  margin-top: 10rem;
+  margin-top: 16rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -88,7 +88,7 @@ footer {
   }
   img,
   svg {
-    width: 4rem;
-    height: 4rem;
+    width: 2rem;
+    height: 2rem;
   }
 }

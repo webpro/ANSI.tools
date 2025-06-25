@@ -168,7 +168,7 @@ export function analyzeAnsi(text: string): TableRow[] {
 
         if ((csiFinalChar === "h" || csiFinalChar === "l") && params.startsWith("?")) {
           const mode = params.substring(1);
-          const modeDescription = privateModes[mode];
+          const modeDescription = privateModes[mode]?.description;
           const action = csiFinalChar === "h" ? "enable" : "disable";
           if (modeDescription) {
             description = `${action} ${modeDescription}`;
