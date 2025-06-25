@@ -192,8 +192,22 @@ export function analyzeAnsi(text: string): TableRow[] {
       example = "N/A";
     } else if (oscCommand !== undefined) {
       mnemonic = "OSC";
-      description = oscCommand;
-      example = "<span>N/A</span>";
+      if (oscCommand.startsWith("8;")) {
+        mnemonic = "OSC 8";
+        const parts = oscCommand.split(";");
+        const uri = parts[2];
+
+        if (uri) {
+          description = `hyperlink: ${uri}`;
+          example = `<a href="${uri}" target="_blank" rel="noopener">${escapeHtmlEntities(uri)}</a>`;
+        } else {
+          description = "hyperlink (end)";
+          example = "N/A";
+        }
+      } else {
+        description = oscCommand;
+        example = "N/A";
+      }
     } else if (singleCharCode) {
       const codeInfo = controlCodes[singleCharCode];
       if (codeInfo) {
@@ -286,6 +300,26 @@ export function getAllKnownCodes(PREFIX = "ESC") {
         code: escapeHtmlEntities(`${PREFIX}[?${key}${action}`),
         mnemonic: mnemonic ?? (action === "h" ? "DECSET" : "DECRST"),
         description: `${action === "h" ? "enable" : "disable"} ${description}`,
+        example: "N/A",
+      });
+    }
+  }
+
+  for (const key of Object.keys(oscCodes)) {
+    const { description, mnemonic = "" } = oscCodes[key];
+    const displayCode = `${PREFIX}]${key}`;
+
+    if (key === "8") {
+      rows.push({
+        code: escapeHtmlEntities(`${displayCode};PARAMS;URL\u0007`),
+        mnemonic,
+        description,
+        example: `<a href="http://example.org" target="_blank" rel="noopener">text</a>`,
+      });
+      rows.push({
+        code: escapeHtmlEntities(`${displayCode};;\u0007`),
+        mnemonic: "OSC 8",
+        description: `${description} (end)`,
         example: "N/A",
       });
     }

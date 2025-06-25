@@ -34,6 +34,11 @@ export const examples = [
     value: "\\033[31;1;4mHello\\033[0m, \\033[32mgreen text\\033[0m.",
   },
   {
+    label: "hyperlinks",
+    value:
+      "- \u001b]8;;https://ansi.tools\u0007ANSI.tools\u001b]8;;\u0007\n- \u001b]8;;https://ansi.tools/lookup\u0007ANSI.tools lookup\u001b]8;;\u0007",
+  },
+  {
     label: "blocks",
     value: "██ █\n█ ██\r\n██ █\r████",
   },

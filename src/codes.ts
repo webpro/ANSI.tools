@@ -121,3 +121,7 @@ export const privateModes: { [key: string]: { description: string; mnemonic?: st
   "1049": { description: "alternate screen buffer with cursor save/restore" },
   "2004": { description: "bracketed paste mode" },
 };
+
+export const oscCodes: { [key: string]: { description: string; mnemonic?: string } } = {
+  "8": { mnemonic: "OSC 8", description: "hyperlink" },
+};
