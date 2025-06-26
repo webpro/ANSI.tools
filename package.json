@@ -2,7 +2,7 @@
   "name": "ansi-viewer",
   "private": true,
   "version": "0.0.0",
-  "description": "A web application that allows users to paste strings containing ANSI escape codes.",
+  "description": "Paste strings containing ANSI escape codes.",
   "main": "src/main.ts",
   "type": "module",
   "scripts": {
@@ -20,12 +20,12 @@
   "dependencies": {
     "ansi_up": "^6.0.6",
     "fast-string-truncated-width": "^1.2.1",
-    "typescript": "^5.0.0",
-    "uhtml": "^4.7.1",
-    "vite": "^4.0.0"
+    "uhtml": "^4.7.1"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0"
+    "@types/node": "^24.0.4",
+    "vite": "^7.0.0",
+    "typescript": "^5.8.3"
   },
-  "packageManager": "pnpm@10.12.1"
+  "packageManager": "pnpm@10.12.3"
 }
