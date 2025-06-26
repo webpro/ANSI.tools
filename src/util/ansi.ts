@@ -1,5 +1,3 @@
-import { escapeHtmlEntities } from "./string";
-
 const ANSI_RAW_REGEX_GLOBAL = /(?:\u001b\[|\u009b)([?0-9;]*)?([@-~])|\u001b](.*?)(?:\u0007|\u001b\\)|\u001b([a-zA-Z])/g;
 
 export function stripAnsi(text: string): string {
@@ -19,7 +17,7 @@ export function stripNonSgrCodes(text: string): string {
   });
 }
 
-export function escape(text: string) {
+export function escapeInput(text: string) {
   return text
     .replace(/\u001b/g, "\\u001b")
     .replace(/\u0007/g, "\\u0007")
@@ -28,12 +26,11 @@ export function escape(text: string) {
     .replace(/\r/g, "\\r");
 }
 
-export function unescape(text: string) {
+export function unescapeInput(text: string) {
   return text
     .replace(/\\u001[bB]/g, "\u001b")
     .replace(/\\u0007/g, "\u0007")
     .replace(/\\x1[bB]/g, "\x1b")
-    .replace(/\\033/g, "\u001b")
     .replace(/\\u009b/g, "\u009b")
     .replace(/(\\n|\\r)/g, "\n");
 }

@@ -1,7 +1,7 @@
 import { html, render } from "uhtml";
 import { split, truncate, unescapeNewlines } from "./util/string.ts";
 import type { State } from "./app.ts";
-import { escape } from "./util/ansi.ts";
+import { escapeInput } from "./util/ansi.ts";
 import { Settings } from "./util/settings.ts";
 import "./css/tools.css";
 
@@ -59,9 +59,9 @@ export class Tools {
     const [plainStart, plainEnd] = split(this.#state.plain, limit);
 
     const { index } = truncate(this.#state.unescaped, limit);
-    const truncatedAnsi = this.#state.escaped.slice(0, this.#state.map[index]);
-    const ansiStart = escape(truncatedAnsi);
-    const ansiEnd = escape(this.#state.escaped.slice(ansiStart.length));
+    const truncatedAnsi = this.#state.input.slice(0, this.#state.map[index]);
+    const ansiStart = escapeInput(truncatedAnsi);
+    const ansiEnd = escapeInput(this.#state.input.slice(ansiStart.length));
     const start = isRenderNewlines ? unescapeNewlines(ansiStart) : ansiStart;
     const end = isRenderNewlines ? unescapeNewlines(ansiEnd) : ansiEnd;
 

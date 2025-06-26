@@ -12,20 +12,20 @@ export class Table {
 
   constructor() {
     this.#container = document.getElementById("table-container") as HTMLElement;
-    this.render();
-  }
-
-  update(state: State) {
-    this.#state = state;
-    this.render();
+    this.#render();
   }
 
   #toggleSetting = (name: "isShowDuplicates" | "isSortCodes") => {
     this.#settings.set(name, !this.#settings.get(name));
-    this.render();
+    this.#render();
   };
 
-  render() {
+  update(state: State) {
+    this.#state = state;
+    this.#render();
+  }
+
+  #render() {
     if (!this.#state) return;
 
     let rows = analyzeAnsi(this.#state.input);

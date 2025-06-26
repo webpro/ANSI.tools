@@ -1,7 +1,7 @@
 import { AnsiUp } from "ansi_up";
 import { controlCodes, privateModes, sgrParameters, oscCodes } from "../codes.ts";
 import { escapeHtmlEntities } from "./string.ts";
-import { escape, unescape } from "./ansi.ts";
+import { escapeInput, unescapeInput } from "./ansi.ts";
 
 interface LookupTableRow {
   code: string;
@@ -95,7 +95,7 @@ export function sortAnsiCodes(rows: TableRow[]): TableRow[] {
 }
 
 export function analyzeAnsi(text: string): TableRow[] {
-  const matches = escape(text).matchAll(ANSI_LITERAL_REGEX);
+  const matches = text.matchAll(ANSI_LITERAL_REGEX);
   const rows: TableRow[] = [];
 
   for (const match of matches) {
@@ -114,7 +114,7 @@ export function analyzeAnsi(text: string): TableRow[] {
     let description = "";
     let example = "";
     let mnemonic = "";
-    const fullCodeRaw = unescape(fullCodeLiteral);
+    const fullCodeRaw = unescapeInput(fullCodeLiteral);
 
     if (csiFinalChar === "m") {
       const params = csiParamsStr ? csiParamsStr.split(";") : ["0"];

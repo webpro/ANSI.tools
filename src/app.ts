@@ -2,13 +2,12 @@ import { getVisibleCharacterCount, getWidth, newlines } from "./util/string.ts";
 import { Table } from "./table.ts";
 import { Tools } from "./tools.ts";
 import { Output } from "./output.ts";
-import { escape, stripAnsi, unescape, unescapeWithMap, unoctal } from "./util/ansi.ts";
+import { escapeInput, stripAnsi, unescapeInput, unescapeWithMap, unoctal } from "./util/ansi.ts";
 import { Input } from "./input.ts";
 import { examples } from "./examples.ts";
 
 export interface State {
   input: string;
-  escaped: string;
   unescaped: string;
   map: number[];
   plain: string;
@@ -32,24 +31,22 @@ export class App {
 
     this.#Input.addEventListener("update-state", (event: Event) => {
       this.#setState((event as CustomEvent).detail.value);
-      this.render();
+      this.#render();
     });
 
     this.#setState(examples[0].value);
-    this.render();
+    this.#render();
   }
 
   #setState(value: string) {
-    const un = unescape(value);
-    const escaped = escape(value);
-    const { raw: unescaped, map } = unescapeWithMap(escaped);
-    const plain = newlines(stripAnsi(unoctal(un)));
-    const width = getWidth(unescaped);
-    const length = getVisibleCharacterCount(escaped);
-    this.#state = { input: value, escaped, unescaped, plain, width, length, map };
+    const { raw: unescaped, map } = unescapeWithMap(value);
+    const plain = newlines(stripAnsi(unoctal(unescaped)));
+    const width = plain.length;
+    const length = getWidth(value);
+    this.#state = { input: value, unescaped, plain, width, length, map };
   }
 
-  render() {
+  #render() {
     if (!this.#state) return;
 
     this.#Input.update(this.#state);

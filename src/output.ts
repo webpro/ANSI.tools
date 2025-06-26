@@ -18,18 +18,19 @@ export class Output {
     this.#convert = new AnsiUp();
   }
 
-  update(state: State) {
-    this.#state = state;
-    this.render();
-  }
-
   #toggleSetting = (name: "isLightMode" | "isGridVisible") => {
     this.#settings.set(name, !this.#settings.get(name));
-    this.render();
+    this.#render();
   };
 
-  render() {
+  update(state: State) {
+    this.#state = state;
+    this.#render();
+  }
+
+  #render() {
     if (!this.#state) return;
+
     const rawAnsi = this.#state.unescaped;
     const textToRender = rawAnsi.endsWith("\n") ? `${rawAnsi}\u200b` : rawAnsi;
     const outputHtml = this.#convert.ansi_to_html(stripNonSgrCodes(textToRender));
@@ -51,7 +52,7 @@ export class Output {
         <pre id="visual-output">${whitespaceStart}${raw(outputHtml)}</pre>
       </div>
       <div class="status-bar">
-        <div class="status-item">length: ${this.#state.width}</div>
+        <div class="status-item">width: ${this.#state.width}</div>
         <div class="status-item">rows: ${lines.length}</div>
         <div class="status-item">columns: ${columns}</div>
         <div class="status-spacer"></div>
