@@ -135,7 +135,7 @@ export function analyzeAnsi(text: string): TableRow[] {
             i += 4;
           }
         } else {
-          descriptions.push(sgrParameters[param].description || `unknown sgr: ${param}`);
+          descriptions.push(sgrParameters[param]?.description || `unknown sgr: ${param}`);
         }
       }
       description = descriptions.join(", ");

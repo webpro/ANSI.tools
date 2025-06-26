@@ -9,7 +9,7 @@ export const examples = [
   },
   {
     label: "cursor",
-    value: String.raw`\x1b[3A\x1b[4D\x1b[shello\x20\x1b[J\x1b[1;3Hworld\x1b[u\x1b[13T`,
+    value: String.raw`\x1b[3A\x1b[4D\x1b[shello\x1b[J\x1b[1;3Hworld\x1b[u\x1b[13T`,
   },
   {
     label: "mixed",
@@ -34,6 +34,10 @@ export const examples = [
   {
     label: "hyperlinks",
     value: String.raw`- \u001b]8;;https://ansi.tools\u0007ANSI.tools\u001b]8;;\u0007\n- \u001b]8;;https://ansi.tools/lookup\u0007ANSI.tools lookup\u001b]8;;\u0007`,
+  },
+  {
+    label: "test",
+    value: String.raw`\u001b[0m \u001b[0;32m✓\u001b[0m \u001b[0;2msrc/\u001b[0mindex\u001b[0;2m.test.ts (1)\u001b[0m\n\n  \u001b[0;2m Test Files \u001b[0m \u001b[0;1;32m1 passed\u001b[0;98m (1)\u001b[0m\n  \u001b[0;2m      Tests \u001b[0m \u001b[0;1;32m1 passed\u001b[0;98m (1)\u001b[0m\n  \u001b[0;2m   Start at \u001b[0m 23:32:41\n  \u001b[0;2m   Duration \u001b[0m 11ms\n\n  \u001b[42;1;39;0m PASS \u001b[0;32m Waiting for file changes...\u001b[0m\n         \u001b[0;2mpress \u001b[0;1mh\u001b[0;2m to show help, press \u001b[0;1mq\u001b[0;2m to quit`,
   },
   {
     label: "blocks",
