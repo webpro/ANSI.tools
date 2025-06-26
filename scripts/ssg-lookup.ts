@@ -15,7 +15,7 @@ for (const row of rows) {
       <td><code>${row.code}</code></td>
       <td><code>${row.mnemonic}</code></td>
       <td>${row.description}</td>
-      <td>${row.example}</td>
+      <td>${html([row.example])}</td>
     </tr>`,
   );
 }
