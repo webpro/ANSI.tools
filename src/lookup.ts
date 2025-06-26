@@ -1,5 +1,5 @@
 import "./css/global.css";
-import "./css/app.css";
+import "./css/input.css";
 import "./css/lookup.css";
 import "./css/table.css";
 

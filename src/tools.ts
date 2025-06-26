@@ -18,11 +18,6 @@ export class Tools {
     this.render();
   }
 
-  update(state: State) {
-    this.#state = state;
-    this.render();
-  }
-
   #handleTruncateInput = (event: Event) => {
     const input = event.currentTarget as HTMLInputElement;
     const value = input.valueAsNumber;
@@ -49,6 +44,11 @@ export class Tools {
     this.#settings.set(name, !this.#settings.get(name));
     this.render();
   };
+
+  update(state: State) {
+    this.#state = state;
+    this.render();
+  }
 
   render() {
     if (!this.#state) return;
