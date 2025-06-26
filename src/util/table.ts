@@ -311,13 +311,13 @@ export function getAllKnownCodes(PREFIX = "ESC") {
 
     if (key === "8") {
       rows.push({
-        code: escapeHtmlEntities(`${displayCode};PARAMS;URL\u0007`),
+        code: escapeHtmlEntities(`${displayCode};PARAMS;URL\\u0007`),
         mnemonic,
         description,
         example: `<a href="http://example.org" target="_blank" rel="noopener">text</a>`,
       });
       rows.push({
-        code: escapeHtmlEntities(`${displayCode};;\u0007`),
+        code: escapeHtmlEntities(`${displayCode};;\\u0007`),
         mnemonic: "OSC 8",
         description: `${description} (end)`,
         example: "N/A",

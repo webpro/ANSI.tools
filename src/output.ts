@@ -1,6 +1,7 @@
 import { html, render } from "uhtml";
 import { AnsiUp } from "ansi_up";
-import { getWidth, raw } from "./util/string.ts";
+import { getWidth } from "./util/string.ts";
+import { raw } from "./util/html.ts";
 import { stripNonSgrCodes } from "./util/ansi.ts";
 import { Settings } from "./util/settings.ts";
 import type { State } from "./app.ts";

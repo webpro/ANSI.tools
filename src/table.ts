@@ -1,5 +1,5 @@
 import { html, render } from "uhtml";
-import { raw } from "./util/string.ts";
+import { raw } from "./util/html.ts";
 import type { State } from "./app.ts";
 import { analyzeAnsi, sortAnsiCodes } from "./util/table.ts";
 import { Settings } from "./util/settings.ts";

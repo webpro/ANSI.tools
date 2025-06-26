@@ -1,8 +1,5 @@
-import { html } from "uhtml";
 import { stripAllAnsiCodes } from "./ansi.ts";
 import truncatedWidth from "../../vendor/fast-string-truncated-width/index.js";
-
-export const raw = (str: string) => html([str]);
 
 export function getVisibleCharacterCount(rawAnsi: string) {
   const plainText = stripAllAnsiCodes(rawAnsi);
