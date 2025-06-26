@@ -4,7 +4,7 @@ import { getWidth, raw } from "./util/string.ts";
 import { stripNonSgrCodes } from "./util/ansi.ts";
 import { Settings } from "./util/settings.ts";
 import type { State } from "./app.ts";
-import "./output.css";
+import "./css/output.css";
 
 export class Output {
   #container: HTMLElement;

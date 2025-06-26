@@ -5,7 +5,7 @@ import { Tools } from "./tools.ts";
 import { Output } from "./output.ts";
 import { examples } from "./examples.ts";
 import { escape, stripAnsi, unescape, unescapeWithMap, unoctal } from "./util/ansi.ts";
-import "./app.css";
+import "./css/app.css";
 
 export interface State {
   input: string;

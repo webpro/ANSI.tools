@@ -3,7 +3,7 @@ import { split, truncate, unescapeNewlines } from "./util/string.ts";
 import type { State } from "./app.ts";
 import { escape } from "./util/ansi.ts";
 import { Settings } from "./util/settings.ts";
-import "./tools.css";
+import "./css/tools.css";
 
 export class Tools {
   #container: HTMLElement;

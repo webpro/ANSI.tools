@@ -1,7 +1,7 @@
 import { html, render } from "uhtml";
 import { getAllKnownCodes } from "./util/table.ts";
 import { raw } from "./util/string.ts";
-import "./lookup.css";
+import "./css/lookup.css";
 
 const rows = getAllKnownCodes();
 

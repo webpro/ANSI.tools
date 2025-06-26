@@ -3,7 +3,7 @@ import { raw } from "./util/string.ts";
 import type { State } from "./app.ts";
 import { analyzeAnsi, sortAnsiCodes } from "./util/table.ts";
 import { Settings } from "./util/settings.ts";
-import "./table.css";
+import "./css/table.css";
 
 export class Table {
   #container: HTMLElement;
