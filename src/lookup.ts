@@ -1,6 +1,6 @@
+import "./css/global.css";
 import "./css/app.css";
 import "./css/lookup.css";
-import "./css/main.css";
 import "./css/table.css";
 
 function attachSearchHandler() {
