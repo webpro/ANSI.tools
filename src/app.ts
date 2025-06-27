@@ -2,7 +2,7 @@ import { getVisibleCharacterCount, getWidth, newlines } from "./util/string.ts";
 import { Table } from "./table.ts";
 import { Tools } from "./tools.ts";
 import { Output } from "./output.ts";
-import { escapeInput, stripAnsi, unescapeInput, unescapeWithMap, unoctal } from "./util/ansi.ts";
+import { stripAnsi, unescapeWithMap, unoctal } from "./util/ansi.ts";
 import { Input } from "./input.ts";
 import { examples } from "./examples.ts";
 
@@ -41,7 +41,7 @@ export class App {
   #setState(value: string) {
     const { raw: unescaped, map } = unescapeWithMap(value);
     const plain = newlines(stripAnsi(unoctal(unescaped)));
-    const width = plain.length;
+    const width = getVisibleCharacterCount(plain);
     const length = getWidth(value);
     this.#state = { input: value, unescaped, plain, width, length, map };
   }
