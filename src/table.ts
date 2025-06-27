@@ -1,5 +1,4 @@
-import { html, render } from "uhtml";
-import { raw } from "./util/html.ts";
+import { document, html, render, raw } from "isum";
 import type { State } from "./app.ts";
 import { analyzeAnsi, sortAnsiCodes } from "./util/table.ts";
 import { Settings } from "./util/settings.ts";

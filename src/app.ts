@@ -6,6 +6,9 @@ import { stripAnsi, unescapeWithMap, unoctal } from "./util/ansi.ts";
 import { Input } from "./input.ts";
 import { examples } from "./examples.ts";
 
+const isClient = typeof window !== "undefined";
+const initialContent = isClient ? examples[0].value : "";
+
 export interface State {
   input: string;
   unescaped: string;
@@ -34,7 +37,7 @@ export class App {
       this.#render();
     });
 
-    this.#setState(examples[0].value);
+    this.#setState(initialContent);
     this.#render();
   }
 

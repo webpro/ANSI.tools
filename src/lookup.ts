@@ -1,9 +1,30 @@
+import { document, html, raw, render } from "isum";
+import { getAllKnownCodes } from "./util/table.ts";
 import "./css/global.css";
 import "./css/input.css";
 import "./css/lookup.css";
 import "./css/table.css";
 
-function attachSearchHandler() {
+export function renderTable() {
+  const tableBody = document.getElementById("ansi-codes-tbody");
+  if (tableBody?.firstChild) return;
+  const rows = getAllKnownCodes();
+  const rowTemplates = [];
+  for (const row of rows) {
+    rowTemplates.push(
+      html`<tr>
+        <td><code>${row.code}</code></td>
+        <td><code>${row.mnemonic}</code></td>
+        <td>${row.description}</td>
+        <td>${raw(row.example)}</td>
+      </tr>`,
+    );
+  }
+
+  render(document.getElementById("ansi-codes-tbody"), html`${rowTemplates}`);
+}
+
+export function attachSearchHandler() {
   const searchInput = document.getElementById("ansi-search") as HTMLInputElement;
   const tableBody = document.getElementById("ansi-codes-tbody");
   if (!tableBody) return;
@@ -19,5 +40,3 @@ function attachSearchHandler() {
     for (const row of rows) row.element.hidden = !row.text.includes(query);
   });
 }
-
-attachSearchHandler();

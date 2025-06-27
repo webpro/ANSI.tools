@@ -1,4 +1,4 @@
-import { html, render } from "uhtml";
+import { document, html, render } from "isum";
 import { examples } from "./examples.ts";
 import "./css/input.css";
 import type { State } from "./app.ts";

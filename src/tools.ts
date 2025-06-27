@@ -1,4 +1,4 @@
-import { html, render } from "uhtml";
+import { document, html, render } from "isum";
 import { split, truncate, unescapeNewlines } from "./util/string.ts";
 import type { State } from "./app.ts";
 import { escapeInput } from "./util/ansi.ts";
