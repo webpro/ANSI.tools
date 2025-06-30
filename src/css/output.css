@@ -15,8 +15,6 @@
 #visual-output {
   margin: 0;
   white-space: pre;
-  font-family: monospace;
-  font-size: 1em;
   line-height: 1;
   overflow: hidden;
 }

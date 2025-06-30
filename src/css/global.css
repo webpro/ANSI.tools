@@ -1,6 +1,14 @@
+:root {
+  font-family: monospace;
+  font-size: 16px;
+}
+
+* {
+  font-family: inherit;
+}
+
 body {
   margin: 1em;
-  font-family: monospace, sans-serif;
 }
 
 @media screen and (min-width: 600px) {
@@ -22,13 +30,11 @@ header {
 }
 
 h1 {
-  font-family: monospace;
   font-size: 1rem;
   color: #333;
 }
 
 nav {
-  font-family: monospace;
   display: flex;
   justify-content: center;
   font-size: 1rem;
@@ -70,7 +76,6 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: monospace;
   flex-direction: column;
   gap: 0.5rem;
   p:has(span) {

@@ -2,11 +2,11 @@ textarea {
   border: none;
   border-radius: 0;
   resize: vertical;
-  font-family: monospace;
   box-sizing: border-box;
   background-color: transparent;
   color: #e0e0e0;
   outline: none;
+  font-size: inherit;
 }
 
 button {
@@ -39,7 +39,6 @@ button:hover {
   border: none;
   border-top: 1px solid #555;
   border-radius: 0;
-  font-family: monospace;
   font-size: 0.8rem;
   line-height: 1.5;
   color: #ecf0f1;
@@ -115,5 +114,5 @@ button:hover {
 
 #example-buttons-container button {
   padding: 2px 8px;
-  font-size: 12px;
+  font-size: 0.8rem
 }

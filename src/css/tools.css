@@ -2,21 +2,9 @@
   margin-top: 1rem;
 }
 
-.tools-grid pre {
-  background-color: #000;
-  color: #fff;
-  padding: 0.5em;
-  margin: 0;
-  text-wrap: unset;
-  overflow-wrap: anywhere;
-  border: 0.1px solid #ccc;
-  line-height: 1;
-}
-
 .utility-output {
   margin: 1.5em 0;
   color: #222;
-  font-family: inherit;
   padding: 0;
   line-height: 1;
 }
@@ -34,18 +22,25 @@
   margin: 1.5em 0;
 }
 
-.tools-grid input[type="number"] {
-  width: 5ch;
-  text-align: right;
-  margin: 0;
-  padding: 0.2em 0.5em 0.2em 0.2em;
-  border: 1px solid #ccc;
-  border-radius: 3px;
+.tools-grid pre,
+input {
+  background-color: #000;
+  color: #e0e0e0;
+  line-height: 1;
+  border: none;
+  font-family: inherit;
 }
 
-.tools-grid output {
-  border: 1px solid #ccc;
-  padding: 0.2em 0.5em;
-  border-radius: 3px;
+.tools-grid pre {
+  padding: 0.75rem;
+  margin: 0;
+  text-wrap: unset;
+  overflow-wrap: anywhere;
+}
+
+.tools-grid input[type="number"] {
+  padding: 0.75rem 0 0.75rem 1rem;
+  width: 5ch;
   text-align: center;
+  margin: 0;
 }
