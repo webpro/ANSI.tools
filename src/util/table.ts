@@ -28,7 +28,7 @@ const ANSI_LITERAL_REGEX = new RegExp(
     `(?:${OSC_LITERAL_INTRO})(.*?)(${OSC_LITERAL_TERMINATOR})`,
     `(${ESC_LITERAL})([a-zA-Z])`,
   ].join("|"),
-  "g",
+  "g"
 );
 
 const ANSI_REGEX_FOR_SORTING =
@@ -67,8 +67,8 @@ export function sortAnsiCodes(rows: TableRow[]): TableRow[] {
       if (finalCharA === "m" && paramsStrA === undefined) paramsStrA = "0";
       if (finalCharB === "m" && paramsStrB === undefined) paramsStrB = "0";
 
-      const paramsA = (paramsStrA || "").split(";").filter((p) => p);
-      const paramsB = (paramsStrB || "").split(";").filter((p) => p);
+      const paramsA = (paramsStrA || "").split(";").filter(p => p);
+      const paramsB = (paramsStrB || "").split(";").filter(p => p);
 
       const minLength = Math.min(paramsA.length, paramsB.length);
       for (let i = 0; i < minLength; i++) {
@@ -161,8 +161,8 @@ export function analyzeAnsi(text: string): TableRow[] {
         }
       }
 
-      const sampleText = isBackgroundColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-      example = convert.ansi_to_html(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${sampleText}\u001b[0m`);
+      const text = isBackgroundColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
+      example = convert.ansi_to_html(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${text}\u001b[0m`);
     } else if (csiFinalChar) {
       const codeInfo = controlCodes[csiFinalChar];
       const params = csiParamsStr || "";
@@ -232,18 +232,28 @@ export function analyzeAnsi(text: string): TableRow[] {
 }
 
 export function getAllKnownCodes(PREFIX = "ESC") {
-  const rows: LookupTableRow[] = [];
+  const rows: TableRow[] = [];
   const rawPrefix = "\u001b";
 
   for (const key of Object.keys(sgrParameters)) {
-    const isBgColor = (Number(key) >= 40 && Number(key) <= 49) || (Number(key) >= 100 && Number(key) <= 107);
-    const sampleText = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-    const exampleAnsiString = `${rawPrefix}[${key}m${sampleText}\u001b[0m`;
+    const info = sgrParameters[key];
+    const displayCode = `${PREFIX}[${key}m`;
+    const code = Number.parseInt(key, 10);
+    const isBgColor = (code >= 40 && code <= 49) || (code >= 100 && code <= 107);
+    const text = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
+    let raw = `${rawPrefix}[${key}m`;
+
+    if (key === "38;5;n") raw = `${rawPrefix}[38;5;40m`;
+    else if (key === "48;5;n") raw = `${rawPrefix}[48;5;198m`;
+    else if (key === "38;2;r;g;b") raw = `${rawPrefix}[38;2;255;105;180m`;
+    else if (key === "48;2;r;g;b") raw = `${rawPrefix}[48;2;255;105;18m`;
+
     rows.push({
-      code: escapeHtmlEntities(`${PREFIX}[${key}m`),
+      code: escapeHtmlEntities(displayCode),
+      raw,
       mnemonic: "",
-      description: sgrParameters[key].description,
-      example: convert.ansi_to_html(exampleAnsiString),
+      description: info.description,
+      example: convert.ansi_to_html(`${raw}${text}\u001b[0m`),
     });
   }
 
@@ -255,8 +265,10 @@ export function getAllKnownCodes(PREFIX = "ESC") {
     if (isCsi) {
       if (info.params) {
         for (const param of Object.keys(info.params)) {
+          const raw = `${rawPrefix}[${param}${key}`;
           rows.push({
             code: escapeHtmlEntities(`${PREFIX}[${param}${key}`),
+            raw,
             mnemonic,
             description: `${info.description}: ${info.params[param]}`,
             example: "N/A",
@@ -264,28 +276,35 @@ export function getAllKnownCodes(PREFIX = "ESC") {
         }
       } else {
         let displayCode: string;
+        let raw: string;
         let description = info.description;
 
         if ("Hf".includes(key)) {
           displayCode = `${PREFIX}[n;m${key}`;
+          raw = `${rawPrefix}[n;m${key}`;
           description = `${info.description} (to row n, column m)`;
         } else if ("ABCDEFGST".includes(key)) {
           displayCode = `${PREFIX}[n${key}`;
+          raw = `${rawPrefix}[n${key}`;
           description = `${info.description} (by n lines/columns)`;
         } else {
           displayCode = `${PREFIX}[${key}`;
+          raw = `${rawPrefix}[${key}`;
         }
 
         rows.push({
           code: escapeHtmlEntities(displayCode),
+          raw,
           mnemonic,
           description,
           example: "N/A",
         });
       }
     } else {
+      const raw = `${rawPrefix}${key}`;
       rows.push({
         code: escapeHtmlEntities(`${PREFIX}${key}`),
+        raw,
         mnemonic,
         description: info.description,
         example: "N/A",
@@ -296,8 +315,10 @@ export function getAllKnownCodes(PREFIX = "ESC") {
   for (const key of Object.keys(privateModes)) {
     const { description, mnemonic } = privateModes[key];
     for (const action of ["h", "l"]) {
+      const raw = `${rawPrefix}[?${key}${action}`;
       rows.push({
         code: escapeHtmlEntities(`${PREFIX}[?${key}${action}`),
+        raw,
         mnemonic: mnemonic ?? (action === "h" ? "DECSET" : "DECRST"),
         description: `${action === "h" ? "enable" : "disable"} ${description}`,
         example: "N/A",
@@ -307,17 +328,20 @@ export function getAllKnownCodes(PREFIX = "ESC") {
 
   for (const key of Object.keys(oscCodes)) {
     const { description, mnemonic = "" } = oscCodes[key];
-    const displayCode = `${PREFIX}]${key}`;
 
     if (key === "8") {
+      const raw = `${rawPrefix}]8;PARAMS;URL\u0007`;
       rows.push({
-        code: escapeHtmlEntities(`${displayCode};PARAMS;URL\\u0007`),
+        code: escapeHtmlEntities(`${PREFIX}]8;PARAMS;URL\\u0007`),
+        raw,
         mnemonic,
         description,
         example: `<a href="http://example.org" target="_blank" rel="noopener">text</a>`,
       });
+      const rawEnd = `${rawPrefix}]8;;\u0007`;
       rows.push({
-        code: escapeHtmlEntities(`${displayCode};;\\u0007`),
+        code: escapeHtmlEntities(`${PREFIX}]8;;\\u0007`),
+        raw: rawEnd,
         mnemonic: "OSC 8",
         description: `${description} (end)`,
         example: "N/A",
