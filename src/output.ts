@@ -4,17 +4,15 @@ import { filterForAnsiUp, unescapeInput } from "./util/ansi.ts";
 import { Settings } from "./util/settings.ts";
 import type { State } from "./app.ts";
 import "./css/output.css";
-import { parseInput, getCharacterWidth, getVisualWidth } from "./util/parse-input.ts";
+import { getVisualWidth } from "./util/parse-input.ts";
 
 export class Output {
   #container: HTMLElement;
-  #convert: AnsiUp;
   #state?: State;
   #settings = new Settings("output", { isLightMode: false, isGridVisible: false });
 
   constructor() {
     this.#container = document.getElementById("output-container") as HTMLElement;
-    this.#convert = new AnsiUp();
   }
 
   #toggleSetting = (name: "isLightMode" | "isGridVisible") => {
@@ -33,7 +31,8 @@ export class Output {
     const filteredEscaped = filterForAnsiUp(this.#state.input);
     const filteredUnescaped = unescapeInput(filteredEscaped);
     const textToRender = filteredUnescaped.endsWith("\n") ? `${filteredUnescaped}\u200b` : filteredUnescaped;
-    const outputHtml = this.#convert.ansi_to_html(textToRender);
+    const convert = new AnsiUp();
+    const outputHtml = convert.ansi_to_html(textToRender);
     const whitespaceStart = outputHtml.match(/^\s+/)?.[0] ?? "";
     const lines = this.#state.plain.split("\n");
     const columns = lines.reduce((max, line) => Math.max(max, getVisualWidth(line)), 0);
