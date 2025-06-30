@@ -1,5 +1,5 @@
 import { document, html, raw, render } from "isum";
-import { getAllKnownCodes } from "./util/table.ts";
+import { getAllKnownCodes, sortAnsiCodes } from "./util/table.ts";
 import "./css/global.css";
 import "./css/input.css";
 import "./css/lookup.css";
@@ -8,7 +8,7 @@ import "./css/table.css";
 export function renderTable() {
   const tableBody = document.getElementById("ansi-codes-tbody");
   if (tableBody?.firstChild) return;
-  const rows = getAllKnownCodes();
+  const rows = sortAnsiCodes(getAllKnownCodes());
   const rowTemplates = [];
   for (const row of rows) {
     rowTemplates.push(

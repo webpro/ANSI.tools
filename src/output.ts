@@ -1,10 +1,10 @@
 import { document, html, render, raw } from "isum";
 import { AnsiUp } from "ansi_up";
-import { getWidth } from "./util/string.ts";
-import { stripNonSgrCodes } from "./util/ansi.ts";
+import { filterForAnsiUp, unescapeInput } from "./util/ansi.ts";
 import { Settings } from "./util/settings.ts";
 import type { State } from "./app.ts";
 import "./css/output.css";
+import { parseInput, getCharacterWidth, getVisualWidth } from "./util/parse-input.ts";
 
 export class Output {
   #container: HTMLElement;
@@ -30,12 +30,13 @@ export class Output {
   #render() {
     if (!this.#state) return;
 
-    const rawAnsi = this.#state.unescaped;
-    const textToRender = rawAnsi.endsWith("\n") ? `${rawAnsi}\u200b` : rawAnsi;
-    const outputHtml = this.#convert.ansi_to_html(stripNonSgrCodes(textToRender));
+    const filteredEscaped = filterForAnsiUp(this.#state.input);
+    const filteredUnescaped = unescapeInput(filteredEscaped);
+    const textToRender = filteredUnescaped.endsWith("\n") ? `${filteredUnescaped}\u200b` : filteredUnescaped;
+    const outputHtml = this.#convert.ansi_to_html(textToRender);
     const whitespaceStart = outputHtml.match(/^\s+/)?.[0] ?? "";
     const lines = this.#state.plain.split("\n");
-    const columns = lines.reduce((max, line) => Math.max(max, getWidth(line)), 0);
+    const columns = lines.reduce((max, line) => Math.max(max, getVisualWidth(line)), 0);
 
     const isLightMode = this.#settings.get("isLightMode");
     const isGridVisible = this.#settings.get("isGridVisible");
@@ -51,7 +52,7 @@ export class Output {
         <pre id="visual-output">${whitespaceStart}${raw(outputHtml)}</pre>
       </div>
       <div class="status-bar">
-        <div class="status-item">width: ${this.#state.width}</div>
+        <div class="status-item">length: ${this.#state.width}</div>
         <div class="status-item">rows: ${lines.length}</div>
         <div class="status-item">columns: ${columns}</div>
         <div class="status-spacer"></div>

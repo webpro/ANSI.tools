@@ -2,6 +2,7 @@ import { document, html, render } from "isum";
 import { examples } from "./examples.ts";
 import "./css/input.css";
 import type { State } from "./app.ts";
+import { escapeNewlines } from "./util/ansi.ts";
 
 export class Input extends EventTarget {
   #container: HTMLElement;
@@ -18,7 +19,8 @@ export class Input extends EventTarget {
   }
 
   #handleInput = (event: InputEvent) => {
-    this.#setState(event.data ?? "");
+    const target = event.target as HTMLTextAreaElement;
+    this.#setState(target.value);
   };
 
   #handleExampleClick = (value: string) => {
@@ -44,8 +46,8 @@ export class Input extends EventTarget {
             ${examples
               .toReversed()
               .map(
-                (example) =>
-                  html`<button @click=${() => this.#handleExampleClick(example.value)}>${example.label}</button>`,
+                example =>
+                  html`<button @click=${() => this.#handleExampleClick(example.value)}>${example.label}</button>`
               )}
           </div>
         </div>

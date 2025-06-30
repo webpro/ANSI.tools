@@ -19,7 +19,6 @@
   "license": "ISC",
   "dependencies": {
     "ansi_up": "^6.0.6",
-    "fast-string-truncated-width": "^1.2.1",
     "isum": "^1.0.0"
   },
   "devDependencies": {

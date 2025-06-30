@@ -3,30 +3,26 @@
 }
 
 .tools-grid pre {
-  padding: 0.12em;
+  background-color: #000;
+  color: #fff;
+  padding: 0.5em;
   margin: 0;
   text-wrap: unset;
   overflow-wrap: anywhere;
-  font-size: 1.2em;
-  border: 1px solid #ccc;
-}
-
-#truncate-width {
-  width: 5ch;
-  text-align: right;
+  border: 0.1px solid #ccc;
+  line-height: 1;
 }
 
 .utility-output {
   margin: 1.5em 0;
   color: #222;
   font-family: inherit;
-  font-size: 1em;
   padding: 0;
+  line-height: 1;
 }
 
 .mark {
-  color: #000;
-  background-color: yellow;
+  color: #0f0;
 }
 
 .tools-grid {
@@ -39,13 +35,12 @@
 }
 
 .tools-grid input[type="number"] {
+  width: 5ch;
   text-align: right;
-  font-size: 1em;
   margin: 0;
   padding: 0.2em 0.5em 0.2em 0.2em;
   border: 1px solid #ccc;
   border-radius: 3px;
-  text-align: center;
 }
 
 .tools-grid output {

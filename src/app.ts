@@ -1,19 +1,17 @@
-import { getVisibleCharacterCount, getWidth, newlines } from "./util/string.ts";
 import { Table } from "./table.ts";
 import { Tools } from "./tools.ts";
 import { Output } from "./output.ts";
-import { stripAnsi, unescapeWithMap, unoctal } from "./util/ansi.ts";
 import { Input } from "./input.ts";
 import { examples } from "./examples.ts";
+import { parseInput, type ParsedInput } from "./util/parse-input.ts";
+import { escapeNewlines } from "./util/ansi.ts";
 
 const isClient = typeof window !== "undefined";
-const initialContent = isClient ? examples[0].value : "";
+const index = Math.floor(Math.random() * examples.length);
+const initialContent = isClient ? examples[index].value : "";
 
-export interface State {
+export interface State extends ParsedInput {
   input: string;
-  unescaped: string;
-  map: number[];
-  plain: string;
   width: number;
   length: number;
 }
@@ -42,11 +40,11 @@ export class App {
   }
 
   #setState(value: string) {
-    const { raw: unescaped, map } = unescapeWithMap(value);
-    const plain = newlines(stripAnsi(unoctal(unescaped)));
-    const width = getVisibleCharacterCount(plain);
-    const length = getWidth(value);
-    this.#state = { input: value, unescaped, plain, width, length, map };
+    const escaped = escapeNewlines(value);
+    const state = parseInput(escaped);
+    const width = state.plain.length;
+    const length = escaped.length;
+    this.#state = { input: escaped, width, length, ...state };
   }
 
   #render() {
