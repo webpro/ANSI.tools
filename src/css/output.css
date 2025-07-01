@@ -7,7 +7,7 @@
   overflow-x: auto;
 }
 
-#output-container.light-bg {
+#output-container:has(.light-bg) {
   background-color: transparent;
   color: unset;
 }

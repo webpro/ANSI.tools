@@ -1,4 +1,3 @@
-import { attachSearchHandler, renderTable } from "./lookup.ts";
+import { renderLookupTable } from "./lookup.ts";
 
-attachSearchHandler();
-renderTable();
+renderLookupTable();

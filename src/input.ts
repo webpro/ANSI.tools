@@ -1,59 +1,31 @@
-import { document, html, render } from "isum";
+import { html } from "isum/preactive";
 import { examples } from "./examples.ts";
 import "./css/input.css";
-import type { State } from "./app.ts";
-import { escapeNewlines } from "./util/ansi.ts";
+import { appState, rawInput } from "./app-state.ts";
 
-export class Input extends EventTarget {
-  #container: HTMLElement;
-  #state?: State;
-
-  constructor() {
-    super();
-    this.#container = document.getElementById("input-container") as HTMLElement;
-  }
-
-  #setState(value: string) {
-    const event = new CustomEvent("update-state", { detail: { value } });
-    this.dispatchEvent(event);
-  }
-
-  #handleInput = (event: InputEvent) => {
+export function Input() {
+  function handleInput(event: InputEvent) {
     const target = event.target as HTMLTextAreaElement;
-    this.#setState(target.value);
-  };
-
-  #handleExampleClick = (value: string) => {
-    this.#setState(value);
-  };
-
-  update(state: State) {
-    this.#state = state;
-    this.#render();
+    rawInput.value = target.value;
   }
 
-  #render() {
-    if (!this.#state) return;
+  function handleExampleClick(value: string) {
+    rawInput.value = value;
+  }
 
-    const view = html`
-      <textarea class="content" id="input" rows="15" .value=${this.#state.input} @input=${this.#handleInput}></textarea>
-      <div class="status-bar">
-        <div class="status-item">length: ${this.#state.length}</div>
-        <div class="status-spacer"></div>
-        <div class="examples-dropdown">
-          <span class="examples-trigger">Examples</span>
-          <div id="example-buttons-container">
-            ${examples
-              .toReversed()
-              .map(
-                example =>
-                  html`<button @click=${() => this.#handleExampleClick(example.value)}>${example.label}</button>`
-              )}
-          </div>
+  return () => html`
+    <textarea class="content" id="input" rows="15" .value=${rawInput.value} @input=${handleInput}></textarea>
+    <div class="status-bar">
+      <div class="status-item">length: ${appState.value.length}</div>
+      <div class="status-spacer"></div>
+      <div class="examples-dropdown">
+        <span class="examples-trigger">Examples</span>
+        <div id="example-buttons-container">
+          ${examples
+            .toReversed()
+            .map(example => html`<button @click=${() => handleExampleClick(example.value)}>${example.label}</button>`)}
         </div>
       </div>
-    `;
-
-    render(this.#container, view);
-  }
+    </div>
+  `;
 }

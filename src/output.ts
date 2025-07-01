@@ -1,84 +1,69 @@
-import { document, html, render, raw } from "isum";
+import { html, computed, raw } from "isum/preactive";
 import { AnsiUp } from "ansi_up";
 import { filterForAnsiUp, unescapeInput } from "./util/ansi.ts";
-import { Settings } from "./util/settings.ts";
-import type { State } from "./app.ts";
+import { createSettingsStore } from "./util/settings.ts";
+import { appState } from "./app-state.ts";
 import "./css/output.css";
 import { getVisualWidth } from "./util/parse-input.ts";
 
-export class Output {
-  #container: HTMLElement;
-  #state?: State;
-  #settings = new Settings("output", { isLightMode: false, isGridVisible: false });
+export function Output() {
+  const settings = createSettingsStore("output", { isLightMode: false, isGridVisible: false });
 
-  constructor() {
-    this.#container = document.getElementById("output-container") as HTMLElement;
-  }
+  const dimensions = computed(() => {
+    const lines: string[] = appState.value.plain.split("\n");
+    let columns = 0;
+    for (const line of lines) columns = Math.max(columns, getVisualWidth(line));
+    return { lines: lines.length, columns };
+  });
 
-  #toggleSetting = (name: "isLightMode" | "isGridVisible") => {
-    this.#settings.set(name, !this.#settings.get(name));
-    this.#render();
-  };
-
-  update(state: State) {
-    this.#state = state;
-    this.#render();
-  }
-
-  #render() {
-    if (!this.#state) return;
-
-    const filteredEscaped = filterForAnsiUp(this.#state.input);
+  const outputHtml = computed(() => {
+    const { input } = appState.value;
+    const filteredEscaped = filterForAnsiUp(input);
     const filteredUnescaped = unescapeInput(filteredEscaped);
     const textToRender = filteredUnescaped.endsWith("\n") ? `${filteredUnescaped}\u200b` : filteredUnescaped;
     const convert = new AnsiUp();
-    const outputHtml = convert.ansi_to_html(textToRender);
-    const whitespaceStart = outputHtml.match(/^\s+/)?.[0] ?? "";
-    const lines = this.#state.plain.split("\n");
-    const columns = lines.reduce((max, line) => Math.max(max, getVisualWidth(line)), 0);
+    return convert.ansi_to_html(textToRender);
+  });
 
-    const isLightMode = this.#settings.get("isLightMode");
-    const isGridVisible = this.#settings.get("isGridVisible");
+  const whitespaceStart = computed(() => outputHtml.value.match(/^\s+/)?.[0] ?? "");
 
-    if (isLightMode) this.#container.classList.add("light-bg");
-    else this.#container.classList.remove("light-bg");
-
-    if (isGridVisible) this.#container.classList.add("grid-visible");
-    else this.#container.classList.remove("grid-visible");
-
-    const view = html`
-      <div class="content">
-        <pre id="visual-output">${whitespaceStart}${raw(outputHtml)}</pre>
+  return () => html`
+    <div
+      class=${`content ${settings.isLightMode.value ? "light-bg" : ""} ${settings.isGridVisible.value ? "grid-visible" : ""}`}
+    >
+      <pre id="visual-output">${whitespaceStart.value}${raw(outputHtml.value)}</pre>
+    </div>
+    <div class="status-bar">
+      <div class="status-item">length: ${appState.value.width}</div>
+      <div class="status-item">rows: ${dimensions.value.lines}</div>
+      <div class="status-item">columns: ${dimensions.value.columns}</div>
+      <div class="status-spacer"></div>
+      <div class="status-item">
+        <label>
+          <input
+            type="checkbox"
+            data-key="light-mode"
+            ?checked=${settings.isLightMode.value}
+            @change=${() => {
+              settings.isLightMode.value = !settings.isLightMode.peek();
+            }}
+          />
+          invert
+        </label>
       </div>
-      <div class="status-bar">
-        <div class="status-item">length: ${this.#state.width}</div>
-        <div class="status-item">rows: ${lines.length}</div>
-        <div class="status-item">columns: ${columns}</div>
-        <div class="status-spacer"></div>
-        <div class="status-item">
-          <label>
-            <input
-              type="checkbox"
-              data-key="light-mode"
-              .checked=${isLightMode}
-              @change=${() => this.#toggleSetting("isLightMode")}
-            />
-            invert
-          </label>
-        </div>
-        <div class="status-item">
-          <label>
-            <input
-              type="checkbox"
-              data-key="grid-visible"
-              .checked=${isGridVisible}
-              @change=${() => this.#toggleSetting("isGridVisible")}
-            />
-            grid
-          </label>
-        </div>
+      <div class="status-item">
+        <label>
+          <input
+            type="checkbox"
+            data-key="grid-visible"
+            ?checked=${settings.isGridVisible.value}
+            @change=${() => {
+              settings.isGridVisible.value = !settings.isGridVisible.peek();
+            }}
+          />
+          grid
+        </label>
       </div>
-    `;
-    render(this.#container, view);
-  }
+    </div>
+  `;
 }

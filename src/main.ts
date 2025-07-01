@@ -1,4 +1,4 @@
-import { App } from "./app.ts";
+import { renderApp } from "./app.ts";
 import "./css/global.css";
 
-new App();
+renderApp();

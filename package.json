@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "ansi_up": "^6.0.6",
-    "isum": "^1.0.0"
+    "isum": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.4",
