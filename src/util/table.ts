@@ -1,5 +1,5 @@
 import { AnsiUp } from "ansi_up";
-import { controlCodes, privateModes, sgrParameters, oscCodes } from "../codes.ts";
+import { ansiCodes } from "../codes.ts";
 import { escapeHtmlEntities } from "./string.ts";
 import { escapeInput, unescapeInput } from "./ansi.ts";
 
@@ -231,121 +231,77 @@ export function analyzeAnsi(text: string): TableRow[] {
   return rows;
 }
 
-export function getAllKnownCodes(PREFIX = "ESC") {
+function tpl(template?: string, example?: { [key: string]: string }): string {
+  if (!template) return "";
+  if (!example) return template;
+  return template.replace(/<([^>]+)>/g, (_, varName) => example[varName]);
+}
+
+export function getAllKnownCodes(PREFIX = "ESC", PREFIX_RAW = "\u001b") {
   const rows: TableRow[] = [];
-  const rawPrefix = "\u001b";
 
-  for (const key of Object.keys(sgrParameters)) {
-    const info = sgrParameters[key];
-    const displayCode = `${PREFIX}[${key}m`;
-    const code = Number.parseInt(key, 10);
-    const isBgColor = (code >= 40 && code <= 49) || (code >= 100 && code <= 107);
-    const text = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-    let raw = `${rawPrefix}[${key}m`;
+  for (const data of ansiCodes) {
+    switch (data.type) {
+      case "SGR": {
+        const { code: c, description, template, example } = data;
+        const code = `${PREFIX}[${c}${template ?? ""}m`;
+        const raw = `${PREFIX_RAW}[${c}${tpl(template, example)}m`;
+        const sgrCode = Number.parseInt(c.split(";")[0], 10);
+        const isBgColor = (sgrCode >= 40 && sgrCode <= 49) || (sgrCode >= 100 && sgrCode <= 107) || c.startsWith("48;");
+        const text = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
+        rows.push({ code, raw, mnemonic: "", description, example: convert.ansi_to_html(`${raw}${text}\u001b[0m`) });
+        break;
+      }
 
-    if (key === "38;5;n") raw = `${rawPrefix}[38;5;40m`;
-    else if (key === "48;5;n") raw = `${rawPrefix}[48;5;198m`;
-    else if (key === "38;2;r;g;b") raw = `${rawPrefix}[38;2;255;105;180m`;
-    else if (key === "48;2;r;g;b") raw = `${rawPrefix}[48;2;255;105;18m`;
+      case "CSI": {
+        const { params, mnemonic, description } = data;
+        if (params) {
+          for (const [param, desc] of Object.entries(params)) {
+            const code = `${PREFIX}[${param}${data.code}`;
+            const raw = `${PREFIX_RAW}[${param}${data.code}`;
+            rows.push({ code, raw, mnemonic, description: `${description}: ${desc}`, example: "N/A" });
+          }
+        } else {
+          const code = `${PREFIX}[${data.template ?? ""}${data.code}`;
+          const raw = `${PREFIX_RAW}[${data.code}${tpl(data.template, data.example)}${data.code}`;
+          rows.push({ code, raw, mnemonic, description, example: "N/A" });
+        }
+        break;
+      }
 
-    rows.push({
-      code: escapeHtmlEntities(displayCode),
-      raw,
-      mnemonic: "",
-      description: info.description,
-      example: convert.ansi_to_html(`${raw}${text}\u001b[0m`),
-    });
-  }
+      case "OSC": {
+        const { mnemonic, description, template, example, displayExample, end } = data;
+        const code = `${PREFIX}]${data.code}${template ?? ""}ST`;
+        const raw = `${PREFIX_RAW}]${data.code}${tpl(template, example)}"\u0007"`;
+        rows.push({ code, raw, mnemonic, description, example: displayExample ?? "N/A" });
 
-  for (const key of Object.keys(controlCodes)) {
-    const info = controlCodes[key];
-    const mnemonic = info.mnemonic || "";
-    const isCsi = key !== "c";
+        if (end) {
+          const code = `${PREFIX}]${data.code}${end.template}ST`;
+          const raw = `${PREFIX_RAW}]${data.code}${end.template}\u0007`;
+          rows.push({ code, raw, mnemonic, description: end.description, example: "N/A" });
+        }
+        break;
+      }
 
-    if (isCsi) {
-      if (info.params) {
-        for (const param of Object.keys(info.params)) {
-          const raw = `${rawPrefix}[${param}${key}`;
+      case "DEC": {
+        const { code, description, mnemonic } = data;
+        for (const action of ["h", "l"]) {
           rows.push({
-            code: escapeHtmlEntities(`${PREFIX}[${param}${key}`),
-            raw,
-            mnemonic,
-            description: `${info.description}: ${info.params[param]}`,
+            code: `${PREFIX}[?${code}${action}`,
+            raw: `${PREFIX_RAW}[?${code}${action}`,
+            mnemonic: mnemonic ?? (action === "h" ? "DECSET" : "DECRST"),
+            description: `${action === "h" ? "enable" : "disable"} ${description}`,
             example: "N/A",
           });
         }
-      } else {
-        let displayCode: string;
-        let raw: string;
-        let description = info.description;
-
-        if ("Hf".includes(key)) {
-          displayCode = `${PREFIX}[n;m${key}`;
-          raw = `${rawPrefix}[n;m${key}`;
-          description = `${info.description} (to row n, column m)`;
-        } else if ("ABCDEFGST".includes(key)) {
-          displayCode = `${PREFIX}[n${key}`;
-          raw = `${rawPrefix}[n${key}`;
-          description = `${info.description} (by n lines/columns)`;
-        } else {
-          displayCode = `${PREFIX}[${key}`;
-          raw = `${rawPrefix}[${key}`;
-        }
-
-        rows.push({
-          code: escapeHtmlEntities(displayCode),
-          raw,
-          mnemonic,
-          description,
-          example: "N/A",
-        });
+        break;
       }
-    } else {
-      const raw = `${rawPrefix}${key}`;
-      rows.push({
-        code: escapeHtmlEntities(`${PREFIX}${key}`),
-        raw,
-        mnemonic,
-        description: info.description,
-        example: "N/A",
-      });
-    }
-  }
 
-  for (const key of Object.keys(privateModes)) {
-    const { description, mnemonic } = privateModes[key];
-    for (const action of ["h", "l"]) {
-      const raw = `${rawPrefix}[?${key}${action}`;
-      rows.push({
-        code: escapeHtmlEntities(`${PREFIX}[?${key}${action}`),
-        raw,
-        mnemonic: mnemonic ?? (action === "h" ? "DECSET" : "DECRST"),
-        description: `${action === "h" ? "enable" : "disable"} ${description}`,
-        example: "N/A",
-      });
-    }
-  }
-
-  for (const key of Object.keys(oscCodes)) {
-    const { description, mnemonic = "" } = oscCodes[key];
-
-    if (key === "8") {
-      const raw = `${rawPrefix}]8;PARAMS;URL\u0007`;
-      rows.push({
-        code: escapeHtmlEntities(`${PREFIX}]8;PARAMS;URL\\u0007`),
-        raw,
-        mnemonic,
-        description,
-        example: `<a href="http://example.org" target="_blank" rel="noopener">text</a>`,
-      });
-      const rawEnd = `${rawPrefix}]8;;\u0007`;
-      rows.push({
-        code: escapeHtmlEntities(`${PREFIX}]8;;\\u0007`),
-        raw: rawEnd,
-        mnemonic: "OSC 8",
-        description: `${description} (end)`,
-        example: "N/A",
-      });
+      case "ESC": {
+        const { code, mnemonic, description } = data;
+        rows.push({ code: `${PREFIX}${code}`, raw: `${PREFIX_RAW}${code}`, mnemonic, description, example: "N/A" });
+        break;
+      }
     }
   }
 
