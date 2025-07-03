@@ -47,6 +47,11 @@ export function renderLookupTable() {
           <tbody id="ansi-codes-tbody">
             ${rows.value}
           </tbody>
-        </table>`
+        </table>
+
+        <p>
+          Something missing or incorrect?
+          <a href="https://github.com/webpro/ANSI.tools">Feel free to report or fix</a>.
+        </p>`
   );
 }
