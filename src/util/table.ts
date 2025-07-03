@@ -44,6 +44,8 @@ export function sortAnsiCodes(rows: TableRow[]): TableRow[] {
 
     const isCsiA = matchA[2] !== undefined;
     const isCsiB = matchB[2] !== undefined;
+    const isOscA = matchA[3] !== undefined;
+    const isOscB = matchB[3] !== undefined;
 
     if (isCsiA && !isCsiB) return -1;
     if (!isCsiA && isCsiB) return 1;
@@ -72,8 +74,8 @@ export function sortAnsiCodes(rows: TableRow[]): TableRow[] {
 
       const minLength = Math.min(paramsA.length, paramsB.length);
       for (let i = 0; i < minLength; i++) {
-        const numA = Number(paramsA[i]);
-        const numB = Number(paramsB[i]);
+        const numA = Number.parseInt(paramsA[i], 10);
+        const numB = Number.parseInt(paramsB[i], 10);
 
         if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
           if (numA !== numB) {
@@ -88,6 +90,24 @@ export function sortAnsiCodes(rows: TableRow[]): TableRow[] {
       }
 
       return paramsA.length - paramsB.length;
+    }
+
+    if (isOscA && !isOscB) return -1;
+    if (!isOscA && isOscB) return 1;
+
+    if (isOscA && isOscB) {
+      const oscCommandA = matchA[3];
+      const oscCommandB = matchB[3];
+
+      const numA = Number.parseInt(oscCommandA, 10);
+      const numB = Number.parseInt(oscCommandB, 10);
+
+      if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+        if (numA !== numB) {
+          return numA - numB;
+        }
+      }
+      return oscCommandA.localeCompare(oscCommandB);
     }
 
     return a.raw.localeCompare(b.raw);
