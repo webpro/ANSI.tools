@@ -1,7 +1,7 @@
 import { AnsiUp } from "ansi_up";
-import { ansiCodes } from "../codes.ts";
+import { sgrMap, csiMap, oscMap, decMap, escMap, ansiCodes } from "../codes.ts";
 import { escapeHtmlEntities } from "./string.ts";
-import { escapeInput, unescapeInput } from "./ansi.ts";
+import { unescapeInput } from "./ansi.ts";
 
 interface LookupTableRow {
   code: string;
@@ -155,46 +155,34 @@ export function analyzeAnsi(text: string): TableRow[] {
             i += 4;
           }
         } else {
-          descriptions.push(sgrParameters[param]?.description || `unknown sgr: ${param}`);
+          descriptions.push(sgrMap.get(param)?.description || `unknown sgr: ${param}`);
         }
       }
       description = descriptions.join(", ");
 
       let isBackgroundColor = false;
-      for (let i = 0; i < params.length; i++) {
-        const param = params[i];
-        if (param === "38") {
-          if (params[i + 1] === "5") {
-            i += 2;
-          } else if (params[i + 1] === "2") {
-            i += 4;
-          }
-        } else if (param === "48") {
+      for (const param of params) {
+        const code = Number.parseInt(param, 10);
+        if (param.startsWith("48;") || (code >= 40 && code <= 47) || (code >= 100 && code <= 107)) {
           isBackgroundColor = true;
           break;
-        } else {
-          const code = Number.parseInt(param, 10);
-          if ((code >= 40 && code <= 47) || (code >= 100 && code <= 107)) {
-            isBackgroundColor = true;
-            break;
-          }
         }
       }
 
       const text = isBackgroundColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
       example = convert.ansi_to_html(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${text}\u001b[0m`);
     } else if (csiFinalChar) {
-      const codeInfo = controlCodes[csiFinalChar];
+      const codeInfo = csiMap.get(csiFinalChar);
       const params = csiParamsStr || "";
       if (codeInfo) {
         mnemonic = codeInfo.mnemonic || "";
 
         if ((csiFinalChar === "h" || csiFinalChar === "l") && params.startsWith("?")) {
           const mode = params.substring(1);
-          const modeDescription = privateModes[mode]?.description;
+          const modeInfo = decMap.get(mode);
           const action = csiFinalChar === "h" ? "enable" : "disable";
-          if (modeDescription) {
-            description = `${action} ${modeDescription}`;
+          if (modeInfo) {
+            description = `${action} ${modeInfo.description}`;
           } else {
             description = `${action} Private Mode ${mode}`;
           }
@@ -211,25 +199,26 @@ export function analyzeAnsi(text: string): TableRow[] {
       }
       example = "N/A";
     } else if (oscCommand !== undefined) {
-      mnemonic = "OSC";
-      if (oscCommand.startsWith("8;")) {
-        mnemonic = "OSC 8";
-        const parts = oscCommand.split(";");
-        const uri = parts[2];
-
-        if (uri) {
+      const [code, ...rest] = oscCommand.split(";");
+      const codeInfo = oscMap.get(code);
+      if (codeInfo) {
+        mnemonic = codeInfo.mnemonic;
+        if (code === "8" && rest.length > 0 && rest[1]) {
+          const uri = rest[1];
           description = `hyperlink: ${uri}`;
           example = `<a href="${uri}" target="_blank" rel="noopener">${escapeHtmlEntities(uri)}</a>`;
-        } else {
+        } else if (code === "8") {
           description = "hyperlink (end)";
           example = "N/A";
+        } else {
+          description = `${codeInfo.description} (${rest.join(";")})`;
         }
       } else {
-        description = oscCommand;
+        description = `unknown osc command: ${oscCommand}`;
         example = "N/A";
       }
     } else if (singleCharCode) {
-      const codeInfo = controlCodes[singleCharCode];
+      const codeInfo = escMap.get(singleCharCode);
       if (codeInfo) {
         mnemonic = codeInfo.mnemonic || "";
         description = codeInfo.description;

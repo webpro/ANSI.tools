@@ -150,3 +150,29 @@ export const ansiCodes: AnsiCode[] = [
   { type: "OSC", code: "104", mnemonic: "OSC 104", description: "reset palette colors" },
   { type: "OSC", code: "777", mnemonic: "OSC 777", description: "rxvt extension", template: ";notify;<title>;<body>", example: { title: "title", body: "body" } },
 ];
+
+export const sgrMap = new Map<string, Extract<AnsiCode, { type: "SGR" }>>();
+export const csiMap = new Map<string, Extract<AnsiCode, { type: "CSI" }>>();
+export const oscMap = new Map<string, Extract<AnsiCode, { type: "OSC" }>>();
+export const decMap = new Map<string, Extract<AnsiCode, { type: "DEC" }>>();
+export const escMap = new Map<string, Extract<AnsiCode, { type: "ESC" }>>();
+
+for (const code of ansiCodes) {
+  switch (code.type) {
+    case "SGR":
+      sgrMap.set(code.code, code);
+      break;
+    case "CSI":
+      csiMap.set(code.code, code);
+      break;
+    case "OSC":
+      oscMap.set(code.code, code);
+      break;
+    case "DEC":
+      decMap.set(code.code, code);
+      break;
+    case "ESC":
+      escMap.set(code.code, code);
+      break;
+  }
+}
