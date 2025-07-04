@@ -7,7 +7,6 @@
     "moduleResolution": "nodenext",
     "noEmit": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "skipLibCheck": true,
     "strict": true,
     "target": "esnext"

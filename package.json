@@ -7,8 +7,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "pnpm type-check && pnpm test",
     "build": "vite build",
-    "postbuild": "node --import isum/no-css scripts/build.ts"
+    "postbuild": "node --import isum/no-css scripts/build.ts",
+    "test": "node --test",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "ansi",
