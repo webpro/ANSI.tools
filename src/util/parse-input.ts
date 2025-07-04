@@ -1,10 +1,9 @@
-import type { State } from "../app.ts";
 import { unescapeInput } from "./ansi.ts";
 
 const INVISIBLE_ANSI =
   /^(\\u001b(\[.*?[@-~]|\].*?\\u0007|[a-zA-Z]|c)?|\\u009b(.*?[@-~])?|\\x1b(\[.*?[@-~]|\].*?\\u0007|[a-zA-Z]|c)?|\\033(\[.*?[@-~]|\].*?\\u0007|[a-zA-Z]|c)?)/;
 
-export interface ParsedInput {
+interface ParsedInput {
   map: number[];
   greedyMap: number[];
   reverseMap: number[];
@@ -80,7 +79,7 @@ export function parseInput(input: string): ParsedInput {
   return { map, greedyMap, reverseMap, visualWidth, plain, unescaped };
 }
 
-export function getCharacterWidth(char: string): number {
+function getCharacterWidth(char: string): number {
   const codePoint = char.codePointAt(0);
   if (!codePoint) return 0;
   if (codePoint === 10 || codePoint === 13) return 1;

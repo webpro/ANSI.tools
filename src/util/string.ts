@@ -10,10 +10,6 @@ export function escapeHtmlEntities(value: string) {
   return value.replace(/[&<>"']/g, match => replacements[match]);
 }
 
-export function newlines(value: string) {
-  return value.replace(/(\r?\n|\r)/g, "\n");
-}
-
 export function unescapeNewlines(value: string) {
   return value.replace(/(\\r\\n|\\n|\\r)/g, "\n");
 }
