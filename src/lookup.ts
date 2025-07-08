@@ -1,5 +1,5 @@
 import { computed, document, html, raw, render, signal } from "isum/preactive";
-import { getAllKnownCodes, sortAnsiCodes } from "./util/table.ts";
+import { createRowsFromCodes, sortControlCodes } from "./util/table.ts";
 import "./css/global.css";
 import "./css/input.css";
 import "./css/lookup.css";
@@ -7,7 +7,7 @@ import "./css/table.css";
 
 export function renderLookupTable() {
   const container = document.getElementById("lookup-container");
-  const rowData = sortAnsiCodes(getAllKnownCodes());
+  const rowData = sortControlCodes(createRowsFromCodes());
   const query = signal("");
 
   const rows = computed(() => {

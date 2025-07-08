@@ -1,7 +1,8 @@
 import { unescapeInput } from "./ansi.ts";
 
-const INVISIBLE_ANSI =
-  /^(\\u001b(\[.*?[@-~]|\].*?\\u0007|[a-zA-Z]|c)?|\\u009b(.*?[@-~])?|\\x1b(\[.*?[@-~]|\].*?\\u0007|[a-zA-Z]|c)?|\\033(\[.*?[@-~]|\].*?\\u0007|[a-zA-Z]|c)?)/;
+const code = "(\\\\u001b|\\\\x1b|\\\\033|\\\\e)";
+const value = "(\\[.*?[@-~]|\\].*?(\\\\u0007|\\\\a|\\\\x07)|[a-zA-Z]|c)?";
+const INVISIBLE_ANSI = new RegExp(`^(${code}${value}|\\\\u009b(.*?[@-~])?)`);
 
 interface ParsedInput {
   map: number[];
@@ -26,18 +27,17 @@ function parseToken(input: string, index: number) {
     return { original: newlineMatch[0], unescaped: "\n", isVisible: true, nextIndex: index + newlineMatch[0].length };
   }
 
-  if (remaining.startsWith("\\u0007")) {
-    return { original: "\\u0007", unescaped: "\u0007", isVisible: false, nextIndex: index + 6 };
+  const terminatorMatch = remaining.match(/^\\(u0007|a|x07)/);
+  if (terminatorMatch) {
+    const original = terminatorMatch[0];
+    const unescaped = unescapeInput(original);
+    return { original, unescaped, isVisible: false, nextIndex: index + original.length };
   }
 
   const invisibleMatch = remaining.match(INVISIBLE_ANSI);
-
   if (invisibleMatch) {
     const original = invisibleMatch[0];
-    let char = "\u001b";
-    if (original.startsWith("\\u009b")) char = "\u009b";
-    const sequencePart = invisibleMatch[2] || invisibleMatch[3] || invisibleMatch[4] || invisibleMatch[5] || "";
-    const unescaped = char + (sequencePart ? unescapeInput(sequencePart) : "");
+    const unescaped = unescapeInput(original);
     return { original, unescaped, isVisible: false, nextIndex: index + original.length };
   }
 

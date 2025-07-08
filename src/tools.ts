@@ -1,5 +1,5 @@
 import { html, signal, computed } from "isum/preactive";
-import { escapeInput } from "./util/ansi.ts";
+import { escapeControlCodes } from "./util/ansi.ts";
 import { createSettingsStore } from "./util/settings.ts";
 import { getPosition, getPositionReversed } from "./util/parse-input.ts";
 import { appState } from "./app-state.ts";
@@ -39,8 +39,8 @@ export function Tools() {
   const ansi = computed(() => {
     const rawAnsi = appState.value.input;
     const limit = inputValues.value.ansi;
-    const start = escapeInput(rawAnsi.slice(0, limit));
-    const end = escapeInput(rawAnsi.slice(limit));
+    const start = escapeControlCodes(rawAnsi.slice(0, limit));
+    const end = escapeControlCodes(rawAnsi.slice(limit));
     if (settings.isRenderNewlines.value) return { start: unescapeNewlines(start), end: unescapeNewlines(end) };
     return { start, end };
   });

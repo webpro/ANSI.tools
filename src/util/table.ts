@@ -1,314 +1,215 @@
 import { AnsiUp } from "ansi_up";
 import { sgrMap, csiMap, oscMap, decMap, escMap, ansiCodes } from "../codes.ts";
 import { escapeHtmlEntities } from "./string.ts";
-import { unescapeInput } from "./ansi.ts";
 
-interface LookupTableRow {
+interface TableRow {
+  type: "SGR" | "CSI" | "OSC" | "DEC" | "ESC";
   code: string;
+  sort: string | number;
   mnemonic: string;
   description: string;
+}
+
+interface LookupTableRow extends TableRow {
   example: string;
 }
 
-interface TableRow extends LookupTableRow {
-  raw: string;
-}
+type Match = Omit<TableRow, "type" | "code">;
 
 const convert = new AnsiUp();
 
-const ESC_LITERAL = "(?:\\\\u001[bB]|\\\\x1[bB]|\\\\033)";
-const CSI8_LITERAL = "(?:\\\\u009b)";
-const CSI_LITERAL_INTRO = `(?:${ESC_LITERAL}\\[|${CSI8_LITERAL})`;
+const ESC_LITERAL = "(?:\\\\u001[bB]|\\\\x1[bB]|\\\\033|\\\\e)";
+const CSI_LITERAL_INTRO = `(?:${ESC_LITERAL}\\[|(?:\\\\u009b))`;
 const OSC_LITERAL_INTRO = `${ESC_LITERAL}\\]`;
-const OSC_LITERAL_TERMINATOR = `(?:\\\\u0007|${ESC_LITERAL}\\\\)`;
+const OSC_LITERAL_TERMINATOR = `(?:\\\\u0007|\\\\a|\\\\x07|${ESC_LITERAL}\\\\)`;
 
 const ANSI_LITERAL_REGEX = new RegExp(
   [
-    `(?:${CSI_LITERAL_INTRO})([?0-9;]*)?([@-~])`,
-    `(?:${OSC_LITERAL_INTRO})(.*?)(${OSC_LITERAL_TERMINATOR})`,
-    `(${ESC_LITERAL})([a-zA-Z])`,
+    `(?:${CSI_LITERAL_INTRO})(?<csiParams>[?0-9;]*)?(?<csiLastChar>[@-~])`,
+    `(?:${OSC_LITERAL_INTRO})(?<oscCommand>.*?)(?:${OSC_LITERAL_TERMINATOR})`,
+    `(?<esc>${ESC_LITERAL})(?<escCode>[a-zA-Z])`,
   ].join("|"),
   "g"
 );
 
-const ANSI_REGEX_FOR_SORTING =
-  /(?:\u001b\[|\u009b)([?0-9;nm]*)?([@-~])|\u001b](.*?)(?:\u0007|\u001b\\)|\u001b([a-zA-Z])/;
+const typeOrder: Record<TableRow["type"], number> = { SGR: 1, CSI: 2, OSC: 3, DEC: 4, ESC: 5 };
 
-export function sortAnsiCodes(rows: TableRow[]): TableRow[] {
+export function sortControlCodes<T extends TableRow | LookupTableRow>(rows: T[]): T[] {
   return rows.toSorted((a, b) => {
-    const matchA = a.raw.match(ANSI_REGEX_FOR_SORTING);
-    const matchB = b.raw.match(ANSI_REGEX_FOR_SORTING);
-
-    if (!matchA) return 1;
-    if (!matchB) return -1;
-
-    const isCsiA = matchA[2] !== undefined;
-    const isCsiB = matchB[2] !== undefined;
-    const isOscA = matchA[3] !== undefined;
-    const isOscB = matchB[3] !== undefined;
-
-    if (isCsiA && !isCsiB) return -1;
-    if (!isCsiA && isCsiB) return 1;
-
-    if (isCsiA && isCsiB) {
-      const finalCharA = matchA[2];
-      const finalCharB = matchB[2];
-
-      const isSgrA = finalCharA === "m";
-      const isSgrB = finalCharB === "m";
-      if (isSgrA && !isSgrB) return -1;
-      if (!isSgrA && isSgrB) return 1;
-
-      if (finalCharA !== finalCharB) {
-        return finalCharA.localeCompare(finalCharB);
-      }
-
-      let paramsStrA = matchA[1];
-      let paramsStrB = matchB[1];
-
-      if (finalCharA === "m" && paramsStrA === undefined) paramsStrA = "0";
-      if (finalCharB === "m" && paramsStrB === undefined) paramsStrB = "0";
-
-      const paramsA = (paramsStrA || "").split(";").filter(p => p);
-      const paramsB = (paramsStrB || "").split(";").filter(p => p);
-
-      const minLength = Math.min(paramsA.length, paramsB.length);
-      for (let i = 0; i < minLength; i++) {
-        const numA = Number.parseInt(paramsA[i], 10);
-        const numB = Number.parseInt(paramsB[i], 10);
-
-        if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
-          if (numA !== numB) {
-            return numA - numB;
-          }
-        } else {
-          const strComp = paramsA[i].localeCompare(paramsB[i]);
-          if (strComp !== 0) {
-            return strComp;
-          }
-        }
-      }
-
-      return paramsA.length - paramsB.length;
-    }
-
-    if (isOscA && !isOscB) return -1;
-    if (!isOscA && isOscB) return 1;
-
-    if (isOscA && isOscB) {
-      const oscCommandA = matchA[3];
-      const oscCommandB = matchB[3];
-
-      const numA = Number.parseInt(oscCommandA, 10);
-      const numB = Number.parseInt(oscCommandB, 10);
-
-      if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
-        if (numA !== numB) {
-          return numA - numB;
-        }
-      }
-      return oscCommandA.localeCompare(oscCommandB);
-    }
-
-    return a.raw.localeCompare(b.raw);
+    const typeComparison = typeOrder[a.type] - typeOrder[b.type];
+    if (typeComparison !== 0) return typeComparison;
+    if (typeof a.sort === "number" && typeof b.sort === "number") return a.sort - b.sort;
+    if (!a.sort) return 1;
+    if (!b.sort) return -1;
+    return a.sort.toString().localeCompare(b.sort.toString());
   });
 }
 
-export function analyzeAnsi(text: string): TableRow[] {
-  const matches = text.matchAll(ANSI_LITERAL_REGEX);
-  const rows: TableRow[] = [];
-
-  for (const match of matches) {
-    const fullCodeLiteral = match[0];
-    const csiParamsStr = match[1];
-    const csiFinalChar = match[2];
-    let oscCommand = match[3];
-    const oscTerminator = match[4];
-    const singleEscLiteral = match[5];
-    const singleCharCode = match[6];
-
-    if (oscCommand !== undefined) {
-      oscCommand = match[0].replace(oscTerminator, "").replace(new RegExp(OSC_LITERAL_INTRO), "");
-    }
-
-    let description = "";
-    let example = "";
-    let mnemonic = "";
-    const fullCodeRaw = unescapeInput(fullCodeLiteral);
-
-    if (csiFinalChar === "m") {
-      const params = csiParamsStr ? csiParamsStr.split(";") : ["0"];
-      if (params.length === 0) {
-        params.push("0");
-      }
-
-      const descriptions: string[] = [];
-      for (let i = 0; i < params.length; i++) {
-        const param = params[i];
-        if (param === "38" || param === "48") {
-          const type = param === "38" ? "fg" : "bg";
-          if (params[i + 1] === "5") {
-            descriptions.push(`${type}: 8-bit color ${params[i + 2]}`);
-            i += 2;
-          } else if (params[i + 1] === "2") {
-            descriptions.push(`${type}: 24-bit color rgb(${params[i + 2]}, ${params[i + 3]}, ${params[i + 4]})`);
-            i += 4;
-          }
-        } else {
-          descriptions.push(sgrMap.get(param)?.description || `unknown sgr: ${param}`);
-        }
-      }
-      description = descriptions.join(", ");
-
-      let isBackgroundColor = false;
-      for (const param of params) {
-        const code = Number.parseInt(param, 10);
-        if (param.startsWith("48;") || (code >= 40 && code <= 47) || (code >= 100 && code <= 107)) {
-          isBackgroundColor = true;
-          break;
-        }
-      }
-
-      const text = isBackgroundColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-      example = convert.ansi_to_html(`${fullCodeRaw.replace(/\u009b/g, "\u001b[")}${text}\u001b[0m`);
-    } else if (csiFinalChar) {
-      const codeInfo = csiMap.get(csiFinalChar);
-      const params = csiParamsStr || "";
-      if (codeInfo) {
-        mnemonic = codeInfo.mnemonic || "";
-
-        if ((csiFinalChar === "h" || csiFinalChar === "l") && params.startsWith("?")) {
-          const mode = params.substring(1);
-          const modeInfo = decMap.get(mode);
-          const action = csiFinalChar === "h" ? "enable" : "disable";
-          if (modeInfo) {
-            description = `${action} ${modeInfo.description}`;
-          } else {
-            description = `${action} Private Mode ${mode}`;
-          }
-        } else {
-          description = codeInfo.description;
-          if (codeInfo.params && codeInfo.params[params] !== undefined) {
-            description += `: ${codeInfo.params[params]}`;
-          } else if (params) {
-            description += ` (${params})`;
-          }
-        }
-      } else {
-        description = `unknown csi sequence (terminator '${csiFinalChar}')`;
-      }
-      example = "N/A";
-    } else if (oscCommand !== undefined) {
-      const [code, ...rest] = oscCommand.split(";");
-      const codeInfo = oscMap.get(code);
-      if (codeInfo) {
-        mnemonic = codeInfo.mnemonic;
-        if (code === "8" && rest.length > 0 && rest[1]) {
-          const uri = rest[1];
-          description = `hyperlink: ${uri}`;
-          example = `<a href="${uri}" target="_blank" rel="noopener">${escapeHtmlEntities(uri)}</a>`;
-        } else if (code === "8") {
-          description = "hyperlink (end)";
-          example = "N/A";
-        } else {
-          description = `${codeInfo.description} (${rest.join(";")})`;
-        }
-      } else {
-        description = `unknown osc command: ${oscCommand}`;
-        example = "N/A";
-      }
-    } else if (singleCharCode) {
-      const codeInfo = escMap.get(singleCharCode);
-      if (codeInfo) {
-        mnemonic = codeInfo.mnemonic || "";
-        description = codeInfo.description;
-      } else {
-        description = `unknown control character '${singleCharCode}'`;
-      }
-      example = "N/A";
-    }
-
-    rows.push({
-      code: escapeHtmlEntities(fullCodeLiteral),
-      raw: fullCodeRaw,
-      mnemonic,
-      description,
-      example: example,
-    });
+function handleSGR(csiParams: string): Match {
+  const value = csiParams || "0";
+  const sgrParams = value.split(";").filter(Boolean);
+  if (sgrParams.length === 0) {
+    sgrParams.push("0");
   }
 
-  return rows;
+  const descriptions: string[] = [];
+  const paramsIterator = sgrParams[Symbol.iterator]();
+  let current = paramsIterator.next();
+
+  while (!current.done) {
+    const param = current.value;
+    const item = sgrMap.get(param);
+
+    if (item) {
+      descriptions.push(item.description);
+    } else if (param === "38" || param === "48") {
+      const colorType = param === "38" ? "fg color" : "bg color";
+      const colorMode = paramsIterator.next().value;
+      if (colorMode === "5") {
+        const color = paramsIterator.next().value;
+        descriptions.push(`${colorType}: 8-bit #${color}`);
+      } else if (colorMode === "2") {
+        const r = paramsIterator.next().value;
+        const g = paramsIterator.next().value;
+        const b = paramsIterator.next().value;
+        descriptions.push(`${colorType}: 24-bit rgb(${r}, ${g}, ${b})`);
+      }
+    } else {
+      descriptions.push(`unknown SGR parameter: ${param}`);
+    }
+    current = paramsIterator.next();
+  }
+  const sort = sgrParams.length > 1 ? Number(sgrParams[0]) + Number(sgrParams[1]) / 10 : Number(sgrParams[0]);
+  return { sort, mnemonic: "", description: descriptions.join(", ") };
 }
 
-function tpl(template?: string, example?: { [key: string]: string }): string {
+function handleDEC(csiParams: string, csiLastChar: string): Match {
+  const value = csiParams.substring(1);
+  const item = decMap.get(value);
+  const action = csiLastChar === "h" ? "enable" : "disable";
+  const description = item ? `${action} ${item.description}` : `${action} private mode ${value}`;
+  return { sort: Number(value), mnemonic: item?.mnemonic ?? "", description };
+}
+
+function handleCSI(csiParams: string, csiLastChar: string): Match {
+  const item = csiMap.get(csiLastChar);
+  let description = `unknown CSI sequence (${csiParams}${csiLastChar})`;
+  if (item) {
+    description = item.description;
+    if (item.params && item.params[csiParams] !== undefined) {
+      description += `: ${item.params[csiParams]}`;
+    }
+  }
+  const sort = csiParams ? Number.parseInt(csiParams.split(";")[0], 10) : csiLastChar.toLowerCase();
+  return { sort, mnemonic: item?.mnemonic || "", description };
+}
+
+function handleOSC(oscCommand: string): Match {
+  const [code, _text, value] = oscCommand.split(";");
+  const item = oscMap.get(code);
+  const description = item
+    ? code === "8" && value
+      ? `hyperlink: ${value}`
+      : code === "8"
+        ? "hyperlink (end)"
+        : item.description
+    : `unknown OSC command: ${oscCommand}`;
+  return { sort: value, mnemonic: item?.mnemonic ?? "", description };
+}
+
+function handleESC(escCode: string): Match {
+  const item = escMap.get(escCode);
+  const description = item ? item.description : `unknown escape sequence '${escCode}'`;
+  return { sort: escCode, mnemonic: item?.mnemonic || "", description };
+}
+
+export function extractControlCodes(text: string): TableRow[] {
+  const matches = text.matchAll(ANSI_LITERAL_REGEX);
+  return Array.from(matches, (match): TableRow => {
+    const { csiParams = "", csiLastChar, oscCommand, escCode } = match.groups ?? {};
+    const code = escapeHtmlEntities(match[0]);
+    if (csiLastChar === "m") {
+      return { type: "SGR", code, ...handleSGR(csiParams) };
+    } else if ((csiLastChar === "h" || csiLastChar === "l") && csiParams.startsWith("?")) {
+      return { type: "DEC", code, ...handleDEC(csiParams, csiLastChar) };
+    } else if (csiLastChar) {
+      return { type: "CSI", code, ...handleCSI(csiParams, csiLastChar) };
+    } else if (oscCommand) {
+      return { type: "OSC", code, ...handleOSC(oscCommand) };
+    } else if (escCode) {
+      return { type: "ESC", code, ...handleESC(escCode) };
+    } else {
+      return { type: "CSI", code, sort: "unknown", mnemonic: "", description: "unknown" };
+    }
+  });
+}
+
+function tpl(template?: string, example?: { [key: string]: string }) {
   if (!template) return "";
   if (!example) return template;
   return template.replace(/<([^>]+)>/g, (_, varName) => example[varName]);
 }
 
-export function getAllKnownCodes(PREFIX = "ESC", PREFIX_RAW = "\u001b") {
-  const rows: TableRow[] = [];
+export function createRowsFromCodes() {
+  const PREFIX = "ESC";
+  const PREFIX_RAW = "\u001b";
+  const PREFIX_RAW_ESCAPED = "\\u001b";
+  const SUFFIX_RAW = "\\u0007";
+
+  const rows: LookupTableRow[] = [];
 
   for (const data of ansiCodes) {
-    switch (data.type) {
+    const type = data.type;
+    switch (type) {
       case "SGR": {
-        const { code: c, description, template, example } = data;
-        const code = `${PREFIX}[${c}${template ?? ""}m`;
-        const raw = `${PREFIX_RAW}[${c}${tpl(template, example)}m`;
-        const sgrCode = Number.parseInt(c.split(";")[0], 10);
-        const isBgColor = (sgrCode >= 40 && sgrCode <= 49) || (sgrCode >= 100 && sgrCode <= 107) || c.startsWith("48;");
+        const { description, template } = data;
+        const code = `${PREFIX}[${data.code}${template ?? ""}m`;
+        const raw = `${PREFIX_RAW}[${data.code}${tpl(data.template, data.example)}m`;
+        const sgr = Number.parseInt(data.code.split(";")[0], 10);
+        const isBgColor = (sgr >= 40 && sgr <= 49) || (sgr >= 100 && sgr <= 107) || data.code.startsWith("48;");
         const text = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-        rows.push({ code, raw, mnemonic: "", description, example: convert.ansi_to_html(`${raw}${text}\u001b[0m`) });
+        const example = convert.ansi_to_html(`${raw}${text}\u001b[0m`);
+        rows.push({ type, sort: data.code, code, mnemonic: "", description, example });
         break;
       }
 
       case "CSI": {
-        const { params, mnemonic, description } = data;
+        const { params, mnemonic, description, template } = data;
         if (params) {
           for (const [param, desc] of Object.entries(params)) {
             const code = `${PREFIX}[${param}${data.code}`;
-            const raw = `${PREFIX_RAW}[${param}${data.code}`;
-            rows.push({ code, raw, mnemonic, description: `${description}: ${desc}`, example: "N/A" });
+            rows.push({ type, sort: data.code, code, mnemonic, description: `${description}: ${desc}`, example: "" });
           }
         } else {
-          const code = `${PREFIX}[${data.template ?? ""}${data.code}`;
-          const raw = `${PREFIX_RAW}[${data.code}${tpl(data.template, data.example)}${data.code}`;
-          rows.push({ code, raw, mnemonic, description, example: "N/A" });
+          const code = `${PREFIX}[${template ?? ""}${data.code}`;
+          rows.push({ type, sort: data.code, code, mnemonic, description, example: "" });
         }
         break;
       }
 
       case "OSC": {
-        const { mnemonic, description, template, example, displayExample, end } = data;
+        const { mnemonic, description, template, end } = data;
         const code = `${PREFIX}]${data.code}${template ?? ""}ST`;
-        const raw = `${PREFIX_RAW}]${data.code}${tpl(template, example)}"\u0007"`;
-        rows.push({ code, raw, mnemonic, description, example: displayExample ?? "N/A" });
+        const example = `${PREFIX_RAW_ESCAPED}` + `]${data.code}${tpl(template, data.example)}${SUFFIX_RAW}`;
+        rows.push({ type, sort: Number(data.code), code, mnemonic, description, example });
 
         if (end) {
-          const code = `${PREFIX}]${data.code}${end.template}ST`;
-          const raw = `${PREFIX_RAW}]${data.code}${end.template}\u0007`;
-          rows.push({ code, raw, mnemonic, description: end.description, example: "N/A" });
+          const code = `${PREFIX}]${data.code}${end.template ?? ""}ST`;
+          rows.push({ type, sort: Number(data.code), code, mnemonic, description: end.description, example: "" });
         }
         break;
       }
 
       case "DEC": {
-        const { code, description, mnemonic } = data;
-        for (const action of ["h", "l"]) {
-          rows.push({
-            code: `${PREFIX}[?${code}${action}`,
-            raw: `${PREFIX_RAW}[?${code}${action}`,
-            mnemonic: mnemonic ?? (action === "h" ? "DECSET" : "DECRST"),
-            description: `${action === "h" ? "enable" : "disable"} ${description}`,
-            example: "N/A",
-          });
-        }
+        const shared = { type, sort: data.code, mnemonic: data.mnemonic ?? "", example: "" };
+        rows.push({ ...shared, code: `${PREFIX}[?${data.code}h`, description: `enable ${data.description}` });
+        rows.push({ ...shared, code: `${PREFIX}[?${data.code}l`, description: `disable ${data.description}` });
         break;
       }
 
       case "ESC": {
         const { code, mnemonic, description } = data;
-        rows.push({ code: `${PREFIX}${code}`, raw: `${PREFIX_RAW}${code}`, mnemonic, description, example: "N/A" });
+        rows.push({ type, sort: code, code: `${PREFIX}${code}`, mnemonic, description, example: "" });
         break;
       }
     }

@@ -1,6 +1,6 @@
 import { html, computed, raw } from "isum/preactive";
 import { AnsiUp } from "ansi_up";
-import { filterForAnsiUp, unescapeInput } from "./util/ansi.ts";
+import { normalizeBeforeRender } from "./util/ansi.ts";
 import { createSettingsStore } from "./util/settings.ts";
 import { appState } from "./app-state.ts";
 import "./css/output.css";
@@ -18,11 +18,10 @@ export function Output() {
 
   const outputHtml = computed(() => {
     const { input } = appState.value;
-    const filteredEscaped = filterForAnsiUp(input);
-    const filteredUnescaped = unescapeInput(filteredEscaped);
-    const textToRender = filteredUnescaped.endsWith("\n") ? `${filteredUnescaped}\u200b` : filteredUnescaped;
+    const normalized = normalizeBeforeRender(input);
+    const text = normalized.endsWith("\n") ? `${normalized}\u200b` : normalized;
     const convert = new AnsiUp();
-    return convert.ansi_to_html(textToRender);
+    return convert.ansi_to_html(text);
   });
 
   const whitespaceStart = computed(() => outputHtml.value.match(/^\s+/)?.[0] ?? "");

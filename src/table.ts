@@ -1,5 +1,5 @@
 import { html, computed, raw } from "isum/preactive";
-import { analyzeAnsi, sortAnsiCodes } from "./util/table.ts";
+import { extractControlCodes, sortControlCodes } from "./util/table.ts";
 import { createSettingsStore } from "./util/settings.ts";
 import { appState } from "./app-state.ts";
 import "./css/table.css";
@@ -8,9 +8,9 @@ export function Table() {
   const settings = createSettingsStore("table", { isShowDuplicates: false, isSortCodes: false });
 
   const rows = computed(() => {
-    let rows = analyzeAnsi(appState.value.input);
+    let rows = extractControlCodes(appState.value.input);
     if (!settings.isShowDuplicates.value) rows = [...new Map(rows.map(item => [item.code, item])).values()];
-    if (settings.isSortCodes.value) rows = sortAnsiCodes(rows);
+    if (settings.isSortCodes.value) rows = sortControlCodes(rows);
     return rows;
   });
 
@@ -52,7 +52,6 @@ export function Table() {
           <th>code</th>
           <th>mnemonic</th>
           <th>description</th>
-          <th>example</th>
         </tr>
       </thead>
       <tbody>
@@ -62,7 +61,6 @@ export function Table() {
               <td><code>${info.code}</code></td>
               <td><code>${info.mnemonic}</code></td>
               <td>${info.description}</td>
-              <td>${raw(info.example)}</td>
             </tr>
           `
         )}
