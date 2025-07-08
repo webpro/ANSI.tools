@@ -13,9 +13,12 @@ export function renderLookupTable() {
   const rows = computed(() => {
     const q = query.value;
     return rowData.map(row => {
-      const isHidden = q ? !`${row.code} ${row.mnemonic} ${row.description}`.toLowerCase().includes(q) : false;
+      const isHidden = q
+        ? !`${row.code} ${row.type} ${row.mnemonic} ${row.description}`.toLowerCase().includes(q)
+        : false;
       return html`<tr ?hidden=${isHidden}>
         <td><code>${row.code}</code></td>
+        <td><code>${row.type}</code></td>
         <td><code>${row.mnemonic}</code></td>
         <td>${row.description}</td>
         <td>${raw(row.example)}</td>
@@ -39,6 +42,7 @@ export function renderLookupTable() {
           <thead>
             <tr>
               <th>code</th>
+              <th>type</th>
               <th>mnemonic</th>
               <th>description</th>
               <th>example</th>
