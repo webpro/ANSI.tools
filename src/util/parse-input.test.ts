@@ -171,3 +171,16 @@ test("Hyperlinks", () => {
     unescaped: "- \x1b]8;;https://e.orgtext\x1b]8;;\n- \x1b]8;;https://e.org/nextnext\x1b]8;;",
   });
 });
+
+test("\\e escape sequence and terminators", () => {
+  const input = String.raw`\e]0;title\a\e]0;title2\x07`;
+  const state = parseInput(input);
+  assert.deepEqual(state, {
+    map: [0],
+    greedyMap: [27],
+    reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    visualWidth: 0,
+    plain: "",
+    unescaped: "\u001b]0;title\u0007\u001b]0;title2\u0007",
+  });
+});
