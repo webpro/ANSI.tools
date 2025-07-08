@@ -21,7 +21,7 @@ const convert = new AnsiUp();
 const ESC_LITERAL = "(?:\\\\u001[bB]|\\\\x1[bB]|\\\\033|\\\\e)";
 const CSI_LITERAL_INTRO = `(?:${ESC_LITERAL}\\[|(?:\\\\u009b))`;
 const OSC_LITERAL_INTRO = `${ESC_LITERAL}\\]`;
-const OSC_LITERAL_TERMINATOR = `(?:\\\\u0007|\\\\a|\\\\x07|${ESC_LITERAL}\\\\)`;
+const OSC_LITERAL_TERMINATOR = `(?:\\\\u0007|\\\\a|\\\\x07|\\\\\\\\|${ESC_LITERAL}\\\\)`;
 
 const ANSI_LITERAL_REGEX = new RegExp(
   [

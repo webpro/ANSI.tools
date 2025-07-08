@@ -184,3 +184,16 @@ test("\\e escape sequence and terminators", () => {
     unescaped: "\u001b]0;title\u0007\u001b]0;title2\u0007",
   });
 });
+
+test("OSC \\ terminator", () => {
+  const input = String.raw`\x1b]0;title\x1b\\`;
+  const state = parseInput(input);
+  assert.deepEqual(state, {
+    map: [0],
+    greedyMap: [18],
+    reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    visualWidth: 0,
+    plain: "",
+    unescaped: "\u001b]0;title\u001b\x07",
+  });
+});

@@ -18,6 +18,7 @@ export function unescapeInput(text: string) {
     .replace(/\\u0007/gi, "\u0007")
     .replace(/\\a/gi, "\u0007")
     .replace(/\\x07/gi, "\u0007")
+    .replace(/\\\\/g, "\u0007")
     .replace(/\\r/g, "\r")
     .replace(/\\n/g, "\n");
 }

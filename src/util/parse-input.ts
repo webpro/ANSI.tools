@@ -1,7 +1,7 @@
 import { unescapeInput } from "./ansi.ts";
 
 const code = "(\\\\u001b|\\\\x1b|\\\\033|\\\\e)";
-const value = "(\\[.*?[@-~]|\\].*?(\\\\u0007|\\\\a|\\\\x07)|[a-zA-Z]|c)?";
+const value = "(\\[.*?[@-~]|\\].*?(\\\\u0007|\\\\a|\\\\x07|\\\\\\\\)|[a-zA-Z]|c)?";
 const INVISIBLE_ANSI = new RegExp(`^(${code}${value}|\\\\u009b(.*?[@-~])?)`);
 
 interface ParsedInput {
@@ -27,7 +27,7 @@ function parseToken(input: string, index: number) {
     return { original: newlineMatch[0], unescaped: "\n", isVisible: true, nextIndex: index + newlineMatch[0].length };
   }
 
-  const terminatorMatch = remaining.match(/^\\(u0007|a|x07)/);
+  const terminatorMatch = remaining.match(/^\\(u0007|a|x07|\\)/);
   if (terminatorMatch) {
     const original = terminatorMatch[0];
     const unescaped = unescapeInput(original);
