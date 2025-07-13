@@ -1,15 +1,3 @@
-const replacements: { [key: string]: string } = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#039;",
-};
-
-export function escapeHtmlEntities(value: string) {
-  return value.replace(/[&<>"']/g, match => replacements[match]);
-}
-
 export function unescapeNewlines(value: string) {
   return value.replace(/(\\r\\n|\\n|\\r)/g, "\n");
 }

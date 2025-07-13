@@ -1,10 +1,9 @@
 import { html, computed, raw } from "isum/preactive";
 import { AnsiUp } from "ansi_up";
-import { normalizeBeforeRender } from "./util/ansi.ts";
+import { unescapeInput } from "./util/ansi.ts";
 import { createSettingsStore } from "./util/settings.ts";
 import { appState } from "./app-state.ts";
 import "./css/output.css";
-import { getVisualWidth } from "./util/parse-input.ts";
 
 export function Output() {
   const settings = createSettingsStore("output", { isLightMode: false, isGridVisible: false });
@@ -12,13 +11,19 @@ export function Output() {
   const dimensions = computed(() => {
     const lines: string[] = appState.value.plain.split("\n");
     let columns = 0;
-    for (const line of lines) columns = Math.max(columns, getVisualWidth(line));
+    for (const line of lines) columns = Math.max(columns, line.length);
     return { lines: lines.length, columns };
   });
 
   const outputHtml = computed(() => {
-    const { input } = appState.value;
-    const normalized = normalizeBeforeRender(input);
+    const codes = appState.value.codes;
+    const printable = codes.filter(code => code.type === "TEXT" || (code.type === "CSI" && code.command === "m"));
+    const normalized = unescapeInput(
+      printable
+        .map(code => code.raw)
+        .join("")
+        .replace(/\\u009b/gi, "\u001b[")
+    );
     const text = normalized.endsWith("\n") ? `${normalized}\u200b` : normalized;
     const convert = new AnsiUp();
     return convert.ansi_to_html(text);

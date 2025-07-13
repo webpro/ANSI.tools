@@ -8,7 +8,7 @@ export function Table() {
   const settings = createSettingsStore("table", { isShowDuplicates: false, isSortCodes: false });
 
   const rows = computed(() => {
-    let rows = extractControlCodes(appState.value.input);
+    let rows = extractControlCodes(appState.value.codes);
     if (!settings.isShowDuplicates.value) rows = [...new Map(rows.map(item => [item.code, item])).values()];
     if (settings.isSortCodes.value) rows = sortControlCodes(rows);
     return rows;

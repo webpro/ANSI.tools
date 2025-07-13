@@ -1,0 +1,44 @@
+{
+  "name": "@ansi-tools/parser",
+  "version": "0.0.1",
+  "description": "Tokenize and parse strings containing ANSI escape sequences and control codes",
+  "main": "./dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./escaped": {
+      "types": "./dist/escaped.d.ts",
+      "import": "./dist/escaped.js",
+      "default": "./dist/escaped.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "pnpm type-check && pnpm test",
+    "build": "tsdown --dts src/index.ts src/escaped.ts",
+    "test": "node --test",
+    "type-check": "tsc",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "ansi",
+    "escape codes",
+    "web application"
+  ],
+  "author": "Lars Kappert <lars@webpro.nl>",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.13",
+    "tsdown": "^0.12.9",
+    "typescript": "^5.8.3"
+  }
+}

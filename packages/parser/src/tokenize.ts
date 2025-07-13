@@ -1,0 +1,145 @@
+import {
+  APC,
+  BACKSLASH,
+  BELL,
+  CSI,
+  CSI_OPEN,
+  DCS,
+  ESC,
+  OSC,
+  OSC_OPEN,
+  PM,
+  SOS,
+  ST,
+  STRING_OPENERS,
+  TOKEN_TYPES,
+} from "./constants.ts";
+import type { TOKEN } from "./types.ts";
+
+type State = "GROUND" | "SEQUENCE";
+
+const debug = false;
+
+const INTRODUCERS = new Set([ESC, CSI, OSC, DCS, APC, PM, SOS]);
+
+function emit(token: TOKEN) {
+  if (debug) console.log("token", token);
+  return token;
+}
+
+export function* tokenizer(input: string): Generator<TOKEN> {
+  let i = 0;
+  let state: State = "GROUND";
+  let currentCode: string | undefined;
+
+  function setState(next: State, code?: string) {
+    if (debug) console.log(`state ${state} → ${next}`);
+    state = next;
+    currentCode = code;
+  }
+
+  while (i < input.length) {
+    if (state === "GROUND") {
+      const textStart = i;
+      while (i < input.length) {
+        const char = input[i];
+        if (INTRODUCERS.has(char)) {
+          break;
+        }
+        i++;
+      }
+
+      if (i > textStart) {
+        yield emit({ type: TOKEN_TYPES.TEXT, pos: textStart, raw: input.substring(textStart, i) });
+      }
+
+      if (i < input.length) {
+        const char = input[i];
+        if (char === CSI || char === OSC || char === DCS || char === APC || char === PM || char === SOS) {
+          yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: char });
+          i++;
+          setState("SEQUENCE", char);
+        } else if (char === ESC) {
+          const next = input[i + 1];
+          if (next === CSI_OPEN) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: CSI });
+            i += 2;
+            setState("SEQUENCE", CSI);
+          } else if (next === OSC_OPEN) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: OSC });
+            i += 2;
+            setState("SEQUENCE", OSC);
+          } else if (STRING_OPENERS.has(next)) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: next });
+            i += 2;
+            setState("SEQUENCE", next);
+          } else if (next && next.charCodeAt(0) >= 0x20 && next.charCodeAt(0) <= 0x2f) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: ESC, intermediate: next });
+            i += 2;
+            setState("SEQUENCE", ESC);
+          } else if (next) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC });
+            i += 1;
+            setState("SEQUENCE", ESC);
+          } else {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC });
+            i++;
+          }
+        }
+      }
+    } else if (state === "SEQUENCE") {
+      const pos = i;
+      const code = currentCode;
+      let data = "";
+
+      if (code === CSI) {
+        while (i < input.length) {
+          const char = input[i];
+          const charCode = char.charCodeAt(0);
+          if (charCode >= 0x40 && charCode < 0x7e) {
+            if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
+            yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
+            i++;
+            break;
+          }
+          data += char;
+          i++;
+        }
+      } else if (code === ESC) {
+        if (i < input.length) {
+          const char = input[i];
+          yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
+          i++;
+        }
+      } else if (code) {
+        while (i < input.length) {
+          const char = input[i];
+          let terminator: string | undefined;
+
+          if (char === ST) {
+            terminator = ST;
+          } else if (char === BELL && code === OSC) {
+            terminator = BELL;
+          } else if (char === ESC && input[i + 1] === BACKSLASH) {
+            terminator = ESC + BACKSLASH;
+          }
+
+          if (terminator) {
+            if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
+            yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: terminator });
+            i += terminator.length;
+            break;
+          }
+
+          data += char;
+          i++;
+        }
+      }
+      setState("GROUND");
+    }
+  }
+}
+
+export function tokenize(input: string): TOKEN[] {
+  return Array.from(tokenizer(input));
+}

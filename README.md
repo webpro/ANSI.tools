@@ -6,3 +6,5 @@ Source code of [ansi.tools](https://ansi.tools).
 pnpm install
 pnpm dev
 ```
+
+Also contains the [@ansi-tools/parser](./packages/parser) package.

@@ -1,12 +1,13 @@
 import { AnsiUp } from "ansi_up";
-import { sgrMap, csiMap, oscMap, decMap, escMap, ansiCodes } from "../codes.ts";
-import { escapeHtmlEntities } from "./string.ts";
+import { CODE_TYPES } from "@ansi-tools/parser";
+import type { CODE, CONTROL_CODE } from "@ansi-tools/parser";
+import { sgrMap, csiMap, oscMap, decMap, escMap, dcsMap, stringMap, privateMap, controlCodes } from "../codes.ts";
 
 interface TableRow {
-  type: "SGR" | "CSI" | "OSC" | "DEC" | "ESC";
+  type: CONTROL_CODE["type"];
   code: string;
   sort: string | number;
-  mnemonic: string;
+  mnemonic?: string;
   description: string;
 }
 
@@ -18,46 +19,37 @@ type Match = Omit<TableRow, "type" | "code">;
 
 const convert = new AnsiUp();
 
-const ESC_LITERAL = "(?:\\\\u001[bB]|\\\\x1[bB]|\\\\033|\\\\e)";
-const CSI_LITERAL_INTRO = `(?:${ESC_LITERAL}\\[|(?:\\\\u009b))`;
-const OSC_LITERAL_INTRO = `${ESC_LITERAL}\\]`;
-const OSC_LITERAL_TERMINATOR = `(?:\\\\u0007|\\\\a|\\\\x07|\\\\\\\\|${ESC_LITERAL}\\\\)`;
-
-const ANSI_LITERAL_REGEX = new RegExp(
-  [
-    `(?:${CSI_LITERAL_INTRO})(?<csiParams>[?0-9;]*)?(?<csiLastChar>[@-~])`,
-    `(?:${OSC_LITERAL_INTRO})(?<oscCommand>.*?)(?:${OSC_LITERAL_TERMINATOR})`,
-    `(?<esc>${ESC_LITERAL})(?<escCode>[a-zA-Z])`,
-  ].join("|"),
-  "g"
-);
-
-const typeOrder: Record<TableRow["type"], number> = { SGR: 1, CSI: 2, OSC: 3, DEC: 4, ESC: 5 };
+const typeOrder: Record<TableRow["type"], number> = {
+  CSI: 2,
+  DCS: 7,
+  DEC: 3,
+  ESC: 6,
+  OSC: 5,
+  PRIVATE: 4,
+  SGR: 1,
+  STRING: 8,
+};
 
 export function sortControlCodes<T extends TableRow | LookupTableRow>(rows: T[]): T[] {
   return rows.toSorted((a, b) => {
     const typeComparison = typeOrder[a.type] - typeOrder[b.type];
     if (typeComparison !== 0) return typeComparison;
     if (typeof a.sort === "number" && typeof b.sort === "number") return a.sort - b.sort;
+    if (typeof a.sort === "string" && typeof b.sort === "string") return a.sort.localeCompare(b.sort);
     if (!a.sort) return 1;
     if (!b.sort) return -1;
     return a.sort.toString().localeCompare(b.sort.toString());
   });
 }
 
-function handleSGR(csiParams: string): Match {
-  const value = csiParams || "0";
-  const sgrParams = value.split(";").filter(Boolean);
-  if (sgrParams.length === 0) {
-    sgrParams.push("0");
-  }
-
+function handleSGR(code: CONTROL_CODE): Match {
   const descriptions: string[] = [];
-  const paramsIterator = sgrParams[Symbol.iterator]();
+  const paramsIterator = code.params[Symbol.iterator]();
   let current = paramsIterator.next();
 
   while (!current.done) {
-    const param = current.value;
+    const rawParam = current.value === "-1" ? "0" : current.value;
+    const param = String(Number(rawParam));
     const item = sgrMap.get(param);
 
     if (item) {
@@ -79,69 +71,96 @@ function handleSGR(csiParams: string): Match {
     }
     current = paramsIterator.next();
   }
-  const sort = sgrParams.length > 1 ? Number(sgrParams[0]) + Number(sgrParams[1]) / 10 : Number(sgrParams[0]);
+  const sort = code.params.length > 1 ? Number(code.params[0]) + Number(code.params[1]) / 10 : Number(code.params[0]);
   return { sort, mnemonic: "", description: descriptions.join(", ") };
 }
 
-function handleDEC(csiParams: string, csiLastChar: string): Match {
-  const value = csiParams.substring(1);
-  const item = decMap.get(value);
-  const action = csiLastChar === "h" ? "enable" : "disable";
-  const description = item ? `${action} ${item.description}` : `${action} private mode ${value}`;
-  return { sort: Number(value), mnemonic: item?.mnemonic ?? "", description };
+function handleDEC(code: CONTROL_CODE): Match {
+  const param = code.params?.[0] || "";
+  const command = code.command;
+  const item = decMap.get(param);
+
+  let description: string;
+  if (!item) {
+    description = `unknown DEC mode ${param}`;
+  } else if (command === "h") {
+    description = `enable ${item.description}`;
+  } else if (command === "l") {
+    description = `disable ${item.description}`;
+  } else {
+    description = item.description;
+  }
+
+  return { sort: Number(param), mnemonic: item?.mnemonic ?? "", description };
 }
 
-function handleCSI(csiParams: string, csiLastChar: string): Match {
-  const item = csiMap.get(csiLastChar);
-  let description = `unknown CSI sequence (${csiParams}${csiLastChar})`;
+function handleCSI(code: CONTROL_CODE): Match {
+  const item = csiMap.get(code.command);
+  let description = `unknown CSI sequence: ${code.raw}`;
   if (item) {
     description = item.description;
-    if (item.params && item.params[csiParams] !== undefined) {
-      description += `: ${item.params[csiParams]}`;
+    const param = code.params[0];
+    if (item.params && item.params[param] !== undefined) {
+      description += `: ${item.params[param]}`;
     }
   }
-  const sort = csiParams ? Number.parseInt(csiParams.split(";")[0], 10) : csiLastChar.toLowerCase();
+  const sort = `${code.command}${(code.params?.[0] ?? "0").padStart(3, "0")}`;
   return { sort, mnemonic: item?.mnemonic || "", description };
 }
 
-function handleOSC(oscCommand: string): Match {
-  const [code, _text, value] = oscCommand.split(";");
-  const item = oscMap.get(code);
+function handleOSC(code: CONTROL_CODE): Match {
+  const item = oscMap.get(code.command);
+  const url = code.params.length > 1 ? code.params[1] : "";
   const description = item
-    ? code === "8" && value
-      ? `hyperlink: ${value}`
-      : code === "8"
+    ? code.command === "8" && url
+      ? `hyperlink: ${url}`
+      : code.command === "8"
         ? "hyperlink (end)"
         : item.description
-    : `unknown OSC command: ${oscCommand}`;
-  return { sort: value, mnemonic: item?.mnemonic ?? "", description };
+    : `unknown OSC command: ${code.raw}`;
+  const sort = Number.parseInt(code.command, 10);
+  return { sort, mnemonic: item?.mnemonic ?? "", description };
 }
 
-function handleESC(escCode: string): Match {
-  const item = escMap.get(escCode);
-  const description = item ? item.description : `unknown escape sequence '${escCode}'`;
-  return { sort: escCode, mnemonic: item?.mnemonic || "", description };
+function handleESC(code: CONTROL_CODE): Match {
+  const key = code.params?.[0] ? `${code.command}${code.params[0]}` : `${code.command}`;
+  const item = escMap.get(key);
+  const description = item ? item.description : `unknown escape sequence '${code.command}'`;
+  return { sort: code.command, mnemonic: item?.mnemonic || "", description };
 }
 
-export function extractControlCodes(text: string): TableRow[] {
-  const matches = text.matchAll(ANSI_LITERAL_REGEX);
-  return Array.from(matches, (match): TableRow => {
-    const { csiParams = "", csiLastChar, oscCommand, escCode } = match.groups ?? {};
-    const code = escapeHtmlEntities(match[0]);
-    if (csiLastChar === "m") {
-      return { type: "SGR", code, ...handleSGR(csiParams) };
-    } else if ((csiLastChar === "h" || csiLastChar === "l") && csiParams.startsWith("?")) {
-      return { type: "DEC", code, ...handleDEC(csiParams, csiLastChar) };
-    } else if (csiLastChar) {
-      return { type: "CSI", code, ...handleCSI(csiParams, csiLastChar) };
-    } else if (oscCommand) {
-      return { type: "OSC", code, ...handleOSC(oscCommand) };
-    } else if (escCode) {
-      return { type: "ESC", code, ...handleESC(escCode) };
-    } else {
-      return { type: "CSI", code, sort: "unknown", mnemonic: "", description: "unknown" };
-    }
-  });
+function handleDCS(code: CONTROL_CODE): Match {
+  const item = dcsMap.get(code.command);
+  const description = item ? item.description : `device control string`;
+  return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
+}
+
+function handleSTR(code: CONTROL_CODE): Match {
+  const item = stringMap.get(code.command);
+  const description = item ? item.description : `string sequence (${code.command})`;
+  return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
+}
+
+function handlePRIVATE(code: CONTROL_CODE): Match {
+  const sign = code.command.charAt(0);
+  const item = privateMap.get(sign);
+  const description = item ? `${item.description} (${code.command})` : `private sequence (${code.command})`;
+  return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
+}
+
+export function extractControlCodes(codes: CODE[]): TableRow[] {
+  const rows: TableRow[] = [];
+  for (const code of codes) {
+    if (code.type === "CSI" && code.command === "m") rows.push({ type: "SGR", code: code.raw, ...handleSGR(code) });
+    else if (code.type === "CSI") rows.push({ type: "CSI", code: code.raw, ...handleCSI(code) });
+    else if (code.type === "DCS") rows.push({ type: "DCS", code: code.raw, ...handleDCS(code) });
+    else if (code.type === "DEC") rows.push({ type: "DEC", code: code.raw, ...handleDEC(code) });
+    else if (code.type === "ESC") rows.push({ type: "ESC", code: code.raw, ...handleESC(code) });
+    else if (code.type === "OSC") rows.push({ type: "OSC", code: code.raw, ...handleOSC(code) });
+    else if (code.type === "PRIVATE") rows.push({ type: "PRIVATE", code: code.raw, ...handlePRIVATE(code) });
+    else if (code.type === "STRING") rows.push({ type: "STRING", code: code.raw, ...handleSTR(code) });
+  }
+  return rows;
 }
 
 function tpl(template?: string, example?: { [key: string]: string }) {
@@ -158,58 +177,92 @@ export function createRowsFromCodes() {
 
   const rows: LookupTableRow[] = [];
 
-  for (const data of ansiCodes) {
-    const type = data.type;
+  for (const item of controlCodes) {
+    const type = item.type;
     switch (type) {
-      case "SGR": {
-        const { description, template } = data;
-        const code = `${PREFIX}[${data.code}${template ?? ""}m`;
-        const raw = `${PREFIX_RAW}[${data.code}${tpl(data.template, data.example)}m`;
-        const sgr = Number.parseInt(data.code.split(";")[0], 10);
-        const isBgColor = (sgr >= 40 && sgr <= 49) || (sgr >= 100 && sgr <= 107) || data.code.startsWith("48;");
+      case CODE_TYPES.SGR: {
+        const { description, template } = item;
+        const code = `${PREFIX}[${item.code}${template ?? ""}m`;
+        const raw = `${PREFIX_RAW}[${item.code}${tpl(item.template, item.example)}m`;
+        const sgr = Number.parseInt(item.code.split(";")[0], 10);
+        const isBgColor = (sgr >= 40 && sgr <= 49) || (sgr >= 100 && sgr <= 107) || item.code.startsWith("48;");
         const text = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-        const example = convert.ansi_to_html(`${raw}${text}\u001b[0m`);
-        rows.push({ type, sort: data.code, code, mnemonic: "", description, example });
+        const example = item.code.includes(":") ? "" : convert.ansi_to_html(`${raw}${text}\u001b[0m`);
+        rows.push({ type, sort: item.code, code, mnemonic: "", description, example });
         break;
       }
 
-      case "CSI": {
-        const { params, mnemonic, description, template } = data;
+      case CODE_TYPES.CSI: {
+        const { params, mnemonic, description, template } = item;
         if (params) {
           for (const [param, desc] of Object.entries(params)) {
-            const code = `${PREFIX}[${param}${data.code}`;
-            rows.push({ type, sort: data.code, code, mnemonic, description: `${description}: ${desc}`, example: "" });
+            const code = `${PREFIX}[${param}${item.code}`;
+            rows.push({ type, sort: item.code, code, mnemonic, description: `${description}: ${desc}`, example: "" });
           }
         } else {
-          const code = `${PREFIX}[${template ?? ""}${data.code}`;
-          rows.push({ type, sort: data.code, code, mnemonic, description, example: "" });
+          const code = `${PREFIX}[${template ?? ""}${item.code}`;
+          const example = template && item.example ? `\\u001b[${tpl(template, item.example)}${item.code}` : "";
+          rows.push({ type, sort: item.code, code, mnemonic, description, example });
         }
         break;
       }
 
-      case "OSC": {
-        const { mnemonic, description, template, end } = data;
-        const code = `${PREFIX}]${data.code}${template ?? ""}ST`;
-        const example = `${PREFIX_RAW_ESCAPED}` + `]${data.code}${tpl(template, data.example)}${SUFFIX_RAW}`;
-        rows.push({ type, sort: Number(data.code), code, mnemonic, description, example });
+      case CODE_TYPES.OSC: {
+        const { mnemonic, description, template, end } = item;
+        const code = `${PREFIX}]${item.code}${template ?? ""}ST`;
+        const example =
+          template && item.example
+            ? `${PREFIX_RAW_ESCAPED}` + `]${item.code}${tpl(template, item.example)}${SUFFIX_RAW}`
+            : "";
+        rows.push({ type, sort: Number(item.code), code, mnemonic, description, example });
 
         if (end) {
-          const code = `${PREFIX}]${data.code}${end.template ?? ""}ST`;
-          rows.push({ type, sort: Number(data.code), code, mnemonic, description: end.description, example: "" });
+          const code = `${PREFIX}]${item.code}${end.template ?? ""}ST`;
+          rows.push({ type, sort: Number(item.code), code, mnemonic, description: end.description, example: "" });
         }
         break;
       }
 
-      case "DEC": {
-        const shared = { type, sort: data.code, mnemonic: data.mnemonic ?? "", example: "" };
-        rows.push({ ...shared, code: `${PREFIX}[?${data.code}h`, description: `enable ${data.description}` });
-        rows.push({ ...shared, code: `${PREFIX}[?${data.code}l`, description: `disable ${data.description}` });
+      case CODE_TYPES.DEC: {
+        const shared = { type, sort: item.code, mnemonic: item.mnemonic ?? "", example: "" };
+        rows.push({ ...shared, code: `${PREFIX}[?${item.code}h`, description: `enable ${item.description}` });
+        rows.push({ ...shared, code: `${PREFIX}[?${item.code}l`, description: `disable ${item.description}` });
         break;
       }
 
-      case "ESC": {
-        const { code, mnemonic, description } = data;
+      case CODE_TYPES.ESC: {
+        const { code, mnemonic, description } = item;
         rows.push({ type, sort: code, code: `${PREFIX}${code}`, mnemonic, description, example: "" });
+        break;
+      }
+
+      case CODE_TYPES.DCS: {
+        const { code, mnemonic, description, template } = item;
+        const dcsCode = `${PREFIX}P${template ?? ""}${code}ST`;
+        const example = template && item.example ? `\\u001bP${tpl(template, item.example)}${code}\\u001b\\\\` : "";
+        rows.push({ type, sort: code, code: dcsCode, mnemonic, description, example });
+        break;
+      }
+
+      case CODE_TYPES.STRING: {
+        const { code, mnemonic, description, template } = item;
+        let prefix: string;
+        if (code === "APC") prefix = "_";
+        else if (code === "PM") prefix = "^";
+        else if (code === "SOS") prefix = "X";
+        else prefix = "_"; // fallback
+
+        const stringCode = `${PREFIX}${prefix}${template ?? ""}ST`;
+        const example = template && item.example ? `\\u001b${prefix}${tpl(template, item.example)}\\u001b\\\\` : "";
+        rows.push({ type, sort: code, code: stringCode, mnemonic, description, example });
+        break;
+      }
+
+      case CODE_TYPES.PRIVATE: {
+        const { code, mnemonic, description, template } = item;
+        const privateCode = `${PREFIX}[${code}${template ?? ""}`;
+        const example = template && item.example ? `\\u001b[${code}${tpl(template, item.example)}` : "";
+        rows.push({ type, sort: code, code: privateCode, mnemonic, description, example });
         break;
       }
     }

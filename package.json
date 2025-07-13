@@ -1,5 +1,5 @@
 {
-  "name": "ansi-viewer",
+  "name": "@ansi-tools/web-inspector",
   "private": true,
   "version": "0.0.0",
   "description": "Paste strings containing ANSI escape codes.",
@@ -7,11 +7,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "pnpm type-check && pnpm test",
+    "prebuild": "pnpm -F @ansi-tools/parser build && pnpm type-check && pnpm test",
+    "test": "node --test",
     "build": "vite build",
     "postbuild": "node --import isum/no-css scripts/build.ts",
-    "test": "node --test",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc"
   },
   "keywords": [
     "ansi",
@@ -21,13 +21,14 @@
   "author": "Lars Kappert <lars@webpro.nl>",
   "license": "ISC",
   "dependencies": {
+    "@ansi-tools/parser": "workspace:*",
     "ansi_up": "^6.0.6",
     "isum": "^1.1.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.13",
     "typescript": "^5.8.3",
-    "vite": "^7.0.2"
+    "vite": "^7.0.4"
   },
-  "packageManager": "pnpm@10.12.4"
+  "packageManager": "pnpm@10.13.1"
 }

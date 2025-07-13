@@ -1,48 +1,18 @@
-type AnsiCode =
-  | {
-      type: "SGR";
-      code: string;
-      description: string;
-      template?: string;
-      example?: { [key: string]: string };
-    }
-  | {
-      type: "CSI";
-      code: string;
-      mnemonic: string;
-      description: string;
-      params?: { [key: string]: string };
-      template?: string;
-      example?: { [key: string]: string };
-    }
-  | {
-      type: "ESC";
-      code: string;
-      mnemonic: string;
-      description: string;
-    }
-  | {
-      type: "DEC";
-      code: string;
-      description: string;
-      mnemonic?: string;
-    }
-  | {
-      type: "OSC";
-      code: string;
-      mnemonic: string;
-      description: string;
-      template?: string;
-      example?: { [key: string]: string };
-      end?: {
-        description: string;
-        template: string;
-      };
-    };
+type ControlCodeItem = {
+  type: "CSI" | "DCS" | "DEC" | "OSC" | "ESC" | "SGR" | "STRING" | "PRIVATE";
+  code: string;
+  mnemonic?: string;
+  description: string;
+  template?: string;
+  example?: { [key: string]: string };
+  params?: { [key: string]: string };
+  end?: { description: string; template: string };
+};
 
-export const ansiCodes: AnsiCode[] = [
+export const controlCodes: ControlCodeItem[] = [
   { type: "SGR", code: "0", description: "reset" },
   { type: "SGR", code: "1", description: "bold" },
+  { type: "SGR", code: "1:2", description: "shadow" },
   { type: "SGR", code: "2", description: "dim" },
   { type: "SGR", code: "3", description: "italic" },
   { type: "SGR", code: "4", description: "underline" },
@@ -56,14 +26,26 @@ export const ansiCodes: AnsiCode[] = [
   { type: "SGR", code: "6", description: "rapid blink" },
   { type: "SGR", code: "7", description: "reverse video" },
   { type: "SGR", code: "8", description: "conceal" },
+  { type: "SGR", code: "8:7", description: "overstrike" },
   { type: "SGR", code: "9", description: "strike-through" },
+  { type: "SGR", code: "10", description: "default font" },
+  { type: "SGR", code: "11", description: "alternate font 1" },
+  { type: "SGR", code: "12", description: "alternate font 2" },
+  { type: "SGR", code: "13", description: "alternate font 3" },
+  { type: "SGR", code: "14", description: "alternate font 4" },
+  { type: "SGR", code: "15", description: "alternate font 5" },
+  { type: "SGR", code: "16", description: "alternate font 6" },
+  { type: "SGR", code: "17", description: "alternate font 7" },
+  { type: "SGR", code: "18", description: "alternate font 8" },
+  { type: "SGR", code: "19", description: "alternate font 9" },
+  { type: "SGR", code: "20", description: "alternate font 10" },
   { type: "SGR", code: "21", description: "double underline" },
-  { type: "SGR", code: "22", description: "reset bold" },
-  { type: "SGR", code: "23", description: "reset italic" },
-  { type: "SGR", code: "24", description: "reset underlined" },
-  { type: "SGR", code: "25", description: "reset blinking" },
+  { type: "SGR", code: "22", description: "reset bold/dim" },
+  { type: "SGR", code: "23", description: "reset italic/alternate font" },
+  { type: "SGR", code: "24", description: "reset underline" },
+  { type: "SGR", code: "25", description: "reset blink" },
   { type: "SGR", code: "27", description: "reset reversed video" },
-  { type: "SGR", code: "28", description: "reveal" },
+  { type: "SGR", code: "28", description: "reset conceal/overstrike" },
   { type: "SGR", code: "29", description: "reset strike-through" },
   { type: "SGR", code: "30", description: "black foreground" },
   { type: "SGR", code: "31", description: "red foreground" },
@@ -89,11 +71,12 @@ export const ansiCodes: AnsiCode[] = [
   { type: "SGR", code: "58;2", description: "set underline color (24-bit true color)", template: ";<r>;<g>;<b>", example: { r: "255", g: "105", b: "18" } },
   { type: "SGR", code: "58;5", description: "set underline color (256-color palette)", template: ";<n>", example: { n: "198" } },
   { type: "SGR", code: "49", description: "default bg color" },
-  { type: "SGR", code: "51", description: "framed" },
-  { type: "SGR", code: "52", description: "encircled" },
+  { type: "SGR", code: "51", description: "frame" },
+  { type: "SGR", code: "52", description: "encircle" },
   { type: "SGR", code: "53", description: "overline" },
-  { type: "SGR", code: "54", description: "not framed or encircled" },
-  { type: "SGR", code: "55", description: "not overlined" },
+  { type: "SGR", code: "54", description: "reset frame/encircle" },
+  { type: "SGR", code: "55", description: "reset overline" },
+  { type: "SGR", code: "59", description: "reset underline color" },
   { type: "SGR", code: "73", description: "superscript" },
   { type: "SGR", code: "74", description: "subscript" },
   { type: "SGR", code: "75", description: "reset super/subscript" },
@@ -113,14 +96,57 @@ export const ansiCodes: AnsiCode[] = [
   { type: "SGR", code: "105", description: "bright magenta background" },
   { type: "SGR", code: "106", description: "bright cyan background" },
   { type: "SGR", code: "107", description: "bright white background" },
-  { type: "ESC", code: "(A", mnemonic: "SCS", description: "select UK character set" },
-  { type: "ESC", code: "(B", mnemonic: "SCS", description: "select ASCII character set" },
-  { type: "ESC", code: "(0", mnemonic: "SCS", description: "select special graphics set" },
-  { type: "ESC", code: "(1", mnemonic: "SCS", description: "select alternate ROM standard character set" },
-  { type: "ESC", code: "(2", mnemonic: "SCS", description: "select alternate ROM special graphics set" },
-  { type: "ESC", code: "P", mnemonic: "DCS", description: "device control string" },
+  { type: "ESC", code: "6", mnemonic: "DECBI", description: "back index" },
+  { type: "ESC", code: "7", mnemonic: "DECSC", description: "save cursor position" },
+  { type: "ESC", code: "8", mnemonic: "DECRC", description: "restore cursor position" },
+  { type: "ESC", code: "9", mnemonic: "DECFI", description: "forward index" },
   { type: "ESC", code: "=", mnemonic: "DECPAM", description: "application keypad" },
   { type: "ESC", code: ">", mnemonic: "DECPNM", description: "normal keypad" },
+  { type: "ESC", code: "P", mnemonic: "DCS", description: "device control string" },
+  { type: "ESC", code: "M", mnemonic: "RI", description: "reverse index" },
+  { type: "ESC", code: "Z", mnemonic: "DECID", description: "identify device" },
+  { type: "ESC", code: "c", mnemonic: "RIS", description: "reset to initial state" },
+  { type: "ESC", code: "l", description: "memory lock" },
+  { type: "ESC", code: "n", mnemonic: "LS2", description: "invoke G2 character set" },
+  { type: "ESC", code: "o", mnemonic: "LS3", description: "invoke G3 character set" },
+  { type: "ESC", code: "~", mnemonic: "LS1R", description: "invoke G1 character set as GR" },
+  { type: "ESC", code: "}", mnemonic: "LS2R", description: "invoke G2 character set as GR" },
+  { type: "ESC", code: "|", mnemonic: "LS3R", description: "invoke G3 character set as GR" },
+  { type: "ESC", code: "<", description: "VT52 mode" },
+  { type: "ESC", code: "_", description: "APC string" },
+  { type: "ESC", code: "[", description: "CSI - Control Sequence Introducer" },
+  { type: "ESC", code: "\\", mnemonic: "ST", description: "string terminator" },
+  { type: "ESC", code: "]", description: "OSC - Operating System Command" },
+  { type: "ESC", code: "^", description: "PM - Privacy Message" },
+  { type: "ESC", code: "X", description: "SOS - Start of String" },
+  { type: "ESC", code: " F", mnemonic: "S7C1T", description: "send 7-bit C1 controls" },
+  { type: "ESC", code: " G", mnemonic: "S8C1T", description: "send 8-bit C1 controls" },
+  { type: "ESC", code: " L", description: "set ANSI conformance level 1" },
+  { type: "ESC", code: " M", description: "set ANSI conformance level 2" },
+  { type: "ESC", code: " N", description: "set ANSI conformance level 3" },
+  { type: "ESC", code: " O", description: "set ANSI conformance level 4" },
+  { type: "ESC", code: "(A", mnemonic: "SCS", description: "G0: select UK character set" },
+  { type: "ESC", code: "(B", mnemonic: "SCS", description: "G0: select ASCII character set" },
+  { type: "ESC", code: "(0", mnemonic: "SCS", description: "G0: select special graphics set" },
+  { type: "ESC", code: "(1", mnemonic: "SCS", description: "G0: select alternate ROM standard character set" },
+  { type: "ESC", code: "(2", mnemonic: "SCS", description: "G0: select alternate ROM special graphics set" },
+  { type: "ESC", code: ")A", mnemonic: "SCS", description: "G1: select UK character set" },
+  { type: "ESC", code: ")B", mnemonic: "SCS", description: "G1: select ASCII character set" },
+  { type: "ESC", code: ")0", mnemonic: "SCS", description: "G1: select special graphics set" },
+  { type: "ESC", code: ")1", mnemonic: "SCS", description: "G1: select alternate ROM standard character set" },
+  { type: "ESC", code: ")2", mnemonic: "SCS", description: "G1: select alternate ROM special graphics set" },
+  { type: "ESC", code: "*A", mnemonic: "SCS", description: "G2: select UK character set" },
+  { type: "ESC", code: "*B", mnemonic: "SCS", description: "G2: select ASCII character set" },
+  { type: "ESC", code: "*0", mnemonic: "SCS", description: "G2: select special graphics set" },
+  { type: "ESC", code: "*1", mnemonic: "SCS", description: "G2: select alternate ROM standard character set" },
+  { type: "ESC", code: "*2", mnemonic: "SCS", description: "G2: select alternate ROM special graphics set" },
+  { type: "ESC", code: "+A", mnemonic: "SCS", description: "G3: select UK character set" },
+  { type: "ESC", code: "+B", mnemonic: "SCS", description: "G3: select ASCII character set" },
+  { type: "ESC", code: "+0", mnemonic: "SCS", description: "G3: select special graphics set" },
+  { type: "ESC", code: "+1", mnemonic: "SCS", description: "G3: select alternate ROM standard character set" },
+  { type: "ESC", code: "+2", mnemonic: "SCS", description: "G3: select alternate ROM special graphics set" },
+  { type: "ESC", code: "%@", description: "select default character set" },
+  { type: "ESC", code: "%G", description: "select UTF-8 character set" },
   { type: "ESC", code: "#3", mnemonic: "DECDHL", description: "double-height line, top half" },
   { type: "ESC", code: "#4", mnemonic: "DECDHL", description: "double-height line, bottom half" },
   { type: "ESC", code: "#5", mnemonic: "DECSWL", description: "single-width, single-height characters" },
@@ -151,11 +177,12 @@ export const ansiCodes: AnsiCode[] = [
   { type: "CSI", code: "P", mnemonic: "DCH", description: "delete characters", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "S", mnemonic: "SU", description: "scroll up (pan down)", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "T", mnemonic: "SD", description: "scroll down (pan up)", template: "<n>", example: { n: "1" } },
+  { type: "CSI", code: "t", description: "window manipulation" },
   { type: "CSI", code: "X", mnemonic: "ECH", description: "erase characters", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "Z", mnemonic: "CBT", description: "cursor backward tabulation", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "`", mnemonic: "HPA", description: "horizontal position absolute", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "a", mnemonic: "HPR", description: "horizontal position relative", template: "<n>", example: { n: "1" } },
-  { type: "CSI", code: "c", mnemonic: "DA", description: "device attributes", params: { "0": "request primary device attributes" } },
+  { type: "CSI", code: "c", mnemonic: "DA", description: "device attributes", params: { "0": "request primary device attributes", ">0": "request secondary device attributes" } },
   { type: "CSI", code: "d", mnemonic: "VPA", description: "vertical position absolute", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "e", mnemonic: "VPR", description: "vertical position relative", template: "<n>", example: { n: "1" } },
   { type: "CSI", code: "f", mnemonic: "HVP", description: "horizontal vertical position", template: "<n>;<m>", example: { n: "1", m: "1" } },
@@ -166,6 +193,26 @@ export const ansiCodes: AnsiCode[] = [
   { type: "CSI", code: "r", mnemonic: "DECSTBM", description: "set scrolling region", template: "<t>;<b>", example: { t: "1", b: "24" } },
   { type: "CSI", code: "s", mnemonic: "SCP", description: "save cursor position" },
   { type: "CSI", code: "u", mnemonic: "RCP", description: "restore cursor position" },
+  { type: "CSI", code: "b", mnemonic: "REP", description: "repeat character", template: "<n>", example: { n: "1" } },
+  { type: "CSI", code: "g", mnemonic: "TBC", description: "tab clear", params: { "0": "clear current column", "3": "clear all tabs" } },
+  { type: "CSI", code: "i", mnemonic: "MC", description: "media copy (printer control)", params: { "0": "print screen", "4": "turn off printer controller mode", "5": "turn on printer controller mode" } },
+  { type: "CSI", code: "j", mnemonic: "HPB", description: "horizontal position backward", template: "<n>", example: { n: "1" } },
+  { type: "CSI", code: "k", mnemonic: "VPB", description: "vertical position backward", template: "<n>", example: { n: "1" } },
+  { type: "CSI", code: "q", mnemonic: "DECLL", description: "load LEDs", params: { "0": "turn off all LEDs", "1": "turn on LED 1", "2": "turn on LED 2", "3": "turn on LED 3", "4": "turn on LED 4" } },
+  { type: "CSI", code: "x", mnemonic: "DECREQTPARM", description: "request terminal parameters" },
+  { type: "CSI", code: "y", mnemonic: "DECTSDT", description: "test diagnostic data" },
+  { type: "CSI", code: " q", mnemonic: "DECSCUSR", description: "set cursor style", template: "<n>", example: { n: "2" } },
+  { type: "CSI", code: " t", mnemonic: "DECSWBV", description: "set warning bell volume" },
+  { type: "CSI", code: " u", mnemonic: "DECSMBV", description: "set margin bell volume" },
+  { type: "CSI", code: "!p", mnemonic: "DECSTR", description: "soft terminal reset" },
+  { type: "CSI", code: '"p', mnemonic: "DECSCL", description: "select conformance level", template: "<level>;<mode>", example: { level: "64", mode: "1" } },
+  { type: "CSI", code: '"q', mnemonic: "DECSCA", description: "select character protection attribute", template: "<n>", example: { n: "1" } },
+  { type: "CSI", code: "$p", mnemonic: "DECRQM", description: "request ANSI mode" },
+  { type: "CSI", code: "$r", mnemonic: "DECCARA", description: "change attributes in rectangular area" },
+  { type: "CSI", code: "$t", mnemonic: "DECRARA", description: "reverse attributes in rectangular area" },
+  { type: "CSI", code: "$v", mnemonic: "DECCRA", description: "copy rectangular area" },
+  { type: "CSI", code: "$x", mnemonic: "DECFRA", description: "fill rectangular area" },
+  { type: "CSI", code: "$z", mnemonic: "DECERA", description: "erase rectangular area" },
   { type: "DEC", code: "1", mnemonic: "DECCKM", description: "cursor key to application" },
   { type: "DEC", code: "2", mnemonic: "DECANM", description: "ANSI mode" },
   { type: "DEC", code: "3", mnemonic: "DECCOLM", description: "number of columns to 132" },
@@ -174,10 +221,26 @@ export const ansiCodes: AnsiCode[] = [
   { type: "DEC", code: "6", mnemonic: "DECOM", description: "origin mode to relative" },
   { type: "DEC", code: "7", mnemonic: "DECAWM", description: "auto-wrap mode" },
   { type: "DEC", code: "8", mnemonic: "DECARM", description: "auto-repeat keys" },
-  { type: "DEC", code: "9", description: "X10 mouse reporting" },
+  { type: "DEC", code: "9", mnemonic: "DECINLM", description: "interlace mode" },
+  { type: "DEC", code: "10", description: "show toolbar" },
   { type: "DEC", code: "12", description: "blinking cursor" },
+  { type: "DEC", code: "18", mnemonic: "DECPFF", description: "print feed form" },
+  { type: "DEC", code: "19", mnemonic: "DECPEX", description: "print extent" },
   { type: "DEC", code: "25", mnemonic: "DECTCEM", description: "show cursor" },
+  { type: "DEC", code: "30", description: "show scrollbar" },
+  { type: "DEC", code: "35", description: "enable font-shifting" },
+  { type: "DEC", code: "38", mnemonic: "DECTEK", description: "enter Tektronix mode" },
+  { type: "DEC", code: "40", description: "allow 80->132 column mode" },
+  { type: "DEC", code: "41", description: "more(1) fix" },
+  { type: "DEC", code: "42", mnemonic: "DECNRCM", description: "national/multinational character mode" },
+  { type: "DEC", code: "44", description: "margin bell" },
+  { type: "DEC", code: "45", description: "reverse-wraparound mode" },
+  { type: "DEC", code: "46", description: "start logging" },
   { type: "DEC", code: "47", description: "alternate screen buffer" },
+  { type: "DEC", code: "66", mnemonic: "DECNKM", description: "application keypad mode" },
+  { type: "DEC", code: "67", description: "backarrow sends backspace" },
+  { type: "DEC", code: "69", mnemonic: "DECVSSM", description: "vertical split screen mode" },
+  { type: "DEC", code: "95", description: "do not clear screen when DECCOLM is set" },
   { type: "DEC", code: "1000", description: "VT200 mouse reporting" },
   { type: "DEC", code: "1001", description: "X11 mouse reporting" },
   { type: "DEC", code: "1002", description: "button-event mouse reporting" },
@@ -185,7 +248,9 @@ export const ansiCodes: AnsiCode[] = [
   { type: "DEC", code: "1004", description: "focus in/out events" },
   { type: "DEC", code: "1005", description: "UTF-8 mouse mode" },
   { type: "DEC", code: "1006", description: "SGR mouse mode" },
-  { type: "DEC", code: "1007", description: "urxvt extended mouse mode" },
+  { type: "DEC", code: "1007", description: "alternate scroll mode" },
+  { type: "DEC", code: "1010", description: "scroll to bottom on tty output" },
+  { type: "DEC", code: "1011", description: "scroll to bottom on keypress" },
   { type: "DEC", code: "1015", description: "urxvt mouse mode" },
   { type: "DEC", code: "1016", description: "SGR mouse pixel mode" },
   { type: "DEC", code: "1034", description: "8-bit meta key" },
@@ -193,8 +258,11 @@ export const ansiCodes: AnsiCode[] = [
   { type: "DEC", code: "1036", description: "alternate key modifiers" },
   { type: "DEC", code: "1037", description: "delete key to send DEL" },
   { type: "DEC", code: "1039", description: "alternate backspace" },
+  { type: "DEC", code: "1040", description: "keep selection even if not highlighted" },
+  { type: "DEC", code: "1041", description: "use CLIPBOARD selection" },
   { type: "DEC", code: "1042", description: "bell to urgent" },
-  { type: "DEC", code: "1043", description: "meta key in alternate mode" },
+  { type: "DEC", code: "1043", description: "enable raising window on BEL" },
+  { type: "DEC", code: "1044", description: "reuse most recent data to CLIPBOARD" },
   { type: "DEC", code: "1047", description: "alternate screen mode" },
   { type: "DEC", code: "1048", description: "extended cursor mode" },
   { type: "DEC", code: "1049", description: "alternate screen buffer (with cursor save/restore)" },
@@ -205,43 +273,112 @@ export const ansiCodes: AnsiCode[] = [
   { type: "DEC", code: "1060", description: "legacy xterm keys" },
   { type: "DEC", code: "1061", description: "VT220 keyboard" },
   { type: "DEC", code: "2004", description: "bracketed paste mode" },
+  { type: "DEC", code: "1062", description: "VT220 function keys" },
+  { type: "DEC", code: "1070", description: "six-key function keys" },
+  { type: "DEC", code: "2026", description: "synchronized output mode" },
+  { type: "DEC", code: "1014", description: "use CLIPBOARD for special paste" },
+  { type: "DEC", code: "1016", description: "SGR mouse pixel mode" },
+  { type: "DEC", code: "1021", description: "bold key sends DEL" },
+  { type: "DEC", code: "1022", description: "Sun function key mode" },
+  { type: "DEC", code: "1023", description: "meta sends ESC" },
+  { type: "DEC", code: "1038", description: "Alt key mode" },
+  { type: "DEC", code: "1039", description: "Alt sends ESC prefix" },
+  { type: "DEC", code: "1045", description: "extended reverse-wraparound mode" },
+  { type: "DEC", code: "1046", description: "application cursor keys mode" },
+  { type: "DEC", code: "1055", description: "VT200 highlighting" },
+  { type: "DEC", code: "1056", description: "VT220 highlighting" },
+  { type: "DEC", code: "1057", description: "VT320 highlighting" },
   { type: "OSC", code: "0", mnemonic: "OSC 0", description: "set window title and icon name", template: ";<text>", example: { text: "title" } },
   { type: "OSC", code: "1", mnemonic: "OSC 1", description: "set icon name", template: ";<text>", example: { text: "icon" } },
   { type: "OSC", code: "2", mnemonic: "OSC 2", description: "set window title", template: ";<text>", example: { text: "title" } },
+  { type: "OSC", code: "3", mnemonic: "OSC 3", description: "set X property on top-level window" },
   { type: "OSC", code: "4", mnemonic: "OSC 4", description: "set/read palette color", template: ";<n>;<color-spec>", example: { n: "11", "color-spec": "rgb:00/ff/00" } },
+  { type: "OSC", code: "5", mnemonic: "OSC 5", description: "change special color spec" },
+  { type: "OSC", code: "6", mnemonic: "OSC 6", description: "enable special color" },
   { type: "OSC", code: "7", mnemonic: "OSC 7", description: "set current working directory", template: ";<url>", example: { url: "file://hostname/path" } },
   { type: "OSC", code: "8", mnemonic: "OSC 8", description: "hyperlink", template: ";<params>;<url>", example: { params: "id=1", url: "https://example.com" }, end: { description: "hyperlink (end)", template: "" } },
   { type: "OSC", code: "9", mnemonic: "OSC 9", description: "send notification", template: ";<message>", example: { message: "hello there" } },
   { type: "OSC", code: "10", mnemonic: "OSC 10", description: "set/read text foreground color", template: ";<color-spec>", example: { "color-spec": "rgb:ff/00/00" } },
   { type: "OSC", code: "11", mnemonic: "OSC 11", description: "set/read text background color", template: ";<color-spec>", example: { "color-spec": "rgb:00/00/ff" } },
   { type: "OSC", code: "12", mnemonic: "OSC 12", description: "set/read text cursor color", template: ";<color-spec>", example: { "color-spec": "rgb:00/ff/00" } },
+  { type: "OSC", code: "13", mnemonic: "OSC 13", description: "change mouse foreground color" },
+  { type: "OSC", code: "14", mnemonic: "OSC 14", description: "change mouse background color" },
+  { type: "OSC", code: "15", mnemonic: "OSC 15", description: "change Tektronix foreground color" },
+  { type: "OSC", code: "16", mnemonic: "OSC 16", description: "change Tektronix background color" },
+  { type: "OSC", code: "17", mnemonic: "OSC 17", description: "change highlight color" },
+  { type: "OSC", code: "18", mnemonic: "OSC 18", description: "change Tektronix cursor color" },
+  { type: "OSC", code: "19", mnemonic: "OSC 19", description: "change highlight foreground color" },
+  { type: "OSC", code: "46", mnemonic: "OSC 46", description: "set log file" },
+  { type: "OSC", code: "50", mnemonic: "OSC 50", description: "set font" },
+  { type: "OSC", code: "51", mnemonic: "OSC 51", description: "reserved for emacs shell" },
   { type: "OSC", code: "52", mnemonic: "OSC 52", description: "manipulate clipboard", template: ";<c>;<data>", example: { c: "c", data: "YmFzZTY0" } },
   { type: "OSC", code: "104", mnemonic: "OSC 104", description: "reset palette color", template: ";<n>", example: { n: "11" } },
+  { type: "OSC", code: "105", mnemonic: "OSC 105", description: "reset special color spec" },
+  { type: "OSC", code: "106", mnemonic: "OSC 106", description: "disable special color" },
+  { type: "OSC", code: "110", mnemonic: "OSC 110", description: "reset dynamic color" },
+  { type: "OSC", code: "111", mnemonic: "OSC 111", description: "reset dynamic color" },
+  { type: "OSC", code: "112", mnemonic: "OSC 112", description: "reset dynamic color" },
+  { type: "OSC", code: "113", mnemonic: "OSC 113", description: "reset dynamic color" },
+  { type: "OSC", code: "114", mnemonic: "OSC 114", description: "reset dynamic color" },
+  { type: "OSC", code: "115", mnemonic: "OSC 115", description: "reset dynamic color" },
+  { type: "OSC", code: "116", mnemonic: "OSC 116", description: "reset dynamic color" },
+  { type: "OSC", code: "117", mnemonic: "OSC 117", description: "reset dynamic color" },
+  { type: "OSC", code: "118", mnemonic: "OSC 118", description: "reset dynamic color" },
+  { type: "OSC", code: "119", mnemonic: "OSC 119", description: "reset dynamic color" },
+  { type: "OSC", code: "133", mnemonic: "OSC 133", description: "FinalTerm shell integration" },
   { type: "OSC", code: "777", mnemonic: "OSC 777", description: "send notification (rxvt-unicode)", template: ";notify;<title>;<body>", example: { title: "subject", body: "hello" } },
+  { type: "OSC", code: "1000", mnemonic: "OSC 1000", description: "xterm modification", template: ";<name>=<value>", example: { name: "resource", value: "setting" } },
+  { type: "OSC", code: "1337", mnemonic: "OSC 1337", description: "iTerm2 shell integration" },
+  { type: "DCS", code: "{", mnemonic: "DECDLD", description: "downloadable character set definition", template: ";<charset-data>", example: { "charset-data": "0;1;2;3;4;5;6;7" } },
+  { type: "DCS", code: "|", mnemonic: "DECUDK", description: "user-defined keys", template: ";<key-definitions>", example: { "key-definitions": "5/4,7/~~" } },
+  { type: "DCS", code: "$q", mnemonic: "DECRQSS", description: "request selection or setting", template: ";<setting>", example: { setting: "m" } },
+  { type: "DCS", code: "+p", description: "set termcap/terminfo data", template: ";<termcap-data>", example: { "termcap-data": "xterm:co#80:li#24" } },
+  { type: "DCS", code: "+q", description: "request termcap/terminfo string", template: ";<capability>", example: { capability: "Co" } },
+  { type: "DCS", code: "$p", description: "DECRQSS request", template: ";<parameter>", example: { parameter: '"q' } },
+  { type: "DCS", code: "$t", description: "restore presentation state", template: ";<state-data>", example: { "state-data": "presentation" } },
+  { type: "DCS", code: "$u", description: "restore format state", template: ";<format-data>", example: { "format-data": "format" } },
+  { type: "STRING", code: "APC", mnemonic: "APC", description: "application program command", template: ";<command>", example: { command: "custom application data" } },
+  { type: "STRING", code: "PM", mnemonic: "PM", description: "privacy message", template: ";<message>", example: { message: "private data content" } },
+  { type: "STRING", code: "SOS", mnemonic: "SOS", description: "start of string", template: ";<data>", example: { data: "string sequence data" } },
+  { type: "PRIVATE", code: "<", description: "private sequence", template: ";<params>;<final>", example: { params: "1", final: "h" } },
+  { type: "PRIVATE", code: "=", description: "private sequence", template: ";<params>;<final>", example: { params: "1", final: "c" } },
+  { type: "PRIVATE", code: ">", description: "private sequence", template: ";<params>;<final>", example: { params: "0", final: "c" } },
 ];
 
-export const sgrMap = new Map<string, Extract<AnsiCode, { type: "SGR" }>>();
-export const csiMap = new Map<string, Extract<AnsiCode, { type: "CSI" }>>();
-export const oscMap = new Map<string, Extract<AnsiCode, { type: "OSC" }>>();
-export const decMap = new Map<string, Extract<AnsiCode, { type: "DEC" }>>();
-export const escMap = new Map<string, Extract<AnsiCode, { type: "ESC" }>>();
+export const csiMap = new Map<string, ControlCodeItem>();
+export const dcsMap = new Map<string, ControlCodeItem>();
+export const decMap = new Map<string, ControlCodeItem>();
+export const escMap = new Map<string, ControlCodeItem>();
+export const oscMap = new Map<string, ControlCodeItem>();
+export const privateMap = new Map<string, ControlCodeItem>();
+export const sgrMap = new Map<string, ControlCodeItem>();
+export const stringMap = new Map<string, ControlCodeItem>();
 
-for (const code of ansiCodes) {
+for (const code of controlCodes) {
   switch (code.type) {
-    case "SGR":
-      sgrMap.set(code.code, code);
-      break;
     case "CSI":
       csiMap.set(code.code, code);
       break;
-    case "OSC":
-      oscMap.set(code.code, code);
+    case "DCS":
+      dcsMap.set(code.code, code);
       break;
     case "DEC":
       decMap.set(code.code, code);
       break;
     case "ESC":
       escMap.set(code.code, code);
+      break;
+    case "OSC":
+      oscMap.set(code.code, code);
+      break;
+    case "PRIVATE":
+      privateMap.set(code.code, code);
+      break;
+    case "SGR":
+      sgrMap.set(code.code, code);
+      break;
+    case "STRING":
+      stringMap.set(code.code, code);
       break;
   }
 }
