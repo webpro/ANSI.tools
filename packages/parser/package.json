@@ -36,6 +36,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "homepage": "https://github.com/webpro/ANSI.tools/tree/main/packages/parser",
+  "bugs": "https://github.com/webpro/ANSI.tools/issues",
+  "repository": {
+    "type": "git",
+    "url": "github:webpro/ANSI.tools",
+    "directory": "packages/parser"
+  },
   "devDependencies": {
     "@types/node": "^24.0.13",
     "tsdown": "^0.12.9",

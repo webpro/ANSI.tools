@@ -20,6 +20,8 @@ Parser for ANSI escape sequences.
 - ✅ Zero dependencies
 - ✅ Separate optimized modules for raw and escaped input
 
+Used by [ansi.tools](https://ansi.tools).
+
 ## Installation
 
 ```bash
@@ -145,10 +147,11 @@ for (const code of codes) {
 ## Type Definitions
 
 ```ts
-function parse(input: string): CODE[];
 function tokenize(input: string): TOKEN[];
-function* parser(tokens: Generator<TOKEN>): Generator<CODE>;
+function parse(input: string): CODE[];
+
 function* tokenizer(input: string): Generator<TOKEN>;
+function* parser(tokens: Generator<TOKEN>): Generator<CODE>;
 ```
 
 ### CODE
