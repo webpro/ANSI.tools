@@ -81,8 +81,10 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       if (i < input.length) {
         const candidates = INTRODUCER_LOOKUP.get(input[i + 1]);
         if (candidates) {
+          let matched = false;
           for (const [sequence, len] of candidates) {
             if (i + len <= input.length && input.substring(i, i + len) === sequence) {
+              matched = true;
               if (sequence === CSI_ESCAPED) {
                 yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence, code: CSI });
                 i += len;
@@ -123,6 +125,11 @@ export function* tokenizer(input: string): Generator<TOKEN> {
               break;
             }
           }
+          if (!matched) {
+            i++;
+          }
+        } else {
+          i++;
         }
       }
     } else if (state === "SEQUENCE") {
