@@ -6,6 +6,7 @@ export default defineConfig({
       input: {
         main: "./index.html",
         lookup: "./lookup.html",
+        about: "./about.html",
       },
     },
   },
