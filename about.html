@@ -2,20 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>ANSI Escape Codes</title>
+    <title>ANSI Escape Codes | About</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="View and inspect ANSI escape sequences in the browser. See a visual rendering and a detailed breakdown of all control codes."
-    />
-    <link rel="prefetch" href="/lookup" />
+    <meta name="description" content="About ANSI.tools" />
+    <link rel="prefetch" href="/" />
     <meta property="og:title" content="ANSI Escape Codes" />
-    <meta
-      property="og:description"
-      content="View and inspect ANSI escape sequences in the browser. See a visual rendering and a detailed breakdown of all control codes."
-    />
+    <meta property="og:description" content="About ANSI.tools" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ansi.tools/" />
     <meta property="og:image" content="https://ansi.tools/ansi.tools.png" />
@@ -23,10 +17,7 @@
     <meta property="twitter:domain" content="ansi.tools" />
     <meta property="twitter:url" content="https://ansi.tools/" />
     <meta name="twitter:title" content="ANSI Escape Codes" />
-    <meta
-      name="twitter:description"
-      content="View and inspect ANSI escape sequences in the browser. See a visual rendering and a detailed breakdown of all control codes."
-    />
+    <meta name="twitter:description" content="About ANSI.tools" />
     <meta name="twitter:image" content="https://ansi.tools/ansi.tools.png" />
   </head>
   <body>
@@ -46,25 +37,31 @@
       </nav>
     </header>
 
-    <main class="grid">
-      <div id="input-container"></div>
+    <main>
+      <h2>About</h2>
+      <p>Working with ANSI control codes and escape sequences can be a challenge.</p>
+      <p>This website helps to inspect the input, visualize colors and styling, and list control codes.</p>
+      <p>Type or paste text in the black text area, or try out the examples.</p>
+      <p>Use the <a href="/lookup">lookup table</a> to filter and find specific codes.</p>
 
-      <div id="output-container"></div>
+      <p>
+        If you have any ideas, feedback or want to report a bug, feel free to
+        <a href="https://github.com/webpro/ANSI.tools">reach out on GitHub</a>!
+      </p>
 
-      <div id="table-container"></div>
-
-      <div id="tools-container"></div>
+      <h2>Parser</h2>
+      <p>
+        This website uses the <a href="https://www.npmjs.com/package/@ansi-tools/parser">@ansi-tools/parser</a> npm
+        package to tokenize and parse the input.
+      </p>
+      <p>
+        The source code is
+        <a href="https://github.com/webpro/ANSI.tools/tree/main/packages/parser">open and available on GitHub</a>.
+      </p>
     </main>
 
     <footer role="contentinfo">
       <p>No worries, your data won't leave your browser.</p>
-
-      <p>
-        Special thanks to
-        <a href="https://github.com/drudru/ansi_up">ansi_up</a>
-        and
-        <a href="https://github.com/fabiospampinato/fast-string-truncated-width">fast-string-truncated-width</a>.
-      </p>
 
       <p>
         <span>
@@ -79,8 +76,7 @@
         ></span>
       </p>
     </footer>
-
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/about.ts"></script>
     <script async defer src="https://smplnltcs.ansi.tools/latest.js"></script>
     <noscript>
       <img src="https://smplnltcs.ansi.tools/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" />

@@ -58,6 +58,17 @@ nav ul {
   gap: 1rem;
 }
 
+main a {
+  padding: 0.2rem;
+  color: inherit;
+}
+
+main a:hover {
+  color: #0f0;
+  background-color: #000;
+  text-decoration: none;
+}
+
 .grid {
   display: flex;
   flex-direction: column;
@@ -81,10 +92,11 @@ footer {
   p:has(span) {
     display: flex;
     align-items: center;
+    gap: 2rem;
     span {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: .75rem;
     }
   }
   & a {
