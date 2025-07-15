@@ -41,3 +41,23 @@ test("parseDEC multiple parameters with intermediates", () => {
     params: ["1", "2"],
   });
 });
+
+test("parseDEC with colon in parameters", () => {
+  assert.deepEqual(parseDEC(0, "\\e[?1:2h", "?1:2", "h"), {
+    type: "DEC",
+    pos: 0,
+    raw: "\\e[?1:2h",
+    command: "h",
+    params: ["1:2"],
+  });
+});
+
+test("parseDEC with intermediates and colons", () => {
+  assert.deepEqual(parseDEC(0, "\\e[?1:2$p", "?1:2$", "p"), {
+    type: "DEC",
+    pos: 0,
+    raw: "\\e[?1:2$p",
+    command: "$p",
+    params: ["1:2"],
+  });
+});

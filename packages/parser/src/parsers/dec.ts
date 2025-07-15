@@ -2,17 +2,14 @@ import { CODE_TYPES } from "../constants.ts";
 import type { CONTROL_CODE } from "../types.ts";
 
 export function parseDEC(pos: number, raw: string, data: string, final: string): CONTROL_CODE {
-  const withoutPrefix = data.slice(1);
+  const rest = data.slice(1);
   let i = 0;
   let paramsRaw = "";
-  while (
-    i < withoutPrefix.length &&
-    ((withoutPrefix.charCodeAt(i) >= 48 && withoutPrefix.charCodeAt(i) <= 57) || withoutPrefix[i] === ";")
-  ) {
-    paramsRaw += withoutPrefix[i];
+  while (i < rest.length && rest.charCodeAt(i) >= 0x30 && rest.charCodeAt(i) <= 0x3f) {
+    paramsRaw += rest[i];
     i++;
   }
-  const command = withoutPrefix.slice(i) + final;
+  const command = rest.slice(i) + final;
   const params = [];
   if (paramsRaw) {
     let current = "";

@@ -7,22 +7,17 @@ export function parseCSI(pos: number, raw: string, data: string, final: string):
   if (data) {
     let i = 0;
     let paramSection = "";
+    // Parameters are bytes 0x30-0x3f (0-9:;<=>?)
     while (i < data.length && data.charCodeAt(i) >= 0x30 && data.charCodeAt(i) <= 0x3f) {
       paramSection += data[i];
       i++;
     }
     intermediates = data.slice(i);
     if (paramSection) {
-      let current = "";
-      for (let j = 0; j < paramSection.length; j++) {
-        if (paramSection[j] === ";") {
-          params.push(current || "-1");
-          current = "";
-        } else {
-          current += paramSection[j];
-        }
+      const parts = paramSection.replace(/:/g, ";").split(";");
+      for (const part of parts) {
+        params.push(part || "-1");
       }
-      params.push(current || "-1");
     }
   }
   const command = intermediates + final;
@@ -32,7 +27,7 @@ export function parseCSI(pos: number, raw: string, data: string, final: string):
 export function parsePrivateCSI(pos: number, raw: string, data: string, final: string): CONTROL_CODE {
   const privateIndicator = data[0];
   const withoutIndicator = data.slice(1);
-  const match = withoutIndicator.match(/^([\d;]*)(.*)/);
+  const match = withoutIndicator.match(/^([\d;:]*)(.*)/);
   const paramsRaw = match?.[1] ?? "";
   const intermediates = match?.[2] ?? "";
   const command = `${privateIndicator}${intermediates}${final}`;
