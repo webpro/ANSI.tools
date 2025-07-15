@@ -20,6 +20,9 @@ import { parseDCS } from "./parsers/dcs.ts";
 import { parseDEC } from "./parsers/dec.ts";
 import { parseESC } from "./parsers/esc.ts";
 import { parseOSC } from "./parsers/osc.ts";
+import { parseAPC } from "./parsers/apc.ts";
+import { parsePM } from "./parsers/pm.ts";
+import { parseSOS } from "./parsers/sos.ts";
 import { tokenizer } from "./tokenize.ts";
 import type { CODE, TOKEN } from "./types.ts";
 
@@ -43,62 +46,60 @@ export function* parser(tokens: Generator<TOKEN>): Generator<CODE> {
     }
 
     if (token.type === TOKEN_TYPES.INTRODUCER) {
-      const pos = token.pos;
-      let raw = token.raw;
-      let data = "";
-      let finalToken: TOKEN | undefined;
+      const introducer = token;
+      const data: TOKEN[] = [];
+      let final: TOKEN | undefined;
 
       current = tokens.next();
 
-      while (!current.done && !finalToken) {
+      while (!current.done) {
         const nextToken = current.value;
-
         if (nextToken.type === TOKEN_TYPES.DATA) {
-          data += nextToken.raw;
-          raw += nextToken.raw;
+          data.push(nextToken);
         } else if (nextToken.type === TOKEN_TYPES.FINAL) {
-          finalToken = nextToken;
-          raw += nextToken.raw;
+          final = nextToken;
+          current = tokens.next();
+          break;
         }
         current = tokens.next();
       }
 
-      if (finalToken) {
-        switch (token.code) {
+      if (final) {
+        switch (introducer.code) {
           case CSI:
-            if (data.startsWith(DEC_OPEN)) {
-              yield emit(parseDEC(pos, raw, data, finalToken.raw));
-            } else if (PRIVATE_OPENERS.has(data[0])) {
-              yield emit(parsePrivateCSI(pos, raw, data, finalToken.raw));
+            if (data[0]?.raw.startsWith(DEC_OPEN)) {
+              yield emit(parseDEC(introducer, data, final));
+            } else if (PRIVATE_OPENERS.has(data[0]?.raw)) {
+              yield emit(parsePrivateCSI(introducer, data, final));
             } else {
-              yield emit(parseCSI(pos, raw, data, finalToken.raw));
+              yield emit(parseCSI(introducer, data, final));
             }
             break;
           case OSC:
-            yield emit(parseOSC(pos, raw, data));
+            yield emit(parseOSC(introducer, data, final));
             break;
           case DCS:
           case DCS_OPEN:
-            yield emit(parseDCS(pos, raw, data));
+            yield emit(parseDCS(introducer, data, final));
             break;
           case APC:
           case APC_OPEN:
-            yield emit({ type: CODE_TYPES.STRING, pos, raw, command: "APC", params: data ? [data] : [] });
+            yield emit(parseAPC(introducer, data, final));
             break;
           case PM:
           case PM_OPEN:
-            yield emit({ type: CODE_TYPES.STRING, pos, raw, command: "PM", params: data ? [data] : [] });
+            yield emit(parsePM(introducer, data, final));
             break;
           case SOS:
           case SOS_OPEN:
-            yield emit({ type: CODE_TYPES.STRING, pos, raw, command: "SOS", params: data ? [data] : [] });
+            yield emit(parseSOS(introducer, data, final));
             break;
           case ESC:
-            yield emit(parseESC(token, raw, finalToken.raw, data));
+            yield emit(parseESC(introducer, data, final));
             break;
         }
-      } else if (token.code === ESC) {
-        yield emit(parseESC(token, raw, "", ""));
+      } else if (introducer.code === ESC) {
+        yield emit(parseESC(introducer, data, undefined));
       }
     } else {
       current = tokens.next();

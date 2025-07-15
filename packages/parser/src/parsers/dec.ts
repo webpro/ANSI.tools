@@ -1,15 +1,16 @@
 import { CODE_TYPES } from "../constants.ts";
-import type { CONTROL_CODE } from "../types.ts";
+import type { CODE, TOKEN } from "../types.ts";
 
-export function parseDEC(pos: number, raw: string, data: string, final: string): CONTROL_CODE {
-  const rest = data.slice(1);
+export function parseDEC(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): CODE {
+  const data = dataTokens.map(t => t.raw).join("");
+  const raw = introducer.raw + data + final.raw;
   let i = 0;
   let paramsRaw = "";
-  while (i < rest.length && rest.charCodeAt(i) >= 0x30 && rest.charCodeAt(i) <= 0x3f) {
-    paramsRaw += rest[i];
+  while (i < data.length && data.charCodeAt(i) >= 0x30 && data.charCodeAt(i) <= 0x3f) {
+    paramsRaw += data[i];
     i++;
   }
-  const command = rest.slice(i) + final;
+  const command = data.slice(i) + final.raw;
   const params = [];
   if (paramsRaw) {
     let current = "";
@@ -23,5 +24,5 @@ export function parseDEC(pos: number, raw: string, data: string, final: string):
     }
     params.push(current || "-1");
   }
-  return { type: CODE_TYPES.DEC, pos, raw, command, params };
+  return { type: CODE_TYPES.DEC, pos: introducer.pos, raw, command, params };
 }

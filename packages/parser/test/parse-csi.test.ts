@@ -1,9 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseCSI, parsePrivateCSI } from "../src/parsers/csi.ts";
+import type { TOKEN } from "../src/types.ts";
 
 test("parseCSI simple command", () => {
-  assert.deepEqual(parseCSI(0, "\\e[31m", "31", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "31" }];
+  const final: TOKEN = { type: "FINAL", pos: 5, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[31m",
@@ -13,7 +17,10 @@ test("parseCSI simple command", () => {
 });
 
 test("parseCSI with multiple params", () => {
-  assert.deepEqual(parseCSI(0, "\\e[1;31m", "1;31", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "1;31" }];
+  const final: TOKEN = { type: "FINAL", pos: 7, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[1;31m",
@@ -23,7 +30,10 @@ test("parseCSI with multiple params", () => {
 });
 
 test("parseCSI with missing parameters", () => {
-  assert.deepEqual(parseCSI(0, "\\e[;31m", ";31", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: ";31" }];
+  const final: TOKEN = { type: "FINAL", pos: 6, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[;31m",
@@ -33,7 +43,10 @@ test("parseCSI with missing parameters", () => {
 });
 
 test("parseCSI with trailing semicolon", () => {
-  assert.deepEqual(parseCSI(0, "\\e[31;m", "31;", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "31;" }];
+  const final: TOKEN = { type: "FINAL", pos: 7, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[31;m",
@@ -43,7 +56,10 @@ test("parseCSI with trailing semicolon", () => {
 });
 
 test("parseCSI with colon-delimited SGR", () => {
-  assert.deepEqual(parseCSI(0, "\\e[38:2:10:20:30m", "38:2:10:20:30", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "38:2:10:20:30" }];
+  const final: TOKEN = { type: "FINAL", pos: 18, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[38:2:10:20:30m",
@@ -53,7 +69,10 @@ test("parseCSI with colon-delimited SGR", () => {
 });
 
 test("parseCSI with leading semicolon", () => {
-  assert.deepEqual(parseCSI(0, "\\e[;m", ";", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: ";" }];
+  const final: TOKEN = { type: "FINAL", pos: 4, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[;m",
@@ -63,7 +82,10 @@ test("parseCSI with leading semicolon", () => {
 });
 
 test("parseCSI with subparameters", () => {
-  assert.deepEqual(parseCSI(0, "\\e[38;2;255;128;0m", "38;2;255;128;0", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "38;2;255;128;0" }];
+  const final: TOKEN = { type: "FINAL", pos: 17, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
     type: "CSI",
     pos: 0,
     raw: "\\e[38;2;255;128;0m",
@@ -73,11 +95,23 @@ test("parseCSI with subparameters", () => {
 });
 
 test("parseCSI no data", () => {
-  assert.deepEqual(parseCSI(0, "\\e[m", "", "m"), { type: "CSI", pos: 0, raw: "\\e[m", command: "m", params: [] });
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [];
+  const final: TOKEN = { type: "FINAL", pos: 3, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
+    type: "CSI",
+    pos: 0,
+    raw: "\\e[m",
+    command: "m",
+    params: [],
+  });
 });
 
 test("parsePrivateCSI with < introducer", () => {
-  assert.deepEqual(parsePrivateCSI(0, "\\e[<31m", "<31", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "<31" }];
+  const final: TOKEN = { type: "FINAL", pos: 6, raw: "m" };
+  assert.deepEqual(parsePrivateCSI(introducer, dataTokens, final), {
     type: "PRIVATE",
     pos: 0,
     raw: "\\e[<31m",
@@ -87,7 +121,10 @@ test("parsePrivateCSI with < introducer", () => {
 });
 
 test("parsePrivateCSI with > introducer", () => {
-  assert.deepEqual(parsePrivateCSI(0, "\\e[>c", ">", "c"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: ">" }];
+  const final: TOKEN = { type: "FINAL", pos: 4, raw: "c" };
+  assert.deepEqual(parsePrivateCSI(introducer, dataTokens, final), {
     type: "PRIVATE",
     pos: 0,
     raw: "\\e[>c",
@@ -97,7 +134,10 @@ test("parsePrivateCSI with > introducer", () => {
 });
 
 test("parsePrivateCSI with = introducer", () => {
-  assert.deepEqual(parsePrivateCSI(0, "\\e[=1;2c", "=1;2", "c"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "=1;2" }];
+  const final: TOKEN = { type: "FINAL", pos: 8, raw: "c" };
+  assert.deepEqual(parsePrivateCSI(introducer, dataTokens, final), {
     type: "PRIVATE",
     pos: 0,
     raw: "\\e[=1;2c",
@@ -107,7 +147,10 @@ test("parsePrivateCSI with = introducer", () => {
 });
 
 test("parsePrivateCSI with colon in parameters", () => {
-  assert.deepEqual(parsePrivateCSI(0, "\\e[<1:2m", "<1:2", "m"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "<1:2" }];
+  const final: TOKEN = { type: "FINAL", pos: 8, raw: "m" };
+  assert.deepEqual(parsePrivateCSI(introducer, dataTokens, final), {
     type: "PRIVATE",
     pos: 0,
     raw: "\\e[<1:2m",

@@ -1,9 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseDCS } from "../src/parsers/dcs.ts";
+import type { TOKEN } from "../src/types.ts";
 
 test("parseDCS simple sequence", () => {
-  assert.deepEqual(parseDCS(0, "\\eP0;1|name\\e\\\\", "0;1|name"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\eP", code: "DCS" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "0;1|name" }];
+  const final: TOKEN = { type: "FINAL", pos: 12, raw: "\\e\\\\" };
+  assert.deepEqual(parseDCS(introducer, dataTokens, final), {
     type: "DCS",
     pos: 0,
     raw: "\\eP0;1|name\\e\\\\",
@@ -13,7 +17,10 @@ test("parseDCS simple sequence", () => {
 });
 
 test("parseDCS with missing parameters", () => {
-  assert.deepEqual(parseDCS(0, "\\eP$q;\\e\\\\", "$q;"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\eP", code: "DCS" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "$q;" }];
+  const final: TOKEN = { type: "FINAL", pos: 7, raw: "\\e\\\\" };
+  assert.deepEqual(parseDCS(introducer, dataTokens, final), {
     type: "DCS",
     pos: 0,
     raw: "\\eP$q;\\e\\\\",
@@ -23,7 +30,10 @@ test("parseDCS with missing parameters", () => {
 });
 
 test("parseDCS with known pattern", () => {
-  assert.deepEqual(parseDCS(0, "\\eP$qm\\e\\\\", "$qm"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\eP", code: "DCS" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "$qm" }];
+  const final: TOKEN = { type: "FINAL", pos: 7, raw: "\\e\\\\" };
+  assert.deepEqual(parseDCS(introducer, dataTokens, final), {
     type: "DCS",
     pos: 0,
     raw: "\\eP$qm\\e\\\\",
@@ -33,7 +43,10 @@ test("parseDCS with known pattern", () => {
 });
 
 test("parseDCS empty data", () => {
-  assert.deepEqual(parseDCS(0, "\\eP\\e\\\\", ""), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\eP", code: "DCS" };
+  const dataTokens: TOKEN[] = [];
+  const final: TOKEN = { type: "FINAL", pos: 3, raw: "\\e\\\\" };
+  assert.deepEqual(parseDCS(introducer, dataTokens, final), {
     type: "DCS",
     pos: 0,
     raw: "\\eP\\e\\\\",
@@ -43,7 +56,10 @@ test("parseDCS empty data", () => {
 });
 
 test("parseDCS unknown pattern", () => {
-  assert.deepEqual(parseDCS(0, "\\ePunknown\\e\\\\", "unknown"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\eP", code: "DCS" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "unknown" }];
+  const final: TOKEN = { type: "FINAL", pos: 10, raw: "\\e\\\\" };
+  assert.deepEqual(parseDCS(introducer, dataTokens, final), {
     type: "DCS",
     pos: 0,
     raw: "\\ePunknown\\e\\\\",

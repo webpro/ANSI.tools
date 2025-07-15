@@ -1,16 +1,10 @@
 import { CODE_TYPES } from "../constants.ts";
-import type { CONTROL_CODE, TOKEN } from "../types.ts";
+import type { CODE, TOKEN } from "../types.ts";
 
-export function parseESC(token: TOKEN, raw: string, command: string, data?: string): CONTROL_CODE {
-  if (token.intermediate) {
-    return { type: CODE_TYPES.ESC, pos: token.pos, raw, command: token.intermediate, params: command ? [command] : [] };
-  }
-
-  return {
-    type: CODE_TYPES.ESC,
-    pos: token.pos,
-    raw,
-    command,
-    params: data ? [data] : [],
-  };
+export function parseESC(introducer: TOKEN, dataTokens: TOKEN[], final?: TOKEN): CODE {
+  const data = dataTokens.map(t => t.raw).join("");
+  const command = introducer.intermediate || (dataTokens[0]?.raw ?? final?.raw);
+  const params = introducer.intermediate ? (final?.raw ? [final.raw] : []) : [];
+  const raw = introducer.raw + data + (final?.raw ?? "");
+  return { type: CODE_TYPES.ESC, pos: introducer.pos, raw, command, params };
 }

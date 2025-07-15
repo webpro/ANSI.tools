@@ -1,5 +1,5 @@
 import { CODE_TYPES } from "../constants.ts";
-import type { CONTROL_CODE } from "../types.ts";
+import type { CODE, TOKEN } from "../types.ts";
 
 const DCS_PATTERNS = new Map([
   ["$q", 2],
@@ -9,8 +9,10 @@ const DCS_PATTERNS = new Map([
   ["{", 1],
 ]);
 
-export function parseDCS(pos: number, raw: string, data: string): CONTROL_CODE {
-  if (!data) return { type: CODE_TYPES.DCS, pos, raw, command: "", params: [] };
+export function parseDCS(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): CODE {
+  const data = dataTokens.map(t => t.raw).join("");
+  const raw = introducer.raw + data + (final?.raw ?? "");
+  if (!data) return { type: CODE_TYPES.DCS, pos: introducer.pos, raw, command: "", params: [] };
 
   for (const [pattern, length] of DCS_PATTERNS) {
     if (data.startsWith(pattern)) {
@@ -28,9 +30,9 @@ export function parseDCS(pos: number, raw: string, data: string): CONTROL_CODE {
         }
         params.push(current || "-1");
       }
-      return { type: CODE_TYPES.DCS, pos, raw, command: pattern, params };
+      return { type: CODE_TYPES.DCS, pos: introducer.pos, raw, command: pattern, params };
     }
   }
 
-  return { type: CODE_TYPES.DCS, pos, raw, command: "", params: [data] };
+  return { type: CODE_TYPES.DCS, pos: introducer.pos, raw, command: "", params: [data] };
 }

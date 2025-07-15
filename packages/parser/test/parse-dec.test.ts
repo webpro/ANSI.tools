@@ -1,9 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseDEC } from "../src/parsers/dec.ts";
+import type { TOKEN } from "../src/types.ts";
 
 test("parseDEC basic sequence", () => {
-  assert.deepEqual(parseDEC(0, "\\e[?25h", "?25", "h"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "25" }];
+  const final: TOKEN = { type: "FINAL", pos: 6, raw: "h" };
+  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?25h",
@@ -13,7 +17,10 @@ test("parseDEC basic sequence", () => {
 });
 
 test("parseDEC with missing parameters", () => {
-  assert.deepEqual(parseDEC(0, "\\e[?;h", "?;", "h"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: ";" }];
+  const final: TOKEN = { type: "FINAL", pos: 5, raw: "h" };
+  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?;h",
@@ -23,7 +30,10 @@ test("parseDEC with missing parameters", () => {
 });
 
 test("parseDEC with intermediate bytes", () => {
-  assert.deepEqual(parseDEC(0, "\\e[?1$p", "?1$", "p"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1$" }];
+  const final: TOKEN = { type: "FINAL", pos: 6, raw: "p" };
+  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1$p",
@@ -33,7 +43,10 @@ test("parseDEC with intermediate bytes", () => {
 });
 
 test("parseDEC multiple parameters with intermediates", () => {
-  assert.deepEqual(parseDEC(0, "\\e[?1;2$p", "?1;2$", "p"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1;2$" }];
+  const final: TOKEN = { type: "FINAL", pos: 8, raw: "p" };
+  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1;2$p",
@@ -43,7 +56,10 @@ test("parseDEC multiple parameters with intermediates", () => {
 });
 
 test("parseDEC with colon in parameters", () => {
-  assert.deepEqual(parseDEC(0, "\\e[?1:2h", "?1:2", "h"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1:2" }];
+  const final: TOKEN = { type: "FINAL", pos: 8, raw: "h" };
+  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1:2h",
@@ -53,7 +69,10 @@ test("parseDEC with colon in parameters", () => {
 });
 
 test("parseDEC with intermediates and colons", () => {
-  assert.deepEqual(parseDEC(0, "\\e[?1:2$p", "?1:2$", "p"), {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1:2$" }];
+  const final: TOKEN = { type: "FINAL", pos: 9, raw: "p" };
+  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1:2$p",

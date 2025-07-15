@@ -1,15 +1,17 @@
 import { CODE_TYPES } from "../constants.ts";
-import type { CONTROL_CODE } from "../types.ts";
+import type { CODE, TOKEN } from "../types.ts";
 
-export function parseOSC(pos: number, raw: string, data: string): CONTROL_CODE {
+export function parseOSC(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): CODE {
+  const data = dataTokens.map(t => t.raw).join("");
+  const raw = introducer.raw + data + final.raw;
   const semicolonIndex = data.indexOf(";");
   if (semicolonIndex === -1) {
-    return { type: CODE_TYPES.OSC, pos, raw, command: data, params: [] };
+    return { type: CODE_TYPES.OSC, pos: introducer.pos, raw, command: data, params: [] };
   }
   const command = data.slice(0, semicolonIndex);
   const remainder = data.slice(semicolonIndex + 1);
 
-  if (command === "1337") return { type: CODE_TYPES.OSC, pos, raw, command, params: [remainder] };
+  if (command === "1337") return { type: CODE_TYPES.OSC, pos: introducer.pos, raw, command, params: [remainder] };
 
   const params = [];
   if (remainder) {
@@ -25,5 +27,5 @@ export function parseOSC(pos: number, raw: string, data: string): CONTROL_CODE {
     params.push(current);
   }
 
-  return { type: CODE_TYPES.OSC, pos, raw, command, params };
+  return { type: CODE_TYPES.OSC, pos: introducer.pos, raw, command, params };
 }
