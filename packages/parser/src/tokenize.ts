@@ -79,11 +79,8 @@ export function* tokenizer(input: string): Generator<TOKEN> {
             setState("SEQUENCE", ESC);
           } else if (next) {
             yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC });
-            i += 1;
-            setState("SEQUENCE", ESC);
-          } else {
-            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC });
             i++;
+            setState("SEQUENCE", ESC);
           }
         }
       }

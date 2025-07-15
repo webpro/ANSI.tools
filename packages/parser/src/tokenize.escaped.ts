@@ -82,44 +82,35 @@ export function* tokenizer(input: string): Generator<TOKEN> {
         const candidates = INTRODUCER_LOOKUP.get(input[i + 1]);
         if (candidates) {
           let matched = false;
-          for (const [sequence, len] of candidates) {
-            if (i + len <= input.length && input.substring(i, i + len) === sequence) {
+          for (const [seq, len] of candidates) {
+            if (i + len <= input.length && input.substring(i, i + len) === seq) {
               matched = true;
-              if (sequence === CSI_ESCAPED) {
-                yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence, code: CSI });
+              if (seq === CSI_ESCAPED) {
+                yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: CSI });
                 i += len;
                 setState("SEQUENCE", CSI);
               } else {
-                const nextChar = input[i + len];
-                if (nextChar === CSI_OPEN) {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence + nextChar, code: CSI });
+                const next = input[i + len];
+                if (next === CSI_OPEN) {
+                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: CSI });
                   i += len + 1;
                   setState("SEQUENCE", CSI);
-                } else if (nextChar === OSC_OPEN) {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence + nextChar, code: OSC });
+                } else if (next === OSC_OPEN) {
+                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: OSC });
                   i += len + 1;
                   setState("SEQUENCE", OSC);
-                } else if (STRING_OPENERS.has(nextChar)) {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence + nextChar, code: nextChar });
+                } else if (STRING_OPENERS.has(next)) {
+                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: next });
                   i += len + 1;
-                  setState("SEQUENCE", nextChar);
-                } else if (nextChar && nextChar.charCodeAt(0) >= 0x20 && nextChar.charCodeAt(0) <= 0x2f) {
-                  yield emit({
-                    type: TOKEN_TYPES.INTRODUCER,
-                    pos: i,
-                    raw: sequence + nextChar,
-                    code: ESC,
-                    intermediate: nextChar,
-                  });
+                  setState("SEQUENCE", next);
+                } else if (next && next.charCodeAt(0) >= 0x20 && next.charCodeAt(0) <= 0x2f) {
+                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: ESC, intermediate: next });
                   i += len + 1;
                   setState("SEQUENCE", ESC);
-                } else if (nextChar) {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence, code: ESC });
+                } else if (next) {
+                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC });
                   i += len;
                   setState("SEQUENCE", ESC);
-                } else {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: sequence, code: ESC });
-                  i += len;
                 }
               }
               break;
