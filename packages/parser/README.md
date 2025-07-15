@@ -152,11 +152,15 @@ function parse(input: string): CODE[];
 
 function* tokenizer(input: string): Generator<TOKEN>;
 function* parser(tokens: Generator<TOKEN>): Generator<CODE>;
-```
 
-### CODE
+type TOKEN = {
+  type: "INTRODUCER" | "DATA" | "FINAL" | "TEXT";
+  pos: number;
+  raw: string;
+  code?: string;
+  intermediate?: string;
+};
 
-```ts
 type CONTROL_CODE = {
   type: "CSI" | "DCS" | "DEC" | "ESC" | "OSC" | "SGR" | "STRING" | "PRIVATE";
   command: string;
@@ -165,25 +169,13 @@ type CONTROL_CODE = {
   pos: number;
 };
 
-type CONTROL_CODE_TEXT = {
+type TEXT = {
   type: "TEXT";
   raw: string;
   pos: number;
 };
 
-type CODE = CONTROL_CODE | CONTROL_CODE_TEXT;
-```
-
-### TOKEN
-
-```ts
-type TOKEN = {
-  type: "INTRODUCER" | "DATA" | "FINAL" | "TEXT";
-  pos: number;
-  raw: string;
-  code?: string;
-  intermediate?: string;
-};
+type CODE = CONTROL_CODE | TEXT;
 ```
 
 ## License

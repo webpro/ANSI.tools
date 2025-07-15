@@ -16,10 +16,10 @@ export type CONTROL_CODE = {
   pos: number;
 };
 
-export type CONTROL_CODE_TEXT = {
+export type TEXT = {
   type: "TEXT";
   raw: string;
   pos: number;
 };
 
-export type CODE = CONTROL_CODE | CONTROL_CODE_TEXT;
+export type CODE = CONTROL_CODE | TEXT;
