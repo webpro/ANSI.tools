@@ -4,7 +4,19 @@ export function unescapeNewlines(value: string) {
 
 const segmenter = new Intl.Segmenter();
 
-export function split(value: string, limit: number) {
-  const graphemes = [...segmenter.segment(value)].map(seg => seg.segment);
-  return [graphemes.slice(0, limit).join(""), graphemes.slice(limit).join("")];
+export function getSegments(value: string): string[] {
+  return Array.from(segmenter.segment(value)).map(seg => seg.segment);
+}
+
+export function split(value: string, limit: number): [string, string] {
+  if (limit <= 0) return ["", value];
+  let i = 0;
+  for (const segment of segmenter.segment(value)) {
+    i++;
+    if (i === limit) {
+      const splitIndex = segment.index + segment.segment.length;
+      return [value.slice(0, splitIndex), value.slice(splitIndex)];
+    }
+  }
+  return [value, ""];
 }

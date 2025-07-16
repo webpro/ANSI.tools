@@ -36,12 +36,9 @@ export function Tools() {
   const plain = computed(() => split(appState.value.plain, inputValues.value.plain));
 
   const ansi = computed(() => {
-    const rawAnsi = appState.value.input;
-    const limit = inputValues.value.ansi;
-    const start = rawAnsi.slice(0, limit);
-    const end = rawAnsi.slice(limit);
-    if (settings.isRenderNewlines.value) return { start: unescapeNewlines(start), end: unescapeNewlines(end) };
-    return { start, end };
+    const ansi = split(appState.value.input, inputValues.value.ansi);
+    if (settings.isRenderNewlines.value) return [unescapeNewlines(ansi[0]), unescapeNewlines(ansi[1])];
+    return ansi;
   });
 
   return () => html`
@@ -97,7 +94,7 @@ export function Tools() {
         .value=${inputValues.value.ansi}
         @input=${handleAnsiIndexInput}
       />
-      <pre class="ansi"><span class="mark">${ansi.value.start}</span><span class="unmark">${ansi.value.end}</span></pre>
+      <pre class="ansi"><span class="mark">${ansi.value[0]}</span><span class="unmark">${ansi.value[1]}</span></pre>
     </div>
   `;
 }

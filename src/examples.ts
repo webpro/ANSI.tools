@@ -5,7 +5,7 @@ export const examples = [
   },
   {
     label: "mixed",
-    value: String.raw`\x1b[3A\x1b[4D\x1b[sCursor \x1b[J\x1b[1;3Hmovements\x1b[u\x1b[13T\x1b[A\n\nPrivate sequences\n\e[>0c\e[>0;1f\e[>0g\e[>0;2m\e[>1p\e[=0c\e[<1h\e[<0;1;2c\n\n\x1b[K\x1b[1;32mOpened \x1b[1;4;34m%s\x1b[0;1;32m in your browser.\x1b[0m\n\n⭐ → ✨\n\n這裡有一些中文文字。\n\nThe End.`,
+    value: String.raw`\x1b[3A\x1b[4D\x1b[sCursor \x1b[J\x1b[1;3Hmovements\x1b[u\x1b[13T\x1b[A\n\nPrivate sequences\n\e[>0c\e[>0;1f\e[>0g\e[>0;2m\e[>1p\e[=0c\e[<1h\e[<0;1;2c\n\n\x1b[K\x1b[1;32mOpened \x1b[1;4;34m%s\x1b[0;1;32m in your brows𝒜h 👍🏻\x1b[0m\n\n🌍 → ⭐ → ✨\n\n這裡有一些中文文字。\n\nThe End.`,
   },
   {
     label: "styles",

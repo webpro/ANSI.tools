@@ -1,5 +1,6 @@
 import { parse } from "@ansi-tools/parser/escaped";
 import { unescapeInput } from "./ansi.ts";
+import { getSegments } from "./string.ts";
 import type { CODE } from "@ansi-tools/parser";
 
 interface ParsedInput {
@@ -12,7 +13,7 @@ interface ParsedInput {
   codes: CODE[];
 }
 
-function getNewlineLength(text: string, index: number): number {
+function getNewlineLength(text: string[], index: number): number {
   if (text[index] === "\\") {
     if (text[index + 1] === "r" && text[index + 2] === "\\" && text[index + 3] === "n") return 4;
     else if (text[index + 1] === "r" || text[index + 1] === "n") return 2;
@@ -35,15 +36,16 @@ export function parseInput(input: string): ParsedInput {
     const text = code.raw;
     if (code.type === "TEXT") {
       const p = code.pos;
-      for (let j = 0; j < text.length; ) {
-        const nl = getNewlineLength(text, j);
+      const t = getSegments(text);
+      for (let j = 0; j < t.length; ) {
+        const nl = getNewlineLength(t, j);
         if (nl > 0) {
           plain += "\n";
           unescaped += "\n";
           for (let v = 0; v < nl; v++) reverseMap.push(visualWidth);
         } else {
-          plain += text[j];
-          unescaped += text[j];
+          plain += t[j];
+          unescaped += t[j];
           reverseMap.push(visualWidth);
         }
         const l = nl || 1;
@@ -52,11 +54,12 @@ export function parseInput(input: string): ParsedInput {
         visualWidth += 1;
         j += l;
       }
+      i += t.length;
     } else {
       unescaped += unescapeInput(text);
       for (let j = 0; j < text.length; j++) reverseMap.push(visualWidth);
+      i += text.length;
     }
-    i += text.length;
   }
 
   greedyMap.push(i);

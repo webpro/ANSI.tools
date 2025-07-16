@@ -4,6 +4,7 @@ import { unescapeInput } from "./util/ansi.ts";
 import { createSettingsStore } from "./util/settings.ts";
 import { appState } from "./app-state.ts";
 import "./css/output.css";
+import { getSegments } from "./util/string.ts";
 
 export function Output() {
   const settings = createSettingsStore("output", { isLightMode: false, isGridVisible: false });
@@ -11,7 +12,7 @@ export function Output() {
   const dimensions = computed(() => {
     const lines: string[] = appState.value.plain.split("\n");
     let columns = 0;
-    for (const line of lines) columns = Math.max(columns, line.length);
+    for (const line of lines) columns = Math.max(columns, getSegments(line).length);
     return { lines: lines.length, columns };
   });
 

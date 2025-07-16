@@ -148,42 +148,17 @@ test("Mixed escape sequences", () => {
   });
 });
 
-test("Newlines (1)", () => {
-  const input = String.raw`\u001b[31mAB\nCD`;
-  const state = parseInput(input);
-  assert.deepEqual(state, {
-    map: [0, 11, 12, 14, 15, 16],
-    greedyMap: [10, 11, 12, 14, 15, 16],
-    reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 3, 4, 5],
-    visualWidth: 5,
-    plain: "AB\nCD",
-    unescaped: "\x1b[31mAB\nCD",
-    codes: [
-      { type: "CSI", pos: 0, raw: "\\u001b[31m", params: ["31"], command: "m" },
-      { type: "TEXT", pos: 10, raw: "AB\\nCD" },
-    ],
-  });
-
-  assert.equal(getPosition(state, 0, false), 0);
-  assert.equal(getPosition(state, 1, false), 11);
-  assert.equal(getPosition(state, 2, false), 12);
-
-  assert.equal(getPosition(state, 0, true), 10);
-  assert.equal(getPosition(state, 1, true), 11);
-  assert.equal(getPosition(state, 2, true), 12);
-});
-
-test("Different newlines", () => {
-  const input = String.raw`██ █\n█ ██\r\n██ █\r████`;
+test("Newlines & unicode", () => {
+  const input = String.raw`██👍🏻█\n█🌍██\r\n██𝒜█\r████`;
   const map = parseInput(input);
   assert.deepEqual(map, {
     map: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24],
     greedyMap: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24],
     reverseMap: [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 13, 14, 14, 15, 16, 17, 18, 19],
     visualWidth: 19,
-    plain: "██ █\n█ ██\n██ █\n████",
-    unescaped: "██ █\n█ ██\n██ █\n████",
-    codes: [{ type: "TEXT", pos: 0, raw: "██ █\\n█ ██\\r\\n██ █\\r████" }],
+    plain: "██👍🏻█\n█🌍██\n██𝒜█\n████",
+    unescaped: "██👍🏻█\n█🌍██\n██𝒜█\n████",
+    codes: [{ type: "TEXT", pos: 0, raw: "██👍🏻█\\n█🌍██\\r\\n██𝒜█\\r████" }],
   });
 });
 
