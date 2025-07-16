@@ -2,18 +2,9 @@
 
 Parser for ANSI escape sequences.
 
-## Supported sequence types
-
-- **CSI** (Control Sequence Introducer): `\x1b[...`
-- **OSC** (Operating System Command): `\x1b]...`
-- **DCS** (Device Control String): `\x1bP...`
-- **ESC** (Escape): `\x1b...`
-- **DEC** (DEC Private Mode): `\x1b[?...`
-- **STRING** (APC/PM/SOS): `\x1b_...`, `\x1b^...`, `\x1bX...`
-- **PRIVATE** (Private sequences): `\x1b[<...`, `\x1b[=...`, `\x1b[>...`
-
 ## Features
 
+- ✅ Supports CSI, OSC, DCS, ESC, APC, SOS, PM, etc.
 - ✅ Handles 7-bit (`\x1b` or `\u001b`) and 8-bit (`\u009b`) introducers
 - ✅ Handles octal (`\033`) and shorthand `\e` introducers (only escaped)
 - ✅ Multiple string terminators (`\x1b\\`, `\x07`)
@@ -44,8 +35,8 @@ There is a difference between escaped and unescaped input. Only with an escaped
 input string the raw input and the positions can be preserved in the tokens and
 control codes. See the example below for the default and the `/escaped` import.
 
-The default and unescaped tokenization is roughly ~30% faster. Use this default
-if you just need the control codes.
+The default and unescaped tokenization is roughly ~30% faster. Use this if you
+just need the control codes.
 
 ## Examples
 
