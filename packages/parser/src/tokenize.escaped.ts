@@ -103,14 +103,19 @@ export function* tokenizer(input: string): Generator<TOKEN> {
                   yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: next });
                   i += len + 1;
                   setState("SEQUENCE", next);
-                } else if (next && next.charCodeAt(0) >= 0x20 && next.charCodeAt(0) <= 0x2f) {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: ESC, intermediate: next });
-                  i += len + 1;
-                  setState("SEQUENCE", ESC);
                 } else if (next) {
-                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC });
-                  i += len;
-                  setState("SEQUENCE", ESC);
+                  let j = i + len;
+                  while (j < input.length && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
+                  if (j < input.length) {
+                    const is = input.slice(i + len, j);
+                    if (is)
+                      yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + is, code: ESC, intermediate: is });
+                    else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC });
+                    i = j;
+                    setState("SEQUENCE", ESC);
+                  } else {
+                    i = j;
+                  }
                 } else {
                   i += len;
                 }
