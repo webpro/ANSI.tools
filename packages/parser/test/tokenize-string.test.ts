@@ -1,62 +1,127 @@
 import { test } from "node:test";
-import assert from "node:assert/strict";
 import { tokenize } from "../src/tokenize.ts";
 import { tokenize as tokenizeEscaped } from "../src/tokenize.escaped.ts";
+import assert from "node:assert/strict";
+import "./helpers.ts";
 
-test("DCS sequence", () => {
-  assert.deepEqual(tokenize("\x1bP1$tcolor\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001bP", code: "P" },
-    { type: "DATA", pos: 2, raw: "1$tcolor" },
-    { type: "FINAL", pos: 10, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1bP1$tcolor\x1b\\`), [
+test("DCS sequence", t => {
+  const input = String.raw`\x1bP1$tcolor\x1b\\`;
+  const expected = [
     { type: "INTRODUCER", pos: 0, raw: "\\x1bP", code: "P" },
     { type: "DATA", pos: 5, raw: "1$tcolor" },
     { type: "FINAL", pos: 13, raw: "\\x1b\\\\" },
-  ]);
+  ];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("APC sequence", () => {
-  assert.deepEqual(tokenize("\x1b_data\x9c"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b_", code: "_" },
-    { type: "DATA", pos: 2, raw: "data" },
-    { type: "FINAL", pos: 6, raw: "\x9c" },
-  ]);
+test("DCS with alternative terminator", t => {
+  const input = String.raw`\x1bPdata\x9c`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1bP", code: "P" },
+    { type: "DATA", pos: 5, raw: "data" },
+    { type: "FINAL", pos: 9, raw: "\\x9c" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
 
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b_data\x9c`), [
+test("APC sequence", t => {
+  const input = String.raw`\x1b_data\x9c`;
+  const expected = [
     { type: "INTRODUCER", pos: 0, raw: "\\x1b_", code: "_" },
     { type: "DATA", pos: 5, raw: "data" },
     { type: "FINAL", pos: 9, raw: "\\x9c" },
-  ]);
+  ];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("PM sequence", () => {
-  assert.deepEqual(tokenize("\x1b^private\x9c"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b^", code: "^" },
-    { type: "DATA", pos: 2, raw: "private" },
-    { type: "FINAL", pos: 9, raw: "\x9c" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b^private\x9c`), [
+test("PM sequence", t => {
+  const input = String.raw`\x1b^private\x9c`;
+  const expected = [
     { type: "INTRODUCER", pos: 0, raw: "\\x1b^", code: "^" },
     { type: "DATA", pos: 5, raw: "private" },
     { type: "FINAL", pos: 12, raw: "\\x9c" },
-  ]);
+  ];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("SOS sequence", () => {
-  assert.deepEqual(tokenize("\x1bXstart\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001bX", code: "X" },
-    { type: "DATA", pos: 2, raw: "start" },
-    { type: "FINAL", pos: 7, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1bXstart\x1b\\`), [
+test("SOS sequence", t => {
+  const input = String.raw`\x1bXstart\x1b\\`;
+  const expected = [
     { type: "INTRODUCER", pos: 0, raw: "\\x1bX", code: "X" },
     { type: "DATA", pos: 5, raw: "start" },
     { type: "FINAL", pos: 10, raw: "\\x1b\\\\" },
-  ]);
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("DEC private mode hide cursor", t => {
+  const input = String.raw`\x1b[?25l`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 5, raw: "?25" },
+    { type: "FINAL", pos: 8, raw: "l" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("DEC private modes", t => {
+  const input = String.raw`\x1b[?25h`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 5, raw: "?25" },
+    { type: "FINAL", pos: 8, raw: "h" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("ESC with backslash terminator", t => {
+  const input = String.raw`\x1b_payload\x1b\\`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b_", code: "_" },
+    { type: "DATA", pos: 5, raw: "payload" },
+    { type: "FINAL", pos: 12, raw: "\\x1b\\\\" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("DCS with escape-backslash terminator", t => {
+  const input = String.raw`\x1bP0;1|name\e\\`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1bP", code: "P" },
+    { type: "DATA", pos: 5, raw: "0;1|name" },
+    { type: "FINAL", pos: 13, raw: "\\e\\\\" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("APC with escape-backslash terminator", t => {
+  const input = String.raw`\x1b_some payload\e\\`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b_", code: "_" },
+    { type: "DATA", pos: 5, raw: "some payload" },
+    { type: "FINAL", pos: 17, raw: "\\e\\\\" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("PM with escape-backslash terminator", t => {
+  const input = String.raw`\x1b^privacy data\e\\`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b^", code: "^" },
+    { type: "DATA", pos: 5, raw: "privacy data" },
+    { type: "FINAL", pos: 17, raw: "\\e\\\\" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("SOS with escape-backslash terminator", t => {
+  const input = String.raw`\x1bXstring data\e\\`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1bX", code: "X" },
+    { type: "DATA", pos: 5, raw: "string data" },
+    { type: "FINAL", pos: 16, raw: "\\e\\\\" },
+  ];
+  t.assert.equalTokensDual(input, expected);
 });
 
 test("8-bit control characters", () => {
@@ -124,100 +189,21 @@ test("raw SOS sequence", () => {
   ]);
 });
 
-test("DEC private mode hide cursor", () => {
-  assert.deepEqual(tokenize("\x1b[?25l"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b[", code: "\x9b" },
-    { type: "DATA", pos: 2, raw: "?25" },
-    { type: "FINAL", pos: 5, raw: "l" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b[?25l`), [
-    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
-    { type: "DATA", pos: 5, raw: "?25" },
-    { type: "FINAL", pos: 8, raw: "l" },
-  ]);
+test("incomplete string sequences", t => {
+  t.assert.equalTokensDual(String.raw`\x1b]`, [{ type: "INTRODUCER", pos: 0, raw: "\\x1b]", code: "\x9d" }]);
+  t.assert.equalTokensDual(String.raw`\x1bP`, [{ type: "INTRODUCER", pos: 0, raw: "\\x1bP", code: "P" }]);
+  t.assert.equalTokensDual(String.raw`\x1b_`, [{ type: "INTRODUCER", pos: 0, raw: "\\x1b_", code: "_" }]);
+  t.assert.equalTokensDual(String.raw`\x1b^`, [{ type: "INTRODUCER", pos: 0, raw: "\\x1b^", code: "^" }]);
+  t.assert.equalTokensDual(String.raw`\x1bX`, [{ type: "INTRODUCER", pos: 0, raw: "\\x1bX", code: "X" }]);
 });
 
-test("DEC private modes", () => {
-  assert.deepEqual(tokenize("\x1b[?25h"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b[", code: "\x9b" },
-    { type: "DATA", pos: 2, raw: "?25" },
-    { type: "FINAL", pos: 5, raw: "h" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b[?25h`), [
-    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
-    { type: "DATA", pos: 5, raw: "?25" },
-    { type: "FINAL", pos: 8, raw: "h" },
-  ]);
-});
-
-test("ESC with backslash terminator", () => {
-  assert.deepEqual(tokenize("\x1b_payload\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b_", code: "_" },
-    { type: "DATA", pos: 2, raw: "payload" },
-    { type: "FINAL", pos: 9, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b_payload\x1b\\`), [
-    { type: "INTRODUCER", pos: 0, raw: "\\x1b_", code: "_" },
-    { type: "DATA", pos: 5, raw: "payload" },
-    { type: "FINAL", pos: 12, raw: "\\x1b\\\\" },
-  ]);
-});
-
-test("DCS with escape-backslash terminator", () => {
-  assert.deepEqual(tokenize("\x1bP0;1|name\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001bP", code: "P" },
-    { type: "DATA", pos: 2, raw: "0;1|name" },
-    { type: "FINAL", pos: 10, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1bP0;1|name\e\\`), [
+test("DCS with lengthy data stream", t => {
+  const longData = "A".repeat(100);
+  const dcsInput = String.raw`\x1bP${longData}\x1b\\`;
+  const dcsExpected = [
     { type: "INTRODUCER", pos: 0, raw: "\\x1bP", code: "P" },
-    { type: "DATA", pos: 5, raw: "0;1|name" },
-    { type: "FINAL", pos: 13, raw: "\\e\\\\" },
-  ]);
-});
-
-test("APC with escape-backslash terminator", () => {
-  assert.deepEqual(tokenize("\x1b_some payload\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b_", code: "_" },
-    { type: "DATA", pos: 2, raw: "some payload" },
-    { type: "FINAL", pos: 14, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b_some payload\e\\`), [
-    { type: "INTRODUCER", pos: 0, raw: "\\x1b_", code: "_" },
-    { type: "DATA", pos: 5, raw: "some payload" },
-    { type: "FINAL", pos: 17, raw: "\\e\\\\" },
-  ]);
-});
-
-test("PM with escape-backslash terminator", () => {
-  assert.deepEqual(tokenize("\x1b^privacy data\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001b^", code: "^" },
-    { type: "DATA", pos: 2, raw: "privacy data" },
-    { type: "FINAL", pos: 14, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b^privacy data\e\\`), [
-    { type: "INTRODUCER", pos: 0, raw: "\\x1b^", code: "^" },
-    { type: "DATA", pos: 5, raw: "privacy data" },
-    { type: "FINAL", pos: 17, raw: "\\e\\\\" },
-  ]);
-});
-
-test("SOS with escape-backslash terminator", () => {
-  assert.deepEqual(tokenize("\x1bXstring data\x1b\\"), [
-    { type: "INTRODUCER", pos: 0, raw: "\u001bX", code: "X" },
-    { type: "DATA", pos: 2, raw: "string data" },
-    { type: "FINAL", pos: 13, raw: "\u001b\\" },
-  ]);
-
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1bXstring data\e\\`), [
-    { type: "INTRODUCER", pos: 0, raw: "\\x1bX", code: "X" },
-    { type: "DATA", pos: 5, raw: "string data" },
-    { type: "FINAL", pos: 16, raw: "\\e\\\\" },
-  ]);
+    { type: "DATA", pos: 5, raw: longData },
+    { type: "FINAL", pos: 105, raw: "\\x1b\\\\" },
+  ];
+  t.assert.equalTokensDual(dcsInput, dcsExpected);
 });

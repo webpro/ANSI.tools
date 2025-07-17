@@ -1,115 +1,183 @@
 import { test } from "node:test";
 import { tokenize } from "../src/tokenize.ts";
 import { tokenize as tokenizeEscaped } from "../src/tokenize.escaped.ts";
-import assert from "node:assert/strict";
+import type { TOKEN } from "../src/types.ts";
+import "./helpers.ts";
 
-test("empty input", () => {
-  assert.deepEqual(tokenize(""), []);
-  assert.deepEqual(tokenizeEscaped(String.raw``), []);
+test("empty input", t => {
+  const input = String.raw``;
+  const expected: TOKEN[] = [];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("plain text", () => {
-  assert.deepEqual(tokenize("Hello, world!"), [{ pos: 0, raw: "Hello, world!", type: "TEXT" }]);
-  assert.deepEqual(tokenizeEscaped(String.raw`Hello, world!`), [{ pos: 0, raw: "Hello, world!", type: "TEXT" }]);
+test("plain text", t => {
+  const input = String.raw`Hello, world!`;
+  const expected = [{ pos: 0, raw: "Hello, world!", type: "TEXT" }];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("tab", () => {
-  assert.deepEqual(tokenize("Hello\nWorld\t!"), [{ pos: 0, raw: "Hello\nWorld\t!", type: "TEXT" }]);
-  assert.deepEqual(tokenizeEscaped(String.raw`Hello\nWorld\t!`), [{ pos: 0, raw: "Hello\\nWorld\\t!", type: "TEXT" }]);
+test("code", t => {
+  const input = String.raw`\x1b[31m`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 5, raw: "31" },
+    { type: "FINAL", pos: 7, raw: "m" },
+  ];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("incomplete", () => {
-  assert.deepEqual(tokenize("\x1b"), []);
-  assert.deepEqual(tokenize("\x1b["), [{ pos: 0, raw: "\x1b[", type: "INTRODUCER", code: "\x9b" }]);
-  assert.deepEqual(tokenize("\x1b[31;42"), [{ pos: 0, raw: "\x1b[", type: "INTRODUCER", code: "\x9b" }]);
+test("tab", t => {
+  const input = String.raw`Hello\nWorld\t!`;
+  const expected = [{ pos: 0, raw: "Hello\\nWorld\\t!", type: "TEXT" }];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("malformed", () => {
-  assert.deepEqual(tokenize("\x1b\x7f"), [
-    { pos: 0, raw: "\x1b", type: "INTRODUCER", code: "\x1b" },
-    { pos: 1, raw: "\x7f", type: "FINAL" },
-  ]);
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b\x7f`), [
-    { pos: 0, raw: "\\x1b", type: "INTRODUCER", code: "\x1b" },
-    { pos: 4, raw: "\\", type: "FINAL" },
-    { pos: 5, raw: "x7f", type: "TEXT" },
-  ]);
+test("incomplete", t => {
+  const input1 = String.raw`\x1b`;
+  const expected1: TOKEN[] = [];
+  t.assert.equalTokensDual(input1, expected1);
+  t.assert.equalTokensDual(input1, expected1);
 
-  assert.deepEqual(tokenize("\x1b]0;title"), [{ pos: 0, raw: "\x1b]", type: "INTRODUCER", code: "\x9d" }]);
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b]0;title`), [
-    { pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" },
-  ]);
+  const input2 = String.raw`\x1b[`;
+  const expected2 = [{ pos: 0, raw: `\\x1b[`, type: "INTRODUCER", code: "\x9b" }];
+  t.assert.equalTokensDual(input2, expected2);
+  t.assert.equalTokensDual(input2, expected2);
+
+  const input3 = String.raw`\x1b[31;42`;
+  const expected3 = [{ pos: 0, raw: `\\x1b[`, type: "INTRODUCER", code: "\x9b" }];
+  t.assert.equalTokensDual(input3, expected3);
+  t.assert.equalTokensDual(input3, expected3);
 });
 
-test("boundary conditions", () => {
-  assert.deepEqual(tokenize("text\x1b"), [{ pos: 0, raw: "text", type: "TEXT" }]);
-  assert.deepEqual(tokenizeEscaped(String.raw`text\x1b`), [{ pos: 0, raw: "text", type: "TEXT" }]);
+test("mixed sequences", t => {
+  const input = String.raw`\x1b]0;title`;
+  const expected = [{ pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" }];
+  t.assert.equalTokensDual(input, expected);
+  t.assert.equalTokensDual(input, expected);
+});
 
-  assert.deepEqual(tokenize("text\x1b["), [
-    { pos: 0, raw: "text", type: "TEXT" },
-    { pos: 4, raw: "\x1b[", type: "INTRODUCER", code: "\x9b" },
-  ]);
-  assert.deepEqual(tokenizeEscaped(String.raw`text\x1b[`), [
+test("boundary conditions", t => {
+  const input = String.raw`text\x1b`;
+  const expected = [{ pos: 0, raw: "text", type: "TEXT" }];
+  t.assert.equalTokensDual(input, expected);
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("incomplete sequence", t => {
+  const input = String.raw`text\x1b[`;
+  const expected = [
     { pos: 0, raw: "text", type: "TEXT" },
     { pos: 4, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
-  ]);
-
-  assert.deepEqual(tokenize("\x1b"), []);
-  assert.deepEqual(tokenizeEscaped(String.raw`\x1b`), []);
+  ];
+  t.assert.equalTokensDual(input, expected);
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("nested/overlapping", () => {
-  assert.deepEqual(tokenize("\x1b]0;title\x1bm\x07"), [
-    { pos: 0, raw: "\x1b]", type: "INTRODUCER", code: "\x9d" },
-    { pos: 2, raw: "0;title\x1bm", type: "DATA" },
-    { pos: 11, raw: "\x07", type: "FINAL" },
-  ]);
-
-  assert.deepEqual(tokenize("\x1b[\x1b[\x1b["), [
-    { pos: 0, raw: "\x1b[", type: "INTRODUCER", code: "\x9b" },
-    { pos: 2, raw: "\x1b", type: "DATA" },
-    { pos: 3, raw: "[", type: "FINAL" },
-    { pos: 4, raw: "\x1b[", type: "INTRODUCER", code: "\x9b" },
-  ]);
+test("just introducer", t => {
+  const input = String.raw`\x1b`;
+  const expected: TOKEN[] = [];
+  t.assert.equalTokensDual(input, expected);
 });
 
-test("invalid UTF-8", () => {
-  const invalid = "\xff\xfe\xfd";
-  assert.deepEqual(tokenize(invalid), [{ pos: 0, raw: invalid, type: "TEXT" }]);
-
-  assert.deepEqual(tokenize("\x1b\xff"), [
-    { pos: 0, raw: "\x1b", type: "INTRODUCER", code: "\x1b" },
-    { pos: 1, raw: "\xff", type: "FINAL" },
-  ]);
-});
-
-test("null bytes and control characters", () => {
-  assert.deepEqual(tokenize("hello\x00world"), [{ pos: 0, raw: "hello\x00world", type: "TEXT" }]);
-
-  assert.deepEqual(tokenize("\x1b[\x00\x01\x02m"), [
-    { pos: 0, raw: "\x1b[", type: "INTRODUCER", code: "\x9b" },
-    { pos: 2, raw: "\x00\x01\x02", type: "DATA" },
-    { pos: 5, raw: "m", type: "FINAL" },
-  ]);
-});
-
-test("terminator edge cases", () => {
-  assert.deepEqual(tokenize("\x1bP data\x1b"), [{ pos: 0, raw: "\x1bP", type: "INTRODUCER", code: "P" }]);
-
-  assert.deepEqual(tokenize("\x1b]0;title\x07\x1c"), [
-    { pos: 0, raw: "\x1b]", type: "INTRODUCER", code: "\x9d" },
+test("nested/overlapping", t => {
+  const input = String.raw`\x1b]0;title\x1bm\x07`;
+  const expected = [
+    { pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" },
     { pos: 2, raw: "0;title", type: "DATA" },
-    { pos: 9, raw: "\x07", type: "FINAL" },
-    { pos: 10, raw: "\x1c", type: "TEXT" },
-  ]);
+    { pos: 9, raw: "\\x1b", type: "INTRODUCER", code: "\x1b" },
+    { pos: 10, raw: "m", type: "FINAL" },
+    { pos: 11, raw: "\\x07", type: "TEXT" },
+  ];
+  t.assert.equalTokens(tokenize, input, expected);
 });
 
-test("unicode and high codepoints", () => {
-  assert.deepEqual(tokenize("Hello \u{1F30D} World"), [{ pos: 0, raw: "Hello 🌍 World", type: "TEXT" }]);
+test("multiple sequences", t => {
+  const input = String.raw`\x1b[\x1b[\x1b[`;
+  const expected = [
+    { pos: 0, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
+    { pos: 2, raw: "\\x1b", type: "DATA" },
+    { pos: 3, raw: "[", type: "FINAL" },
+    { pos: 4, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
+  ];
+  t.assert.equalTokens(tokenize, input, expected);
+});
 
-  assert.deepEqual(tokenize(`\x1b]0;Title 👍🏻 𝒜\x07`), [
-    { pos: 0, raw: "\x1b]", type: "INTRODUCER", code: "\x9d" },
-    { pos: 2, raw: `0;Title \u{1F44D}\u{1F3FB} \u{1D49C}`, type: "DATA" },
-    { pos: 17, raw: "\x07", type: "FINAL" },
-  ]);
+test("invalid UTF-8", t => {
+  const invalid = "\xff\xfe\xfd";
+  const expected = [{ pos: 0, raw: invalid, type: "TEXT" }];
+  t.assert.equalTokensDual(invalid, expected);
+});
+
+test("invalid escape sequences", t => {
+  const input = String.raw`\x1b\xff`;
+  const expected = [
+    { pos: 0, raw: "\\x1b", type: "INTRODUCER", code: "\x1b" },
+    { pos: 1, raw: "\\xff", type: "FINAL" },
+  ];
+  t.assert.equalTokens(tokenize, input, expected);
+});
+
+test("null bytes", t => {
+  const input = String.raw`hello\x00world`;
+  const expected = [{ pos: 0, raw: "hello\\x00world", type: "TEXT" }];
+  t.assert.equalTokens(tokenize, input, expected);
+});
+
+test("control characters", t => {
+  const input = String.raw`\x1b[\x00\x01\x02m`;
+  const expected = [
+    { pos: 0, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
+    { pos: 2, raw: "\\x00\\x01\\x02", type: "DATA" },
+    { pos: 5, raw: "m", type: "FINAL" },
+  ];
+  t.assert.equalTokens(tokenize, input, expected);
+});
+
+test("terminator edge cases", t => {
+  const input = String.raw`\x1bP data\x1b`;
+  const expectedRaw = [
+    { pos: 0, raw: "\\x1bP", type: "INTRODUCER", code: "P" },
+    { pos: 2, raw: " data", type: "DATA" },
+  ];
+  const expectedEscaped = [
+    { pos: 0, raw: "\\x1bP", type: "INTRODUCER", code: "P" },
+    { pos: 5, raw: " data", type: "DATA" },
+  ];
+  t.assert.equalTokens(tokenize, input, expectedRaw);
+  t.assert.equalTokens(tokenizeEscaped, input, expectedEscaped);
+});
+
+test("8-bit control characters", t => {
+  const input = String.raw`\x1b]0;title\x07\x1c`;
+  const expected = [
+    { pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" },
+    { pos: 2, raw: "0;title", type: "DATA" },
+    { pos: 9, raw: "\\x07", type: "FINAL" },
+    { pos: 10, raw: "\\x1c", type: "TEXT" },
+  ];
+  t.assert.equalTokens(tokenize, input, expected);
+});
+
+test("unicode", t => {
+  const input = "Hello 🌍 World";
+  const expected = [{ pos: 0, raw: "Hello 🌍 World", type: "TEXT" }];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("high codepoints", t => {
+  const input = String.raw`\x1b]0;Title \u{1F44D}\u{1F3FB} \u{1D49C}\x07`;
+  const expected = [
+    { pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" },
+    { pos: 5, raw: "0;Title \\u{1F44D}\\u{1F3FB} \\u{1D49C}", type: "DATA" },
+    { pos: 41, raw: "\\x07", type: "FINAL" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("invalid 8-bit control characters", t => {
+  for (const char of ["\x80", "\x9A"]) {
+    const input = `before${char}after`;
+    const expected = [{ type: "TEXT", pos: 0, raw: `before${char}after` }];
+    t.assert.equalTokensDual(input, expected);
+  }
 });
