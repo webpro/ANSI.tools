@@ -60,6 +60,8 @@ export function* parser(tokens: Generator<TOKEN>): Generator<CODE> {
           final = nextToken;
           current = tokens.next();
           break;
+        } else if (nextToken.type === TOKEN_TYPES.INTRODUCER) {
+          break;
         }
         current = tokens.next();
       }
