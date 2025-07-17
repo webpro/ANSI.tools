@@ -135,7 +135,7 @@ export function* tokenizer(input: string): Generator<TOKEN> {
         const char = input[i];
         if (code === CSI) {
           const charCode = input.charCodeAt(i);
-          if (charCode >= 0x40 && charCode < 0x7e) {
+          if (charCode >= 0x40 && charCode <= 0x7e) {
             terminator = char;
             terminatorPos = i;
             i++;

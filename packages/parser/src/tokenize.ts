@@ -95,7 +95,7 @@ export function* tokenizer(input: string): Generator<TOKEN> {
         while (i < input.length) {
           const char = input[i];
           const charCode = char.charCodeAt(0);
-          if (charCode >= 0x40 && charCode < 0x7e) {
+          if (charCode >= 0x40 && charCode <= 0x7e) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
             i++;
