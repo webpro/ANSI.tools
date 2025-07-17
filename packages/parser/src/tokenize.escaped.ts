@@ -6,6 +6,7 @@ type State = "GROUND" | "SEQUENCE";
 const debug = false;
 
 const CSI_ESCAPED = "\\u009b";
+const ABANDONED = "ABANDONED";
 
 const INTRODUCERS = [
   ["\\u001b", 6],
@@ -180,6 +181,31 @@ export function* tokenizer(input: string): Generator<TOKEN> {
           }
         }
 
+        if (!terminator && char === BACKSLASH) {
+          const nextChar = input[i + 1];
+          if (nextChar) {
+            const candidates = INTRODUCER_LOOKUP.get(nextChar);
+            if (candidates) {
+              for (const [seq, len] of candidates) {
+                if (i + len > input.length) continue;
+                let matches = true;
+                for (let j = 0; j < len; j++) {
+                  if (input[i + j] !== seq[j]) {
+                    matches = false;
+                    break;
+                  }
+                }
+                if (matches) {
+                  terminator = ABANDONED;
+                  terminatorPos = i;
+                  break;
+                }
+              }
+              if (terminator === ABANDONED) break;
+            }
+          }
+        }
+
         if (!terminator) {
           i++;
         }
@@ -190,7 +216,7 @@ export function* tokenizer(input: string): Generator<TOKEN> {
         yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
       }
 
-      if (terminator) {
+      if (terminator && terminator !== ABANDONED) {
         yield emit({ type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator });
       }
 

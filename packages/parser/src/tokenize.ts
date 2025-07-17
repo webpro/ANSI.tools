@@ -134,6 +134,11 @@ export function* tokenizer(input: string): Generator<TOKEN> {
             break;
           }
 
+          if (char === ESC) {
+            if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
+            break;
+          }
+
           data += char;
           i++;
         }
