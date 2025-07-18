@@ -1,4 +1,5 @@
 import { parse } from "@ansi-tools/parser/escaped";
+import { parse as parseRaw } from "@ansi-tools/parser";
 import { unescapeInput } from "./ansi.ts";
 import { getSegments } from "./string.ts";
 import type { CODE } from "@ansi-tools/parser";
@@ -21,6 +22,10 @@ function getNewlineLength(text: string[], index: number): number {
   return 0;
 }
 
+function isRaw(input: string): boolean {
+  return input.includes("\u001b");
+}
+
 export function parseInput(input: string): ParsedInput {
   const map: number[] = [0];
   const greedyMap: number[] = [];
@@ -30,7 +35,7 @@ export function parseInput(input: string): ParsedInput {
   let visualWidth = 0;
   let i = 0;
 
-  const codes = parse(input);
+  const codes = isRaw(input) ? parseRaw(input) : parse(input);
 
   for (const code of codes) {
     const text = code.raw;
