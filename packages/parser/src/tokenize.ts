@@ -98,11 +98,17 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       if (code === CSI) {
         while (i < input.length) {
           const char = input[i];
+          if (INTRODUCERS.has(char)) {
+            if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
+            setState("GROUND");
+            break;
+          }
           const charCode = char.charCodeAt(0);
           if (charCode >= 0x40 && charCode <= 0x7e) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
             i++;
+            setState("GROUND");
             break;
           }
           data += char;
@@ -111,31 +117,38 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       } else if (code === ESC) {
         if (i < input.length) {
           const char = input[i];
-          yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
-          i++;
+          if (INTRODUCERS.has(char)) {
+            setState("GROUND");
+          } else {
+            yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
+            i++;
+            setState("GROUND");
+          }
         }
       } else if (code) {
         while (i < input.length) {
           const char = input[i];
           let terminator: string | undefined;
 
-          if (char === ST) {
+          if (char === ESC && input[i + 1] === BACKSLASH) {
+            terminator = ESC + BACKSLASH;
+          } else if (char === ST) {
             terminator = ST;
           } else if (char === BELL && code === OSC) {
             terminator = BELL;
-          } else if (char === ESC && input[i + 1] === BACKSLASH) {
-            terminator = ESC + BACKSLASH;
           }
 
           if (terminator) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: terminator });
             i += terminator.length;
+            setState("GROUND");
             break;
           }
 
-          if (char === ESC) {
+          if (INTRODUCERS.has(char)) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
+            setState("GROUND");
             break;
           }
 
@@ -143,7 +156,8 @@ export function* tokenizer(input: string): Generator<TOKEN> {
           i++;
         }
       }
-      setState("GROUND");
+
+      if (state === "SEQUENCE") setState("GROUND");
     }
   }
 }

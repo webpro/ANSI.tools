@@ -95,11 +95,10 @@ test("multiple sequences", t => {
   const input = String.raw`\x1b[\x1b[\x1b[`;
   const expected = [
     { pos: 0, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
-    { pos: 2, raw: "\\x1b", type: "DATA" },
-    { pos: 3, raw: "[", type: "FINAL" },
-    { pos: 4, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
+    { pos: 5, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
+    { pos: 10, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
   ];
-  t.assert.equalTokens(tokenize, input, expected);
+  t.assert.equalTokensDual(input, expected);
 });
 
 test("invalid UTF-8", t => {

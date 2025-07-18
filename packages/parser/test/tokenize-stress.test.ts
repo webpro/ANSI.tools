@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import "./helpers.ts";
+import { tokenize } from "../src/tokenize.ts";
+import { tokenize as tokenizeEscaped } from "../src/tokenize.escaped.ts";
 
 test("alternative introducer", t => {
   const input = String.raw`\e[31m`;
@@ -128,6 +130,28 @@ test("OSC interrupted by DCS", t => {
     { type: "INTRODUCER", pos: 0, raw: "\\x1b]", code: "\x9d" },
     { type: "DATA", pos: 5, raw: "0;title" },
     { type: "INTRODUCER", pos: 12, raw: "\\x1bP", code: "P" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("CSI interrupted by CSI", t => {
+  const input = String.raw`\x1b[31\x1b[32m`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 5, raw: "31" },
+    { type: "INTRODUCER", pos: 7, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 12, raw: "32" },
+    { type: "FINAL", pos: 14, raw: "m" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});
+
+test("CSI interrupted by incomplete CSI", t => {
+  const input = String.raw`\x1b[31\x1b[32`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 5, raw: "31" },
+    { type: "INTRODUCER", pos: 7, raw: "\\x1b[", code: "\x9b" },
   ];
   t.assert.equalTokensDual(input, expected);
 });

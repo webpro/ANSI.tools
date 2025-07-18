@@ -17,26 +17,15 @@ const INTRODUCERS = [
 ] as const;
 
 const INTRODUCER_LOOKUP = new Map<string, [string, number][]>();
+const INTRODUCER_FIRST_CHAR_CACHE = new Map<string, boolean>();
+
 for (const [sequence, len] of INTRODUCERS) {
   const secondChar = sequence[1];
   if (!INTRODUCER_LOOKUP.has(secondChar)) INTRODUCER_LOOKUP.set(secondChar, []);
   INTRODUCER_LOOKUP.get(secondChar)?.push([sequence, len]);
+  INTRODUCER_FIRST_CHAR_CACHE.set(sequence, true);
 }
 
-const STRING_TERMINATORS = new Map([
-  ["\\x9c", 4],
-  ["\\e\\\\", 4],
-  ["\\x1b\\\\", 8],
-]);
-
-const OSC_ONLY_TERMINATORS = new Map([
-  ["\\a", 2],
-  ["\\x07", 4],
-  ["\\u0007", 6],
-]);
-
-const ST_MAX_LENGTH = Math.max(...STRING_TERMINATORS.values());
-const OSC_TERM_MAX_LENGTH = Math.max(...OSC_ONLY_TERMINATORS.values());
 const INTRODUCER_PEEK_AHEAD = new Set(INTRODUCERS.map(entry => entry[0][1]));
 
 function emit(token: TOKEN) {
@@ -45,6 +34,7 @@ function emit(token: TOKEN) {
 }
 
 export function* tokenizer(input: string): Generator<TOKEN> {
+  const l = input.length;
   let i = 0;
   let state: State = "GROUND";
   let currentCode: string | undefined;
@@ -55,14 +45,14 @@ export function* tokenizer(input: string): Generator<TOKEN> {
     currentCode = code;
   }
 
-  while (i < input.length) {
+  while (i < l) {
     if (state === "GROUND") {
       const textStart = i;
-      while (i < input.length) {
+      while (i < l) {
         const backslashIndex = input.indexOf(BACKSLASH, i);
 
         if (backslashIndex === -1) {
-          i = input.length;
+          i = l;
           break;
         }
 
@@ -79,12 +69,23 @@ export function* tokenizer(input: string): Generator<TOKEN> {
         yield emit({ type: TOKEN_TYPES.TEXT, pos: textStart, raw: input.substring(textStart, i) });
       }
 
-      if (i < input.length) {
+      if (i < l) {
         const candidates = INTRODUCER_LOOKUP.get(input[i + 1]);
         if (candidates) {
           let matched = false;
           for (const [seq, len] of candidates) {
-            if (i + len <= input.length && input.substring(i, i + len) === seq) {
+            if (i + len > l) continue; // Early bounds check
+
+            // Character-by-character matching to avoid substring allocation
+            let seqMatched = true;
+            for (let k = 0; k < len && seqMatched; k += 2) {
+              seqMatched = input[i + k] === seq[k];
+              if (seqMatched && k + 1 < len) {
+                seqMatched = input[i + k + 1] === seq[k + 1];
+              }
+            }
+
+            if (seqMatched) {
               matched = true;
               if (seq === CSI_ESCAPED) {
                 yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: CSI });
@@ -106,8 +107,8 @@ export function* tokenizer(input: string): Generator<TOKEN> {
                   setState("SEQUENCE", next);
                 } else if (next) {
                   let j = i + len;
-                  while (j < input.length && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
-                  if (j < input.length) {
+                  while (j < l && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
+                  if (j < l) {
                     const is = input.slice(i + len, j);
                     if (is)
                       yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + is, code: ESC, intermediate: is });
@@ -137,9 +138,80 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       const pos = i;
       const code = currentCode;
 
-      while (!terminator && i < input.length) {
+      while (!terminator && i < l) {
         const char = input[i];
-        if (code === CSI) {
+        if (char === BACKSLASH) {
+          if (code !== CSI && code !== ESC) {
+            const next = input[i + 1];
+            if (next === "a" && i + 2 <= l) {
+              if (code === OSC && input[i + 1] === "a") {
+                terminator = "\\a";
+                terminatorPos = i;
+                i += 2;
+              }
+            } else if (next === "x") {
+              if (i + 4 <= l) {
+                const char3 = input[i + 2];
+                const char4 = input[i + 3];
+                if (char3 === "0" && char4 === "7" && code === OSC) {
+                  terminator = "\\x07";
+                  terminatorPos = i;
+                  i += 4;
+                } else if (char3 === "9" && char4 === "c") {
+                  terminator = "\\x9c";
+                  terminatorPos = i;
+                  i += 4;
+                } else if (
+                  char3 === "1" &&
+                  char4 === "b" &&
+                  i + 6 <= l &&
+                  input[i + 4] === BACKSLASH &&
+                  input[i + 5] === BACKSLASH
+                ) {
+                  terminator = "\\x1b\\\\";
+                  terminatorPos = i;
+                  i += 6;
+                }
+              }
+            } else if (next === "u" && code === OSC && i + 6 <= l) {
+              if (input[i + 2] === "0" && input[i + 3] === "0" && input[i + 4] === "0" && input[i + 5] === "7") {
+                terminator = "\\u0007";
+                terminatorPos = i;
+                i += 6;
+              }
+            } else if (next === "e" && i + 4 <= l) {
+              if (input[i + 2] === BACKSLASH && input[i + 3] === BACKSLASH) {
+                terminator = "\\e\\\\";
+                terminatorPos = i;
+                i += 4;
+              }
+            }
+          }
+
+          if (!terminator) {
+            const next = input[i + 1];
+            if (next) {
+              const candidates = INTRODUCER_LOOKUP.get(next);
+              if (candidates) {
+                for (const [seq, len] of candidates) {
+                  if (i + len > l) continue;
+                  let matched = true;
+                  for (let k = 0; k < len && matched; k += 2) {
+                    matched = input[i + k] === seq[k];
+                    if (matched && k + 1 < len) {
+                      matched = input[i + k + 1] === seq[k + 1];
+                    }
+                  }
+                  if (matched) {
+                    terminator = ABANDONED;
+                    terminatorPos = i;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        } else if (code === CSI) {
           const charCode = input.charCodeAt(i);
           if (charCode >= 0x40 && charCode <= 0x7e) {
             terminator = char;
@@ -150,60 +222,6 @@ export function* tokenizer(input: string): Generator<TOKEN> {
           terminator = char;
           terminatorPos = i;
           i++;
-        } else if (code) {
-          if (char === BACKSLASH) {
-            if (code === OSC) {
-              for (let len = OSC_TERM_MAX_LENGTH; len >= 2; len -= 2) {
-                if (i + len <= input.length) {
-                  const sequence = input.substring(i, i + len);
-                  if (OSC_ONLY_TERMINATORS.has(sequence)) {
-                    terminator = sequence;
-                    terminatorPos = i;
-                    i += len;
-                    break;
-                  }
-                }
-              }
-            }
-            if (!terminator) {
-              for (let len = ST_MAX_LENGTH; len >= 2; len -= 2) {
-                if (i + len <= input.length) {
-                  const sequence = input.substring(i, i + len);
-                  if (STRING_TERMINATORS.has(sequence)) {
-                    terminator = sequence;
-                    terminatorPos = i;
-                    i += len;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if (!terminator && char === BACKSLASH) {
-          const nextChar = input[i + 1];
-          if (nextChar) {
-            const candidates = INTRODUCER_LOOKUP.get(nextChar);
-            if (candidates) {
-              for (const [seq, len] of candidates) {
-                if (i + len > input.length) continue;
-                let matches = true;
-                for (let j = 0; j < len; j++) {
-                  if (input[i + j] !== seq[j]) {
-                    matches = false;
-                    break;
-                  }
-                }
-                if (matches) {
-                  terminator = ABANDONED;
-                  terminatorPos = i;
-                  break;
-                }
-              }
-              if (terminator === ABANDONED) break;
-            }
-          }
         }
 
         if (!terminator) {
