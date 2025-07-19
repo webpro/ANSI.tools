@@ -131,10 +131,7 @@ test("8-bit control characters", () => {
     { type: "FINAL", pos: 8, raw: "\u0007" },
   ]);
 
-  assert.deepEqual(tokenizeEscaped(String.raw`\x9d0;title\x07`), [
-    { type: "TEXT", pos: 1, raw: "x9d0;title" },
-    { type: "TEXT", pos: 12, raw: "x07" },
-  ]);
+  assert.deepEqual(tokenizeEscaped(String.raw`\x9d0;title\x07`), [{ type: "TEXT", pos: 0, raw: "\\x9d0;title\\x07" }]);
 });
 
 test("raw 8-bit sequences", () => {
@@ -145,8 +142,7 @@ test("raw 8-bit sequences", () => {
   ]);
 
   assert.deepEqual(tokenizeEscaped(String.raw`\x900;1|data\x9c`), [
-    { type: "TEXT", pos: 1, raw: "x900;1|data" },
-    { type: "TEXT", pos: 13, raw: "x9c" },
+    { type: "TEXT", pos: 0, raw: "\\x900;1|data\\x9c" },
   ]);
 });
 
@@ -158,8 +154,7 @@ test("raw APC sequence", () => {
   ]);
 
   assert.deepEqual(tokenizeEscaped(String.raw`\x9fapp data\x9c`), [
-    { type: "TEXT", pos: 1, raw: "x9fapp data" },
-    { type: "TEXT", pos: 13, raw: "x9c" },
+    { type: "TEXT", pos: 0, raw: "\\x9fapp data\\x9c" },
   ]);
 });
 
@@ -171,8 +166,7 @@ test("raw PM sequence", () => {
   ]);
 
   assert.deepEqual(tokenizeEscaped(String.raw`\x9eprivacy data\x9c`), [
-    { type: "TEXT", pos: 1, raw: "x9eprivacy data" },
-    { type: "TEXT", pos: 17, raw: "x9c" },
+    { type: "TEXT", pos: 0, raw: "\\x9eprivacy data\\x9c" },
   ]);
 });
 
@@ -184,8 +178,7 @@ test("raw SOS sequence", () => {
   ]);
 
   assert.deepEqual(tokenizeEscaped(String.raw`\x98string data\x9c`), [
-    { type: "TEXT", pos: 1, raw: "x98string data" },
-    { type: "TEXT", pos: 16, raw: "x9c" },
+    { type: "TEXT", pos: 0, raw: "\\x98string data\\x9c" },
   ]);
 });
 

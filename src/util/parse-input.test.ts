@@ -239,7 +239,7 @@ test("OSC \\ terminator", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     visualWidth: 0,
     plain: "",
-    unescaped: "\u001b]0;title\u001b\x07",
+    unescaped: "\u001b]0;title\u001b\\",
     codes: [{ type: "OSC", pos: 0, raw: "\\x1b]0;title\\x1b\\\\", params: ["title"], command: "0" }],
   });
 });
@@ -249,7 +249,7 @@ test("OSC 133 - Set Mark", () => {
   const { visualWidth, plain, unescaped } = parseInput(input);
   assert.equal(visualWidth, 0);
   assert.equal(plain, "");
-  assert.equal(unescaped, "\u001b]133;A\u001b\x07");
+  assert.equal(unescaped, "\u001b]133;A\u001b\\");
 });
 
 test("OSC 1337 - Set User Variable", () => {

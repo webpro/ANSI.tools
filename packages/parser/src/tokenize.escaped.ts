@@ -26,8 +26,6 @@ for (const [sequence, len] of INTRODUCERS) {
   INTRODUCER_FIRST_CHAR_CACHE.set(sequence, true);
 }
 
-const INTRODUCER_PEEK_AHEAD = new Set(INTRODUCERS.map(entry => entry[0][1]));
-
 function emit(token: TOKEN) {
   if (debug) console.log("token", token);
   return token;
@@ -56,8 +54,26 @@ export function* tokenizer(input: string): Generator<TOKEN> {
           break;
         }
 
-        const nextChar = input[backslashIndex + 1];
-        if (nextChar && INTRODUCER_PEEK_AHEAD.has(nextChar)) {
+        let isIntroducer = false;
+        const candidates = INTRODUCER_LOOKUP.get(input[backslashIndex + 1]);
+        if (candidates) {
+          for (const [seq, len] of candidates) {
+            if (backslashIndex + len > l) continue;
+            let matched = true;
+            for (let k = 0; k < len && matched; k += 2) {
+              matched = input[backslashIndex + k] === seq[k];
+              if (matched && k + 1 < len) {
+                matched = input[backslashIndex + k + 1] === seq[k + 1];
+              }
+            }
+            if (matched) {
+              isIntroducer = true;
+              break;
+            }
+          }
+        }
+
+        if (isIntroducer) {
           i = backslashIndex;
           break;
         } else {
@@ -72,21 +88,19 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       if (i < l) {
         const candidates = INTRODUCER_LOOKUP.get(input[i + 1]);
         if (candidates) {
-          let matched = false;
+          let isMatch = false;
           for (const [seq, len] of candidates) {
-            if (i + len > l) continue; // Early bounds check
-
-            // Character-by-character matching to avoid substring allocation
-            let seqMatched = true;
-            for (let k = 0; k < len && seqMatched; k += 2) {
-              seqMatched = input[i + k] === seq[k];
-              if (seqMatched && k + 1 < len) {
-                seqMatched = input[i + k + 1] === seq[k + 1];
+            if (i + len > l) continue;
+            let isSeqMatch = true;
+            for (let k = 0; k < len && isSeqMatch; k += 2) {
+              isSeqMatch = input[i + k] === seq[k];
+              if (isSeqMatch && k + 1 < len) {
+                isSeqMatch = input[i + k + 1] === seq[k + 1];
               }
             }
 
-            if (seqMatched) {
-              matched = true;
+            if (isSeqMatch) {
+              isMatch = true;
               if (seq === CSI_ESCAPED) {
                 yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: CSI });
                 i += len;
@@ -125,7 +139,7 @@ export function* tokenizer(input: string): Generator<TOKEN> {
               break;
             }
           }
-          if (!matched) {
+          if (!isMatch) {
             i++;
           }
         } else {
