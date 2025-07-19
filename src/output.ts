@@ -1,10 +1,9 @@
 import { html, computed, raw } from "isum/preactive";
 import { AnsiUp } from "ansi_up";
-import { unescapeInput } from "./util/ansi.ts";
 import { createSettingsStore } from "./util/settings.ts";
 import { appState } from "./app-state.ts";
 import "./css/output.css";
-import { getSegments } from "./util/string.ts";
+import { getSegments, unescapeInput } from "./util/string.ts";
 
 export function Output() {
   const settings = createSettingsStore("output", { isLightMode: false, isGridVisible: false });

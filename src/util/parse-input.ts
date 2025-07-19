@@ -1,7 +1,6 @@
 import { parse } from "@ansi-tools/parser/escaped";
 import { parse as parseRaw } from "@ansi-tools/parser";
-import { unescapeInput } from "./ansi.ts";
-import { getSegments } from "./string.ts";
+import { getSegments, unescapeInput } from "./string.ts";
 import type { CODE } from "@ansi-tools/parser";
 
 interface ParsedInput {
@@ -70,7 +69,7 @@ export function parseInput(input: string): ParsedInput {
   greedyMap.push(i);
   reverseMap.push(visualWidth);
 
-  return { map, greedyMap, reverseMap, visualWidth, plain, unescaped, codes };
+  return { map, greedyMap, reverseMap, visualWidth, plain: unescapeInput(plain), unescaped, codes };
 }
 
 export function getPosition(state: ParsedInput, pos: number, isGreedy: boolean): number {
