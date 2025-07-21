@@ -45,4 +45,8 @@ export const examples = [
     value:
       "\x1b[1;36m=== Raw Escape Sequences ===\x1b[0m\n\n\x1b[32m✓\x1b[0m Test passed\n\x1b[31m✗\x1b[0m Test failed\n\x1b[33m⚠\x1b[0m Warning message\n\n\x1b[1mBold\x1b[0m, \x1b[3mitalic\x1b[0m, \x1b[4munderline\x1b[0m\n\n\x1b[38;2;255;0;128mTruecolor pink\x1b[0m\n\n\x1b]8;;https://ansi.tools\x07Click here!\x1b]8;;\x07",
   },
+  {
+    label: "VT100 torture",
+    value: "/torturet.vt",
+  },
 ];

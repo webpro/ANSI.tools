@@ -3,14 +3,20 @@ import { examples } from "./examples.ts";
 import "./css/input.css";
 import { appState, rawInput } from "./app-state.ts";
 
+export const load = async (url: string) => {
+  const response = await fetch(url).catch(() => null);
+  return response?.ok ? await response.text() : `Error loading ${url}`;
+};
+
 export function Input() {
   function handleInput(event: InputEvent) {
     const target = event.target as HTMLTextAreaElement;
     rawInput.value = target.value;
   }
 
-  function handleExampleClick(value: string) {
-    rawInput.value = value;
+  async function handleExampleClick(value: string) {
+    if (value.match(/^\/[a-z.\\]+/)) rawInput.value = await load(value);
+    else rawInput.value = value;
   }
 
   return () => html`
