@@ -1,7 +1,7 @@
-import { AnsiUp } from "ansi_up";
 import { CODE_TYPES } from "@ansi-tools/parser";
 import type { CODE, CONTROL_CODE } from "@ansi-tools/parser";
 import { sgrMap, csiMap, oscMap, decMap, escMap, dcsMap, stringMap, privateMap, controlCodes } from "../codes.ts";
+import { ansiToPre } from "ansi-to-pre";
 
 interface TableRow {
   type: CONTROL_CODE["type"];
@@ -16,8 +16,6 @@ interface LookupTableRow extends TableRow {
 }
 
 type Match = Omit<TableRow, "type" | "code">;
-
-const convert = new AnsiUp();
 
 const typeOrder: Record<TableRow["type"], number> = {
   CSI: 2,
@@ -192,10 +190,7 @@ export function createRowsFromCodes() {
         const { description, template } = item;
         const code = `${PREFIX}[${item.code}${template ?? ""}m`;
         const raw = `${PREFIX_RAW}[${item.code}${tpl(item.template, item.example)}m`;
-        const sgr = Number.parseInt(item.code.split(";")[0], 10);
-        const isBgColor = (sgr >= 40 && sgr <= 49) || (sgr >= 100 && sgr <= 107) || item.code.startsWith("48;");
-        const text = isBgColor ? "\u00A0\u00A0\u00A0\u00A0\u00A0" : "Sample";
-        const example = item.code.includes(":") ? "" : convert.ansi_to_html(`${raw}${text}\u001b[0m`);
+        const example = item.code.includes(":") ? "" : ansiToPre(`${raw}Sample\u001b[0m`);
         rows.push({ type, sort: item.code, code, mnemonic: "", description, example });
         break;
       }

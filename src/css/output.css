@@ -8,31 +8,39 @@
 }
 
 #output-container:has(.light-bg) {
-  background-color: transparent;
-  color: unset;
+  background-color: #fff;
+  color: #000;
 }
 
-#visual-output {
+#output-container .content {
+  margin: 1rem;
+  line-height: 1;
+  overflow-x: auto;
+  overflow-y: clip;
+}
+
+#output-container .content pre {
   margin: 0;
   white-space: pre;
+  background-color: transparent !important;
+  color: inherit !important;
+  display: block;
   line-height: 1;
-  overflow: hidden;
 }
 
-#visual-output a {
-  color: inherit;
+#output-container .content a {
+  padding: 0;
 }
 
-.grid-visible #visual-output {
+#output-container .content.grid-visible {
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
   background-size: 1ch 1em;
   background-position: 0 0;
-  padding-bottom: 1px;
 }
 
-.light-bg.grid-visible #visual-output {
+#output-container .content.grid-visible.light-bg  {
   background-image:
     linear-gradient(to right, rgba(128, 128, 128, 0.2) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(128, 128, 128, 0.2) 1px, transparent 1px);

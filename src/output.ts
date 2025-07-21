@@ -1,5 +1,5 @@
 import { html, computed, raw } from "isum/preactive";
-import { AnsiUp } from "ansi_up";
+import { ansiToPre } from "ansi-to-pre";
 import { createSettingsStore } from "./util/settings.ts";
 import { appState } from "./app-state.ts";
 import "./css/output.css";
@@ -17,25 +17,22 @@ export function Output() {
 
   const outputHtml = computed(() => {
     const codes = appState.value.codes;
-    const printable = codes.filter(code => code.type === "TEXT" || (code.type === "CSI" && code.command === "m"));
-    const normalized = unescapeInput(
-      printable
-        .map(code => code.raw)
-        .join("")
-        .replace(/\\u009b/gi, "\u001b[")
+    const printable = codes.filter(
+      code => code.type === "TEXT" || (code.type === "CSI" && code.command === "m") || code.type === "OSC"
     );
-    const text = normalized.endsWith("\n") ? `${normalized}\u200b` : normalized;
-    const convert = new AnsiUp();
-    return convert.ansi_to_html(text);
+    const text = printable
+      .map(code => code.plain ?? code.raw)
+      .join("")
+      .replace(/\\u009b/gi, "\u001b[");
+    const normalized = appState.value.isRaw ? text : unescapeInput(text);
+    return ansiToPre(normalized);
   });
-
-  const whitespaceStart = computed(() => outputHtml.value.match(/^\s+/)?.[0] ?? "");
 
   return () => html`
     <div
       class=${`content ${settings.isLightMode.value ? "light-bg" : ""} ${settings.isGridVisible.value ? "grid-visible" : ""}`}
     >
-      <pre id="visual-output">${whitespaceStart.value}${raw(outputHtml.value)}</pre>
+      ${raw(outputHtml.value)}
     </div>
     <div class="status-bar">
       <div class="status-item">length: ${appState.value.width}</div>

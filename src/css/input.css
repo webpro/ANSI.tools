@@ -108,11 +108,11 @@ button:hover {
   flex-grow: 1;
 }
 
-.content {
+#input-container .content {
   padding: 1rem;
 }
 
 #example-buttons-container button {
   padding: 2px 8px;
-  font-size: 0.8rem
+  font-size: 0.8rem;
 }

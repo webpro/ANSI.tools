@@ -22,7 +22,7 @@
   "license": "ISC",
   "dependencies": {
     "@ansi-tools/parser": "workspace:*",
-    "ansi_up": "^6.0.6",
+    "ansi-to-pre": "^1.0.6",
     "isum": "^1.1.0"
   },
   "devDependencies": {
