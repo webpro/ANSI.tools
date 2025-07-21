@@ -78,7 +78,7 @@ function handleSGR(code: CONTROL_CODE): Match {
 function handleDEC(code: CONTROL_CODE): Match {
   const param = code.params?.[0] || "";
   const command = code.command;
-  const item = decMap.get(param);
+  const item = decMap.get(param.replace(/^\?/, ""));
 
   let description: string;
   if (!item) {
@@ -91,7 +91,7 @@ function handleDEC(code: CONTROL_CODE): Match {
     description = item.description;
   }
 
-  return { sort: Number(param), mnemonic: item?.mnemonic ?? "", description };
+  return { sort: Number(item), mnemonic: item?.mnemonic ?? "", description };
 }
 
 function handleCSI(code: CONTROL_CODE): Match {
