@@ -100,6 +100,19 @@ function handleCSI(code: CONTROL_CODE): Match {
     const param = code.params[0];
     if (item.params && item.params[param] !== undefined) {
       description += `: ${item.params[param]}`;
+    } else if (item.template && code.params.length > 0) {
+      const templateParams = item.template.match(/<([^>]+)>/g);
+      if (templateParams && templateParams.length > 0) {
+        const paramDescriptions: string[] = [];
+        for (let i = 0; i < templateParams.length && i < code.params.length; i++) {
+          const paramName = templateParams[i].slice(1, -1);
+          const value = code.params[i] || (i === 0 ? "1" : "1");
+          paramDescriptions.push(`${paramName} ${value}`);
+        }
+        if (paramDescriptions.length > 0) {
+          description += ` (${paramDescriptions.join(", ")})`;
+        }
+      }
     }
   }
   const sort = `${code.command}${(code.params?.[0] ?? "0").padStart(3, "0")}`;
@@ -203,7 +216,8 @@ export function createRowsFromCodes() {
             rows.push({ type, sort: item.code, code, mnemonic, description: `${description}: ${desc}`, example: "" });
           }
         } else {
-          const code = `${PREFIX}[${template ?? ""}${item.code}`;
+          const templateParams = template ? (template.match(/<[^>]+>/g)?.join(";") ?? "") : "";
+          const code = `${PREFIX}[${templateParams}${item.code}`;
           const example = template && item.example ? `\\u001b[${tpl(template, item.example)}${item.code}` : "";
           rows.push({ type, sort: item.code, code, mnemonic, description, example });
         }
