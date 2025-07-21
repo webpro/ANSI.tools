@@ -87,8 +87,8 @@ button:hover {
   border-radius: 4px;
   padding: 0.5rem;
   gap: 0.2rem;
-  flex-wrap: wrap;
-  justify-content: end;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .examples-dropdown:hover #example-buttons-container {
