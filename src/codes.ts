@@ -5,6 +5,7 @@ type ControlCodeItem = {
   description: string;
   template?: string;
   example?: { [key: string]: string };
+  defaults?: { [key: string]: string };
   params?: { [key: string]: string };
   end?: { description: string; template: string };
 };
@@ -161,14 +162,14 @@ export const controlCodes: ControlCodeItem[] = [
   { type: "ESC", code: "7", mnemonic: "DECSC", description: "save cursor position" },
   { type: "ESC", code: "8", mnemonic: "DECRC", description: "restore cursor position" },
   { type: "CSI", code: "@", mnemonic: "ICH", description: "insert characters", template: "<n> chars", example: { n: "1" } },
-  { type: "CSI", code: "A", mnemonic: "CUU", description: "move cursor up", template: "<rows> rows", example: { rows: "1" } },
-  { type: "CSI", code: "B", mnemonic: "CUD", description: "move cursor down", template: "<rows> rows", example: { rows: "1" } },
-  { type: "CSI", code: "C", mnemonic: "CUF", description: "move cursor forward", template: "<cols> cols", example: { cols: "1" } },
-  { type: "CSI", code: "D", mnemonic: "CUB", description: "move cursor back", template: "<cols> cols", example: { cols: "1" } },
+  { type: "CSI", code: "A", mnemonic: "CUU", description: "move cursor up", template: "<rows> rows", example: { rows: "1" }, defaults: { rows: "1" } },
+  { type: "CSI", code: "B", mnemonic: "CUD", description: "move cursor down", template: "<rows> rows", example: { rows: "1" }, defaults: { rows: "1" } },
+  { type: "CSI", code: "C", mnemonic: "CUF", description: "move cursor forward", template: "<cols> cols", example: { cols: "1" }, defaults: { cols: "1" } },
+  { type: "CSI", code: "D", mnemonic: "CUB", description: "move cursor back", template: "<cols> cols", example: { cols: "1" }, defaults: { cols: "1" } },
   { type: "CSI", code: "E", mnemonic: "CNL", description: "move cursor to next line", template: "<rows> rows", example: { rows: "1" } },
   { type: "CSI", code: "F", mnemonic: "CPL", description: "move cursor to previous line", template: "<rows> rows", example: { rows: "1" } },
   { type: "CSI", code: "G", mnemonic: "CHA", description: "move cursor character absolute", template: "col <col>", example: { col: "1" } },
-  { type: "CSI", code: "H", mnemonic: "CUP", description: "move cursor position", template: "row <row>, col <col>", example: { row: "1", col: "1" } },
+  { type: "CSI", code: "H", mnemonic: "CUP", description: "move cursor position", template: "row <row>, col <col>", example: { row: "1", col: "1" }, defaults: { row: "1", col: "1" } },
   { type: "CSI", code: "I", mnemonic: "CHT", description: "move cursor horizontal tabulation", template: "<n> tabs", example: { n: "1" } },
   { type: "CSI", code: "J", mnemonic: "ED", description: "erase", params: { "0": "from cursor to end of screen", "1": "from cursor to beginning of screen", "2": "entire screen", "3": "entire screen and clear scrollback buffer" } },
   { type: "CSI", code: "K", mnemonic: "EL", description: "erase", params: { "0": "from cursor to end of line", "1": "from cursor to beginning of line", "2": "entire line" } },
@@ -190,7 +191,7 @@ export const controlCodes: ControlCodeItem[] = [
   { type: "CSI", code: "l", mnemonic: "RM", description: "reset mode", params: { "4": "replace mode (IRM)", "20": "normal linefeed (LNM)" } },
   { type: "CSI", code: "m", mnemonic: "SGR", description: "select graphic rendition" },
   { type: "CSI", code: "n", mnemonic: "DSR", description: "device status report", params: { "5": "status report", "6": "report cursor position", R: "report cursor position response", "0": "ready" } },
-  { type: "CSI", code: "r", mnemonic: "DECSTBM", description: "set scrolling region", template: "top <top>, bottom <bottom>", example: { top: "1", bottom: "24" } },
+  { type: "CSI", code: "r", mnemonic: "DECSTBM", description: "set scrolling region", template: "top <top>, bottom <bottom>", example: { top: "1", bottom: "24" }, defaults: { top: "1", bottom: "screen height" } },
   { type: "CSI", code: "s", mnemonic: "SCP", description: "save cursor position" },
   { type: "CSI", code: "u", mnemonic: "RCP", description: "restore cursor position" },
   { type: "CSI", code: "b", mnemonic: "REP", description: "repeat character", template: "<n> times", example: { n: "1" } },

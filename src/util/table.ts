@@ -101,17 +101,16 @@ function handleCSI(code: CONTROL_CODE): Match {
     if (item.params && item.params[param] !== undefined) {
       description += `: ${item.params[param]}`;
     } else if (item.template && code.params.length > 0) {
-      const templateParams = item.template.match(/<([^>]+)>/g);
-      if (templateParams && templateParams.length > 0) {
-        const paramDescriptions: string[] = [];
-        for (let i = 0; i < templateParams.length && i < code.params.length; i++) {
-          const paramName = templateParams[i].slice(1, -1);
-          const value = code.params[i] || (i === 0 ? "1" : "1");
-          paramDescriptions.push(`${paramName} ${value}`);
+      let view = item.template;
+      const params = item.template.match(/<([^>]+)>/g);
+      if (params && params.length > 0) {
+        for (let i = 0; i < params.length && i < code.params.length; i++) {
+          const paramName = params[i].slice(1, -1);
+          const rawValue = code.params[i];
+          const value = rawValue === "-1" ? (item.defaults?.[paramName] ?? "1") : rawValue || "1";
+          view = view.replace(`<${paramName}>`, value);
         }
-        if (paramDescriptions.length > 0) {
-          description += ` (${paramDescriptions.join(", ")})`;
-        }
+        description += ` (${view})`;
       }
     }
   }
