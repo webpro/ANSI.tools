@@ -142,10 +142,18 @@ function handleSTR(code: CONTROL_CODE): Match {
 }
 
 function handlePRIVATE(code: CONTROL_CODE): Match {
-  const sign = code.command.charAt(0);
-  const item = privateMap.get(sign);
-  const description = item ? `${item.description} (${code.command})` : `private sequence (${code.command})`;
-  return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
+  const command = code.command;
+  const prefix = command[0];
+  const item = privateMap.get(prefix);
+  const known: Record<string, string> = {
+    "<m": "private mouse SGR sequence",
+    ">c": "secondary device attributes request",
+    ">m": "private SGR sequence",
+    ">p": "private mode sequence",
+  };
+  const key = prefix + command.slice(-1);
+  const description = known[key] ?? (item ? `${item.description} (${command})` : `private sequence (${command})`);
+  return { sort: command, mnemonic: "", description };
 }
 
 export function extractControlCodes(codes: CODE[]): TableRow[] {

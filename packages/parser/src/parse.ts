@@ -71,7 +71,7 @@ export function* parser(tokens: Generator<TOKEN>): Generator<CODE> {
           case CSI:
             if (data[0]?.raw.startsWith(DEC_OPEN)) {
               yield emit(parseDEC(introducer, data, final));
-            } else if (PRIVATE_OPENERS.has(data[0]?.raw)) {
+            } else if (data[0]?.raw && PRIVATE_OPENERS.has(data[0].raw[0])) {
               yield emit(parsePrivateCSI(introducer, data, final));
             } else {
               yield emit(parseCSI(introducer, data, final));

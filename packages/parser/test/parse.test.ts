@@ -112,3 +112,12 @@ test("24-bit color with combining chars", t => {
   ];
   t.assert.equalCodesDual(input, expected);
 });
+
+test("private sequences with parameters", t => {
+  const input = String.raw`\x1b[>0;2m\x1b[>1p`;
+  const expected: CODE[] = [
+    { type: "PRIVATE", pos: 0, raw: "\\x1b[>0;2m", command: ">m", params: ["0", "2"] },
+    { type: "PRIVATE", pos: 10, raw: "\\x1b[>1p", command: ">p", params: ["1"] },
+  ];
+  t.assert.equalCodesDual(input, expected);
+});

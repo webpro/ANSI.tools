@@ -158,3 +158,29 @@ test("parsePrivateCSI with colon in parameters", () => {
     params: ["1:2"],
   });
 });
+
+test("parsePrivateCSI with > introducer and parameters", () => {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: ">0;2" }];
+  const final: TOKEN = { type: "FINAL", pos: 9, raw: "m" };
+  assert.deepEqual(parsePrivateCSI(introducer, dataTokens, final), {
+    type: "PRIVATE",
+    pos: 0,
+    raw: "\\e[>0;2m",
+    command: ">m",
+    params: ["0", "2"],
+  });
+});
+
+test("parsePrivateCSI with > introducer and single parameter", () => {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: ">1" }];
+  const final: TOKEN = { type: "FINAL", pos: 5, raw: "p" };
+  assert.deepEqual(parsePrivateCSI(introducer, dataTokens, final), {
+    type: "PRIVATE",
+    pos: 0,
+    raw: "\\e[>1p",
+    command: ">p",
+    params: ["1"],
+  });
+});
