@@ -36,7 +36,8 @@ export function Tools() {
   const plain = computed(() => split(appState.value.plain, inputValues.value.plain));
 
   const ansi = computed(() => {
-    const ansi = split(appState.value.input, inputValues.value.ansi);
+    const input = appState.value.raw;
+    const ansi = split(input, inputValues.value.ansi);
     if (settings.isRenderNewlines.value) return [unescapeNewlines(ansi[0]), unescapeNewlines(ansi[1])];
     return ansi;
   });

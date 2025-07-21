@@ -20,7 +20,7 @@ export function Input() {
   }
 
   return () => html`
-    <textarea class="content" id="input" rows="15" .value=${rawInput.value} @input=${handleInput}></textarea>
+    <textarea class="content" id="input" rows="15" .value=${appState.value.raw} @input=${handleInput}></textarea>
     <div class="status-bar">
       <div class="status-item">length: ${appState.value.length}</div>
       <div class="status-spacer"></div>

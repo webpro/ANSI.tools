@@ -11,7 +11,7 @@ test("Empty string", () => {
     reverseMap: [0],
     visualWidth: 0,
     plain: "",
-    unescaped: "",
+    isRaw: false,
     codes: [],
   });
 });
@@ -25,8 +25,8 @@ test("Plain text", () => {
     reverseMap: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     visualWidth: 11,
     plain: "Hello World",
-    unescaped: "Hello World",
-    codes: [{ type: "TEXT", pos: 0, raw: "Hello World" }],
+    isRaw: false,
+    codes: [{ type: "TEXT", pos: 0, raw: "Hello World", plain: "Hello World" }],
   });
 });
 
@@ -39,10 +39,10 @@ test("Escape sequence at beginning", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
     visualWidth: 2,
     plain: "AB",
-    unescaped: "\u001b[31mAB",
+    isRaw: false,
     codes: [
       { type: "CSI", pos: 0, raw: "\\x1b[31m", params: ["31"], command: "m" },
-      { type: "TEXT", pos: 8, raw: "AB" },
+      { type: "TEXT", pos: 8, raw: "AB", plain: "AB" },
     ],
   });
 
@@ -67,18 +67,18 @@ test("Alternating escape sequence", () => {
     ],
     visualWidth: 5,
     plain: "Hello",
-    unescaped: "\u001b[38;2;255;255;0mH\u001b[0;1;3;35me\u001b[95ml\u001b[42ml\u001b[0;41mo\u001b[0m",
+    isRaw: false,
     codes: [
       { type: "CSI", pos: 0, raw: "\\x1b[38;2;255;255;0m", params: ["38", "2", "255", "255", "0"], command: "m" },
-      { type: "TEXT", pos: 20, raw: "H" },
+      { type: "TEXT", pos: 20, raw: "H", plain: "H" },
       { type: "CSI", pos: 21, raw: "\\x1b[0;1;3;35m", params: ["0", "1", "3", "35"], command: "m" },
-      { type: "TEXT", pos: 35, raw: "e" },
+      { type: "TEXT", pos: 35, raw: "e", plain: "e" },
       { type: "CSI", pos: 36, raw: "\\x1b[95m", params: ["95"], command: "m" },
-      { type: "TEXT", pos: 44, raw: "l" },
+      { type: "TEXT", pos: 44, raw: "l", plain: "l" },
       { type: "CSI", pos: 45, raw: "\\x1b[42m", params: ["42"], command: "m" },
-      { type: "TEXT", pos: 53, raw: "l" },
+      { type: "TEXT", pos: 53, raw: "l", plain: "l" },
       { type: "CSI", pos: 54, raw: "\\x1b[0;41m", params: ["0", "41"], command: "m" },
-      { type: "TEXT", pos: 64, raw: "o" },
+      { type: "TEXT", pos: 64, raw: "o", plain: "o" },
       { type: "CSI", pos: 65, raw: "\\x1b[0m", params: ["0"], command: "m" },
     ],
   });
@@ -93,13 +93,13 @@ test("Subsequent escape sequences", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
     visualWidth: 2,
     plain: "\nO",
-    unescaped: "\x1b[A\n\x1b[K\x1b[1;32mO",
+    isRaw: false,
     codes: [
       { type: "CSI", pos: 0, raw: "\\x1b[A", command: "A", params: [] },
-      { type: "TEXT", pos: 6, raw: "\\r" },
+      { type: "TEXT", pos: 6, raw: "\\r", plain: "\n" },
       { type: "CSI", pos: 8, raw: "\\x1b[K", command: "K", params: [] },
       { type: "CSI", pos: 14, raw: "\\x1b[1;32m", params: ["1", "32"], command: "m" },
-      { type: "TEXT", pos: 24, raw: "O" },
+      { type: "TEXT", pos: 24, raw: "O", plain: "O" },
     ],
   });
 });
@@ -113,10 +113,10 @@ test("Cursor position sequence", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5],
     visualWidth: 5,
     plain: "Hello",
-    unescaped: "\u001b[sHello\u001b[u",
+    isRaw: false,
     codes: [
       { type: "CSI", pos: 0, raw: "\\x1b[s", command: "s", params: [] },
-      { type: "TEXT", pos: 6, raw: "Hello" },
+      { type: "TEXT", pos: 6, raw: "Hello", plain: "Hello" },
       { type: "CSI", pos: 11, raw: "\\x1b[u", command: "u", params: [] },
     ],
   });
@@ -134,16 +134,16 @@ test("Mixed escape sequences", () => {
     ],
     visualWidth: 18,
     plain: "Hello, Green text.",
-    unescaped: "\u001b[31;1;4mHello\u001b[0m, \u001b[32mGreen text\u001b[0m.",
+    isRaw: false,
     codes: [
       { type: "CSI", pos: 0, raw: "\\033[31;1;4m", params: ["31", "1", "4"], command: "m" },
-      { type: "TEXT", pos: 12, raw: "Hello" },
+      { type: "TEXT", pos: 12, raw: "Hello", plain: "Hello" },
       { type: "CSI", pos: 17, raw: "\\033[0m", params: ["0"], command: "m" },
-      { type: "TEXT", pos: 24, raw: ", " },
+      { type: "TEXT", pos: 24, raw: ", ", plain: ", " },
       { type: "CSI", pos: 26, raw: "\\033[32m", params: ["32"], command: "m" },
-      { type: "TEXT", pos: 34, raw: "Green text" },
+      { type: "TEXT", pos: 34, raw: "Green text", plain: "Green text" },
       { type: "CSI", pos: 44, raw: "\\033[0m", params: ["0"], command: "m" },
-      { type: "TEXT", pos: 51, raw: "." },
+      { type: "TEXT", pos: 51, raw: ".", plain: "." },
     ],
   });
 });
@@ -157,8 +157,8 @@ test("Newlines & unicode", () => {
     reverseMap: [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 9, 9, 9, 10, 11, 12, 13, 14, 14, 15, 16, 17, 18, 19],
     visualWidth: 19,
     plain: "██👍🏻█\n█🌍██\n██𝒜█\n████",
-    unescaped: "██👍🏻█\n█🌍██\n██𝒜█\n████",
-    codes: [{ type: "TEXT", pos: 0, raw: "██👍🏻█\\n█🌍██\\r\\n██𝒜█\\r████" }],
+    isRaw: false,
+    codes: [{ type: "TEXT", pos: 0, raw: "██👍🏻█\\n█🌍██\\r\\n██𝒜█\\r████", plain: "██👍🏻█\n█🌍██\n██𝒜█\n████" }],
   });
 });
 
@@ -171,7 +171,7 @@ test("Escape sequences without visible characters", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     visualWidth: 0,
     plain: "",
-    unescaped: "\u001b[31m\u001b[0m",
+    isRaw: false,
     codes: [
       { type: "CSI", pos: 0, raw: "\\x1b[31m", params: ["31"], command: "m" },
       { type: "CSI", pos: 8, raw: "\\x1b[0m", params: ["0"], command: "m" },
@@ -193,13 +193,13 @@ test("Hyperlinks", () => {
     ],
     visualWidth: 13,
     plain: "- text\n- next",
-    unescaped: "- \x1b]8;;https://e.orgtext\x1b]8;;\n- \x1b]8;;https://e.org/nextnext\x1b]8;;",
+    isRaw: false,
     codes: [
-      { type: "TEXT", pos: 0, raw: "- " },
+      { type: "TEXT", pos: 0, raw: "- ", plain: "- " },
       { type: "OSC", pos: 2, raw: "\\u001b]8;;https://e.org\\u0007", params: ["", "https://e.org"], command: "8" },
-      { type: "TEXT", pos: 31, raw: "text" },
+      { type: "TEXT", pos: 31, raw: "text", plain: "text" },
       { type: "OSC", pos: 35, raw: "\\u001b]8;;\\u0007", params: ["", ""], command: "8" },
-      { type: "TEXT", pos: 51, raw: "\\n- " },
+      { type: "TEXT", pos: 51, raw: "\\n- ", plain: "\n- " },
       {
         type: "OSC",
         pos: 55,
@@ -207,7 +207,7 @@ test("Hyperlinks", () => {
         params: ["", "https://e.org/next"],
         command: "8",
       },
-      { type: "TEXT", pos: 89, raw: "next" },
+      { type: "TEXT", pos: 89, raw: "next", plain: "next" },
       { type: "OSC", pos: 93, raw: "\\u001b]8;;\\u0007", params: ["", ""], command: "8" },
     ],
   });
@@ -222,7 +222,7 @@ test("\\e escape sequence and terminators", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     visualWidth: 0,
     plain: "",
-    unescaped: "\u001b]0;title\u0007\u001b]0;title2\u0007",
+    isRaw: false,
     codes: [
       { type: "OSC", pos: 0, raw: "\\e]0;title\\a", params: ["title"], command: "0" },
       { type: "OSC", pos: 12, raw: "\\e]0;title2\\x07", params: ["title2"], command: "0" },
@@ -239,51 +239,46 @@ test("OSC \\ terminator", () => {
     reverseMap: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     visualWidth: 0,
     plain: "",
-    unescaped: "\u001b]0;title\u001b\\",
+    isRaw: false,
     codes: [{ type: "OSC", pos: 0, raw: "\\x1b]0;title\\x1b\\\\", params: ["title"], command: "0" }],
   });
 });
 
 test("OSC 133 - Set Mark", () => {
   const input = String.raw`\x1b]133;A\x1b\\`;
-  const { visualWidth, plain, unescaped } = parseInput(input);
+  const { visualWidth, plain } = parseInput(input);
   assert.equal(visualWidth, 0);
   assert.equal(plain, "");
-  assert.equal(unescaped, "\u001b]133;A\u001b\\");
 });
 
 test("OSC 1337 - Set User Variable", () => {
   const input = String.raw`\x1b]1337;SetUserVar=foo=YmFy\x07`;
-  const { visualWidth, plain, unescaped } = parseInput(input);
+  const { visualWidth, plain } = parseInput(input);
   assert.equal(visualWidth, 0);
   assert.equal(plain, "");
-  assert.equal(unescaped, "\u001b]1337;SetUserVar=foo=YmFy\u0007");
 });
 
 test("OSC 1337 - Set Current Directory", () => {
   const input = String.raw`\x1b]1337;CurrentDir=/Users/george\x07`;
-  const { visualWidth, plain, unescaped } = parseInput(input);
+  const { visualWidth, plain } = parseInput(input);
   assert.equal(visualWidth, 0);
   assert.equal(plain, "");
-  assert.equal(unescaped, "\u001b]1337;CurrentDir=/Users/george\u0007");
 });
 
 test("ESC - Set G1 Charset to UK", () => {
   const input = String.raw`\x1b(Ab`;
-  const { visualWidth, plain, unescaped, codes } = parseInput(input);
+  const { visualWidth, plain, codes } = parseInput(input);
   assert.equal(visualWidth, 1);
   assert.equal(plain, "b");
-  assert.equal(unescaped, "\u001b(Ab");
   assert.deepEqual(codes, [
     { type: "ESC", pos: 0, raw: "\\x1b(A", command: "(", params: ["A"] },
-    { type: "TEXT", pos: 6, raw: "b" },
+    { type: "TEXT", pos: 6, raw: "b", plain: "b" },
   ]);
 });
 
 test("DEC Private Mode - Enable Alternate Screen Buffer", () => {
   const input = String.raw`\x1b[?1049h`;
-  const { visualWidth, plain, unescaped } = parseInput(input);
+  const { visualWidth, plain } = parseInput(input);
   assert.equal(visualWidth, 0);
   assert.equal(plain, "");
-  assert.equal(unescaped, "\u001b[?1049h");
 });
