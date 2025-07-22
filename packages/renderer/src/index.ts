@@ -5,8 +5,4 @@ export async function renderString(input: string): Promise<Renderer> {
   return Renderer.fromString(input);;
 }
 
-export function createRenderStream(): RenderStream {
-  return new RenderStream();
-}
-
-export { Renderer };
+export { Renderer, RenderStream };

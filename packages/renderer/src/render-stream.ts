@@ -2,24 +2,26 @@ import {Writable, WritableOptions} from "node:stream";
 import {Renderer} from "./renderer.ts";
 import {parse} from "@ansi-tools/parser";
 
-export class RenderStream extends Writable {
-  public get isRenderStream(): boolean {
-    return true;
-  }
+const renderStreamBrand = Symbol.for('ansi-tools:render-stream');
 
-  public get renderer(): Renderer {
-    return this.#renderer;
+export class RenderStream extends Writable {
+  [renderStreamBrand] = true;
+
+  get renderer(): Renderer {
+    const ast = parse(this.#buffer.join(''));
+    const renderer = new Renderer();
+
+    for (const code of ast) {
+      renderer.write(code);
+    }
+
+    return renderer;
   }
 
   #buffer: string[] = [];
-  #renderer: Renderer = new Renderer();
 
   constructor(opts?: WritableOptions) {
     super(opts);
-
-    this.on('end', () => {
-      this.#updateRenderer();
-    });
   }
 
   _write(
@@ -29,13 +31,5 @@ export class RenderStream extends Writable {
   ): void {
     this.#buffer.push(String(chunk));
     callback();
-  }
-
-  #updateRenderer(): void {
-    const ast = parse(this.#buffer.join(''));
-
-    for (const code of ast) {
-      this.#renderer.write(code);
-    }
   }
 }
