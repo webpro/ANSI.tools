@@ -1,0 +1,56 @@
+{
+  "name": "@ansi-tools/renderer",
+  "version": "1.0.7",
+  "description": "Renders strings containing ANSI escape codes to various outputs.",
+  "main": "./dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./escaped": {
+      "types": "./dist/escaped.d.ts",
+      "import": "./dist/escaped.js",
+      "default": "./dist/escaped.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "pnpm type-check && pnpm test",
+    "build": "tsdown --dts src/index.ts",
+    "dev": "tsdown --dts src/index.ts --watch",
+    "test": "node --test",
+    "type-check": "tsc",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "ansi",
+    "term",
+    "terminal",
+    "ink"
+  ],
+  "author": "ANSI tools maintainers (https://github.com/webpro/ANSI.tools)",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/webpro/ANSI.tools/tree/main/packages/renderer",
+  "bugs": "https://github.com/webpro/ANSI.tools/issues",
+  "repository": {
+    "type": "git",
+    "url": "github:webpro/ANSI.tools",
+    "directory": "packages/renderer"
+  },
+  "dependencies": {
+    "@ansi-tools/parser": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.13",
+    "tsdown": "^0.12.9",
+    "typescript": "^5.8.3"
+  }
+}
