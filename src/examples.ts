@@ -1,15 +1,11 @@
 export const examples = [
   {
-    label: "colors",
-    value: String.raw`\u001b[31mRed\u001b[39m, \u001b[32mgreen\u001b[39m, and \u001b[44mblue background\u001b[49m.\n\n\x1b[38;2;255;255;0mH\x1b[0;1;3;35me\x1b[95ml\x1b[42ml\x1b[0;41mo\x1b[0m`,
+    label: "styles",
+    value: String.raw`\x1b[38;2;255;255;0mH\x1b[0;1;3;35me\x1b[95ml\x1b[42ml\x1b[0;41mo\x1b[0m\n\n\u001b[31mRed\u001b[39m, \u001b[32mgreen\u001b[39m, and \u001b[44mblue background\u001b[49m.\n\n\u001b[1mBold\u001b[22m, \u001b[3mItalic\u001b[23m, \u001b[4mUnderline\u001b[24m, and \u001b[9mStrikethrough\u001b[29m.`,
   },
   {
     label: "mixed",
     value: String.raw`\x1b[3A\x1b[4D\x1b[sCursor \x1b[J\x1b[1;3Hmovements\x1b[u\x1b[13T\x1b[A\n\nPrivate sequences\n\e[>0c\e[>0;1f\e[>0g\e[>0;2m\e[>1p\e[=0c\e[<1h\e[<0;1;2c\n\n\x1b[K\x1b[1;32mOpened \x1b[1;4;34m%s\x1b[0;1;32m in your brows𝒜h 👍🏻\x1b[0m\n\n🌍 → ⭐ → ✨\n\n這裡有一些中文文字。\n\nThe End.`,
-  },
-  {
-    label: "styles",
-    value: String.raw`\u001b[1mBold\u001b[22m, \u001b[3mItalic\u001b[23m, \u001b[4mUnderline\u001b[24m, and \u001b[9mStrikethrough\u001b[29m.`,
   },
   {
     label: "commands",
