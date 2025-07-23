@@ -2,6 +2,7 @@ import { CODE_TYPES } from "@ansi-tools/parser";
 import type { CODE, CONTROL_CODE } from "@ansi-tools/parser";
 import { sgrMap, csiMap, oscMap, decMap, escMap, dcsMap, stringMap, privateMap, controlCodes } from "../codes.ts";
 import { ansiToPre } from "ansi-to-pre";
+import { ESC, ST } from "./string.ts";
 
 interface TableRow {
   type: CONTROL_CODE["type"];
@@ -27,6 +28,8 @@ const typeOrder: Record<TableRow["type"], number> = {
   SGR: 1,
   STRING: 8,
 };
+
+export const ERROR_SIGN = "🚫";
 
 export function sortControlCodes<T extends TableRow | LookupTableRow>(rows: T[]): T[] {
   return rows.toSorted((a, b) => {
@@ -65,7 +68,7 @@ function handleSGR(code: CONTROL_CODE): Match {
         descriptions.push(`${colorType}: 24-bit rgb(${r}, ${g}, ${b})`);
       }
     } else {
-      descriptions.push(`unknown SGR parameter: ${param}`);
+      descriptions.push(`${ERROR_SIGN} SGR parameter: ${param}`);
     }
     current = paramsIterator.next();
   }
@@ -76,11 +79,11 @@ function handleSGR(code: CONTROL_CODE): Match {
 function handleDEC(code: CONTROL_CODE): Match {
   const param = code.params?.[0] || "";
   const command = code.command;
-  const item = decMap.get(param.replace(/^\?/, ""));
+  const item = decMap.get(param);
 
   let description: string;
   if (!item) {
-    description = `unknown DEC mode ${param}`;
+    description = `${ERROR_SIGN} DEC mode ${param}`;
   } else if (command === "h") {
     description = `enable ${item.description}`;
   } else if (command === "l") {
@@ -94,7 +97,7 @@ function handleDEC(code: CONTROL_CODE): Match {
 
 function handleCSI(code: CONTROL_CODE): Match {
   const item = csiMap.get(code.command);
-  let description = `unknown CSI sequence: ${code.raw}`;
+  let description = `${ERROR_SIGN} CSI sequence`;
   if (item) {
     description = item.description;
     const param = code.params[0];
@@ -127,7 +130,7 @@ function handleOSC(code: CONTROL_CODE): Match {
       : code.command === "8"
         ? "hyperlink (end)"
         : item.description
-    : `unknown OSC command: ${code.raw}`;
+    : `${ERROR_SIGN} OSC command: ${code.raw}`;
   const sort = Number.parseInt(code.command, 10);
   return { sort, mnemonic: item?.mnemonic ?? "", description };
 }
@@ -135,7 +138,7 @@ function handleOSC(code: CONTROL_CODE): Match {
 function handleESC(code: CONTROL_CODE): Match {
   const key = code.params?.[0] ? `${code.command}${code.params[0]}` : `${code.command}`;
   const item = escMap.get(key);
-  const description = item ? item.description : `unknown escape sequence '${code.command}'`;
+  const description = item ? item.description : `${ERROR_SIGN} escape sequence`;
   return { sort: code.command, mnemonic: item?.mnemonic || "", description };
 }
 
@@ -184,11 +187,11 @@ export function extractControlCodes(codes: CODE[]): TableRow[] {
 function tpl(template?: string, example?: { [key: string]: string }) {
   if (!template) return "";
   if (!example) return template;
-  return template.replace(/<([^>]+)>/g, (_, varName) => example[varName]);
+  return template.replace(/([a-zA-Z ]*)<([^>]+)> ?([a-zA-Z]*)/g, (_, _prefix, varName, _suffix) => example[varName]);
 }
 
 export function createRowsFromCodes() {
-  const PREFIX = "ESC";
+  const PREFIX = ESC;
   const PREFIX_RAW = "\u001b";
   const PREFIX_RAW_ESCAPED = "\\u001b";
   const SUFFIX_RAW = "\\u0007";
@@ -225,7 +228,7 @@ export function createRowsFromCodes() {
 
       case CODE_TYPES.OSC: {
         const { mnemonic, description, template, end } = item;
-        const code = `${PREFIX}]${item.code}${template ?? ""}ST`;
+        const code = `${PREFIX}]${item.code}${template ?? ""}${ST}`;
         const example =
           template && item.example
             ? `${PREFIX_RAW_ESCAPED}` + `]${item.code}${tpl(template, item.example)}${SUFFIX_RAW}`
@@ -233,7 +236,7 @@ export function createRowsFromCodes() {
         rows.push({ type, sort: Number(item.code), code, mnemonic, description, example });
 
         if (end) {
-          const code = `${PREFIX}]${item.code}${end.template ?? ""}ST`;
+          const code = `${PREFIX}]${item.code}${end.template ?? ""}${ST}`;
           rows.push({ type, sort: Number(item.code), code, mnemonic, description: end.description, example: "" });
         }
         break;
@@ -254,7 +257,7 @@ export function createRowsFromCodes() {
 
       case CODE_TYPES.DCS: {
         const { code, mnemonic, description, template } = item;
-        const dcsCode = `${PREFIX}P${template ?? ""}${code}ST`;
+        const dcsCode = `${PREFIX}P${template ?? ""}${code}${ST}`;
         const example = template && item.example ? `\\u001bP${tpl(template, item.example)}${code}\\u001b\\\\` : "";
         rows.push({ type, sort: code, code: dcsCode, mnemonic, description, example });
         break;
@@ -268,7 +271,7 @@ export function createRowsFromCodes() {
         else if (code === "SOS") prefix = "X";
         else prefix = "_"; // fallback
 
-        const stringCode = `${PREFIX}${prefix}${template ?? ""}ST`;
+        const stringCode = `${PREFIX}${prefix}${template ?? ""}${ST}`;
         const example = template && item.example ? `\\u001b${prefix}${tpl(template, item.example)}\\u001b\\\\` : "";
         rows.push({ type, sort: code, code: stringCode, mnemonic, description, example });
         break;

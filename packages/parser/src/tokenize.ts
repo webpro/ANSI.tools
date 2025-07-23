@@ -2,10 +2,12 @@ import {
   APC,
   BACKSLASH,
   BELL,
+  C0_INTERRUPTERS,
   CSI,
   CSI_OPEN,
   DCS,
   ESC,
+  INTERRUPTERS,
   OSC,
   OSC_OPEN,
   PM,
@@ -98,9 +100,10 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       if (code === CSI) {
         while (i < input.length) {
           const char = input[i];
-          if (INTRODUCERS.has(char)) {
+          if (INTERRUPTERS.has(char)) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             setState("GROUND");
+            if (C0_INTERRUPTERS.has(char)) i++;
             break;
           }
           const charCode = char.charCodeAt(0);
@@ -117,8 +120,9 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       } else if (code === ESC) {
         if (i < input.length) {
           const char = input[i];
-          if (INTRODUCERS.has(char)) {
+          if (INTERRUPTERS.has(char)) {
             setState("GROUND");
+            if (C0_INTERRUPTERS.has(char)) i++;
           } else {
             yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
             i++;
@@ -146,9 +150,10 @@ export function* tokenizer(input: string): Generator<TOKEN> {
             break;
           }
 
-          if (INTRODUCERS.has(char)) {
+          if (INTERRUPTERS.has(char)) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             setState("GROUND");
+            if (C0_INTERRUPTERS.has(char)) i++;
             break;
           }
 

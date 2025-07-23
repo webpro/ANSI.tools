@@ -23,6 +23,13 @@
   white-space: nowrap;
 }
 
-.ansi-codes code {
-  padding: 0.2em 0.4em;
+.ansi-codes tfoot {
+  font-size: 0.9em;
+  font-style: italic;
+  color: #888;
+}
+
+.ansi-codes tfoot td {
+  padding-top: 2rem;
+  border: none;
 }

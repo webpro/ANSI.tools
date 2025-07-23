@@ -33,8 +33,13 @@ export function split(value: string, limit: number): [string, string] {
   return [value, ""];
 }
 
+export const ESC = "␛";
+export const CAN = "␘";
+export const SUB = "␚";
+export const ST = "ST";
+
 export function toRaw(value: string, isRaw: boolean): string {
-  return isRaw ? value.split("\u001b").join("␛") : value;
+  return isRaw ? value.split("\x1b").join(ESC).split("\x18").join(CAN).split("\x1a").join(SUB) : value;
 }
 
 const DEC_SPECIAL_GRAPHICS = new Map([

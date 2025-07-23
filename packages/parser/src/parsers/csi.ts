@@ -1,9 +1,9 @@
 import { CODE_TYPES } from "../constants.ts";
 import type { CODE, TOKEN } from "../types.ts";
 
-export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): CODE {
+export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
   const data = dataTokens.map(t => t.raw).join("");
-  const raw = introducer.raw + data + final.raw;
+  const raw = introducer.raw + data + (final?.raw || "");
   const params = [];
   let intermediates = "";
   if (data) {
@@ -31,7 +31,7 @@ export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): 
   return { type: CODE_TYPES.CSI, pos: introducer.pos, raw, command, params };
 }
 
-export function parsePrivateCSI(introducer: TOKEN, dataTokens: TOKEN[], finalToken: TOKEN): CODE {
+export function parsePrivateCSI(introducer: TOKEN, dataTokens: TOKEN[], finalToken: TOKEN | undefined): CODE {
   const data = dataTokens.map(t => t.raw).join("");
   const raw = introducer.raw + data + (finalToken?.raw ?? "");
   const privateIndicator = data[0] || "";
@@ -39,7 +39,7 @@ export function parsePrivateCSI(introducer: TOKEN, dataTokens: TOKEN[], finalTok
   const match = withoutIndicator.match(/^([\d;:]*)(.*)/);
   const paramsRaw = match?.[1] ?? "";
   const intermediates = match?.[2] ?? "";
-  const command = `${privateIndicator}${intermediates}${finalToken.raw}`;
+  const command = `${privateIndicator}${intermediates}${finalToken?.raw ?? ""}`;
   const params = [];
   if (paramsRaw) {
     let current = "";

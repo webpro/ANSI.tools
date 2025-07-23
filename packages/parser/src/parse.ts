@@ -62,46 +62,44 @@ export function* parser(tokens: Generator<TOKEN>): Generator<CODE> {
           break;
         } else if (nextToken.type === TOKEN_TYPES.INTRODUCER) {
           break;
+        } else if (nextToken.type === TOKEN_TYPES.TEXT) {
+          break;
         }
         current = tokens.next();
       }
 
-      if (final) {
-        switch (introducer.code) {
-          case CSI:
-            if (data[0]?.raw.startsWith(DEC_OPEN)) {
-              yield emit(parseDEC(introducer, data, final));
-            } else if (data[0]?.raw && PRIVATE_OPENERS.has(data[0].raw[0])) {
-              yield emit(parsePrivateCSI(introducer, data, final));
-            } else {
-              yield emit(parseCSI(introducer, data, final));
-            }
-            break;
-          case OSC:
-            yield emit(parseOSC(introducer, data, final));
-            break;
-          case DCS:
-          case DCS_OPEN:
-            yield emit(parseDCS(introducer, data, final));
-            break;
-          case APC:
-          case APC_OPEN:
-            yield emit(parseAPC(introducer, data, final));
-            break;
-          case PM:
-          case PM_OPEN:
-            yield emit(parsePM(introducer, data, final));
-            break;
-          case SOS:
-          case SOS_OPEN:
-            yield emit(parseSOS(introducer, data, final));
-            break;
-          case ESC:
-            yield emit(parseESC(introducer, data, final));
-            break;
-        }
-      } else if (introducer.code === ESC) {
-        yield emit(parseESC(introducer, data, undefined));
+      switch (introducer.code) {
+        case CSI:
+          if (data[0]?.raw.startsWith(DEC_OPEN)) {
+            yield emit(parseDEC(introducer, data, final));
+          } else if (data[0]?.raw && PRIVATE_OPENERS.has(data[0].raw[0])) {
+            yield emit(parsePrivateCSI(introducer, data, final));
+          } else {
+            yield emit(parseCSI(introducer, data, final));
+          }
+          break;
+        case OSC:
+          yield emit(parseOSC(introducer, data, final));
+          break;
+        case DCS:
+        case DCS_OPEN:
+          yield emit(parseDCS(introducer, data, final));
+          break;
+        case APC:
+        case APC_OPEN:
+          yield emit(parseAPC(introducer, data, final));
+          break;
+        case PM:
+        case PM_OPEN:
+          yield emit(parsePM(introducer, data, final));
+          break;
+        case SOS:
+        case SOS_OPEN:
+          yield emit(parseSOS(introducer, data, final));
+          break;
+        case ESC:
+          yield emit(parseESC(introducer, data, final));
+          break;
       }
     } else {
       current = tokens.next();

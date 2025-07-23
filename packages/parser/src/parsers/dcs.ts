@@ -9,7 +9,7 @@ const DCS_PATTERNS = new Map([
   ["{", 1],
 ]);
 
-export function parseDCS(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): CODE {
+export function parseDCS(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
   const data = dataTokens.map(t => t.raw).join("");
   const raw = introducer.raw + data + (final?.raw ?? "");
   if (!data) return { type: CODE_TYPES.DCS, pos: introducer.pos, raw, command: "", params: [] };

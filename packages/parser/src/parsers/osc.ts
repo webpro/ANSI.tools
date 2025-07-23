@@ -1,9 +1,9 @@
 import { CODE_TYPES } from "../constants.ts";
 import type { CODE, TOKEN } from "../types.ts";
 
-export function parseOSC(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): CODE {
+export function parseOSC(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
   const data = dataTokens.map(t => t.raw).join("");
-  const raw = introducer.raw + data + final.raw;
+  const raw = introducer.raw + data + (final?.raw || "");
   const semicolonIndex = data.indexOf(";");
   if (semicolonIndex === -1) {
     return { type: CODE_TYPES.OSC, pos: introducer.pos, raw, command: data, params: [] };

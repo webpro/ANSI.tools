@@ -16,6 +16,20 @@ const INTRODUCERS = [
   ["\\e", 2],
 ] as const;
 
+const INTERRUPTERS_ESCAPED = [
+  ["\\x18", 4],
+  ["\\x1a", 4],
+  ["\\u0018", 6],
+  ["\\u001a", 6],
+] as const;
+
+const INTERRUPTER_LOOKUP = new Map<string, [string, number][]>();
+for (const [sequence, len] of INTERRUPTERS_ESCAPED) {
+  const secondChar = sequence[1];
+  if (!INTERRUPTER_LOOKUP.has(secondChar)) INTERRUPTER_LOOKUP.set(secondChar, []);
+  INTERRUPTER_LOOKUP.get(secondChar)?.push([sequence, len]);
+}
+
 const INTRODUCER_LOOKUP = new Map<string, [string, number][]>();
 const INTRODUCER_FIRST_CHAR_CACHE = new Map<string, boolean>();
 
@@ -155,8 +169,32 @@ export function* tokenizer(input: string): Generator<TOKEN> {
       while (!terminator && i < l) {
         const char = input[i];
         if (char === BACKSLASH) {
+          const next = input[i + 1];
+          if (next) {
+            const interrupters = INTERRUPTER_LOOKUP.get(next);
+            if (interrupters) {
+              for (const [seq, len] of interrupters) {
+                if (i + len <= l) {
+                  let matched = true;
+                  for (let k = 0; k < len; k++) {
+                    if (input[i + k] !== seq[k]) {
+                      matched = false;
+                      break;
+                    }
+                  }
+                  if (matched) {
+                    terminator = ABANDONED;
+                    terminatorPos = i;
+                    i += len;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          if (terminator) break;
+
           if (code !== CSI && code !== ESC) {
-            const next = input[i + 1];
             if (next === "a" && i + 2 <= l) {
               if (code === OSC && input[i + 1] === "a") {
                 terminator = "\\a";
@@ -203,7 +241,6 @@ export function* tokenizer(input: string): Generator<TOKEN> {
           }
 
           if (!terminator) {
-            const next = input[i + 1];
             if (next) {
               const candidates = INTRODUCER_LOOKUP.get(next);
               if (candidates) {
