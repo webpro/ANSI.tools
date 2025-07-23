@@ -69,7 +69,7 @@ test("Alternating escape sequence", () => {
     plain: "Hello",
     isRaw: false,
     codes: [
-      { type: "CSI", pos: 0, raw: "\\x1b[38;2;255;255;0m", params: ["38", "2", "255", "255", "0"], command: "m" },
+      { type: "CSI", pos: 0, raw: "\\x1b[38;2;255;255;0m", params: ["38", "2", "0", "255", "255", "0"], command: "m" },
       { type: "TEXT", pos: 20, raw: "H", plain: "H" },
       { type: "CSI", pos: 21, raw: "\\x1b[0;1;3;35m", params: ["0", "1", "3", "35"], command: "m" },
       { type: "TEXT", pos: 35, raw: "e", plain: "e" },

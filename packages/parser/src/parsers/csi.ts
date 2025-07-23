@@ -23,6 +23,11 @@ export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN): 
     }
   }
   const command = intermediates + (final?.raw ?? "");
+
+  if (command === "m" && params.length === 5 && params[1] === "2" && (params[0] === "38" || params[0] === "48")) {
+    params.splice(2, 0, "0");
+  }
+
   return { type: CODE_TYPES.CSI, pos: introducer.pos, raw, command, params };
 }
 

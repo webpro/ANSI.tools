@@ -106,7 +106,7 @@ test("unicode in OSC title", t => {
 test("24-bit color with combining chars", t => {
   const input = String.raw`\x1b[38;2;255;0;128m🌈\u0301\u0302\u0303\x1b[0m`;
   const expected: CODE[] = [
-    { type: "CSI", pos: 0, raw: "\\x1b[38;2;255;0;128m", command: "m", params: ["38", "2", "255", "0", "128"] },
+    { type: "CSI", pos: 0, raw: "\\x1b[38;2;255;0;128m", command: "m", params: ["38", "2", "0", "255", "0", "128"] },
     { type: "TEXT", pos: 20, raw: "🌈\\u0301\\u0302\\u0303" },
     { type: "CSI", pos: 40, raw: "\\x1b[0m", command: "m", params: ["0"] },
   ];

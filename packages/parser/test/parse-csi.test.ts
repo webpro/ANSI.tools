@@ -64,7 +64,7 @@ test("parseCSI with colon-delimited SGR", () => {
     pos: 0,
     raw: "\\e[38:2:10:20:30m",
     command: "m",
-    params: ["38", "2", "10", "20", "30"],
+    params: ["38", "2", "0", "10", "20", "30"],
   });
 });
 
@@ -90,7 +90,33 @@ test("parseCSI with subparameters", () => {
     pos: 0,
     raw: "\\e[38;2;255;128;0m",
     command: "m",
-    params: ["38", "2", "255", "128", "0"],
+    params: ["38", "2", "0", "255", "128", "0"],
+  });
+});
+
+test("parseCSI with 48;2 background color", () => {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "48;2;128;64;32" }];
+  const final: TOKEN = { type: "FINAL", pos: 17, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
+    type: "CSI",
+    pos: 0,
+    raw: "\\e[48;2;128;64;32m",
+    command: "m",
+    params: ["48", "2", "0", "128", "64", "32"],
+  });
+});
+
+test("parseCSI with 6-parameter 24-bit color (standards-compliant)", () => {
+  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[", code: "CSI" };
+  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 3, raw: "38;2;0;255;128;64" }];
+  const final: TOKEN = { type: "FINAL", pos: 19, raw: "m" };
+  assert.deepEqual(parseCSI(introducer, dataTokens, final), {
+    type: "CSI",
+    pos: 0,
+    raw: "\\e[38;2;0;255;128;64m",
+    command: "m",
+    params: ["38", "2", "0", "255", "128", "64"],
   });
 });
 
