@@ -1,13 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseDEC } from "../src/parsers/dec.ts";
-import type { TOKEN } from "../src/types.ts";
+import { parseCSI } from "../src/parsers/csi.ts";
+import { tokenizeWithFinalizer } from "./helpers.ts";
 
-test("parseDEC basic sequence", () => {
-  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
-  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "25" }];
-  const final: TOKEN = { type: "FINAL", pos: 6, raw: "h" };
-  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
+test("parseCSI basic sequence", () => {
+  const [introducer, data, final] = tokenizeWithFinalizer(String.raw`\e[?25h`);
+  assert.deepEqual(parseCSI(introducer, data, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?25h",
@@ -16,24 +14,20 @@ test("parseDEC basic sequence", () => {
   });
 });
 
-test("parseDEC with missing parameters", () => {
-  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
-  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: ";" }];
-  const final: TOKEN = { type: "FINAL", pos: 5, raw: "h" };
-  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
+test("parseCSI with missing parameters", () => {
+  const [introducer, data, final] = tokenizeWithFinalizer(String.raw`\e[?;h`);
+  assert.deepEqual(parseCSI(introducer, data, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?;h",
     command: "h",
-    params: ["-1", "-1"],
+    params: ["0"],
   });
 });
 
-test("parseDEC with intermediate bytes", () => {
-  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
-  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1$" }];
-  const final: TOKEN = { type: "FINAL", pos: 6, raw: "p" };
-  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
+test("parseCSI with intermediate bytes", () => {
+  const [introducer, data, final] = tokenizeWithFinalizer(String.raw`\e[?1$p`);
+  assert.deepEqual(parseCSI(introducer, data, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1$p",
@@ -42,11 +36,9 @@ test("parseDEC with intermediate bytes", () => {
   });
 });
 
-test("parseDEC multiple parameters with intermediates", () => {
-  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
-  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1;2$" }];
-  const final: TOKEN = { type: "FINAL", pos: 8, raw: "p" };
-  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
+test("parseCSI multiple parameters with intermediates", () => {
+  const [introducer, data, final] = tokenizeWithFinalizer(String.raw`\e[?1;2$p`);
+  assert.deepEqual(parseCSI(introducer, data, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1;2$p",
@@ -55,11 +47,9 @@ test("parseDEC multiple parameters with intermediates", () => {
   });
 });
 
-test("parseDEC with colon in parameters", () => {
-  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
-  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1:2" }];
-  const final: TOKEN = { type: "FINAL", pos: 8, raw: "h" };
-  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
+test("parseCSI with colon in parameters", () => {
+  const [introducer, data, final] = tokenizeWithFinalizer(String.raw`\e[?1:2h`);
+  assert.deepEqual(parseCSI(introducer, data, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1:2h",
@@ -68,11 +58,9 @@ test("parseDEC with colon in parameters", () => {
   });
 });
 
-test("parseDEC with intermediates and colons", () => {
-  const introducer: TOKEN = { type: "INTRODUCER", pos: 0, raw: "\\e[?", code: "CSI" };
-  const dataTokens: TOKEN[] = [{ type: "DATA", pos: 4, raw: "1:2$" }];
-  const final: TOKEN = { type: "FINAL", pos: 9, raw: "p" };
-  assert.deepEqual(parseDEC(introducer, dataTokens, final), {
+test("parseCSI with intermediates and colons", () => {
+  const [introducer, data, final] = tokenizeWithFinalizer(String.raw`\e[?1:2$p`);
+  assert.deepEqual(parseCSI(introducer, data, final), {
     type: "DEC",
     pos: 0,
     raw: "\\e[?1:2$p",

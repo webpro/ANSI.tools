@@ -49,8 +49,7 @@ function handleSGR(code: CONTROL_CODE): Match {
   let current = paramsIterator.next();
 
   while (!current.done) {
-    const rawParam = current.value === "-1" ? "0" : current.value;
-    const param = String(Number(rawParam));
+    const param = String(Number(current.value));
     const item = sgrMap.get(param);
 
     if (item) {
@@ -110,7 +109,7 @@ function handleCSI(code: CONTROL_CODE): Match {
         for (let i = 0; i < params.length && i < code.params.length; i++) {
           const paramName = params[i].slice(1, -1);
           const rawValue = code.params[i];
-          const value = rawValue === "-1" ? (item.defaults?.[paramName] ?? "1") : rawValue || "1";
+          const value = rawValue || (item.defaults?.[paramName] ?? "1");
           view = view.replace(`<${paramName}>`, value);
         }
         description += ` (${view})`;

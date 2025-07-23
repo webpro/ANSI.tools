@@ -18,6 +18,11 @@ export function unescapeInput(text: string) {
     .replace(/\\n/g, "\n");
 }
 
+export function tokenizeWithFinalizer(input: string): [TOKEN, TOKEN[], TOKEN | undefined] {
+  const [introducer, ...rest] = tokenizeEscaped(input);
+  return [introducer, rest.slice(0, -1), rest.at(-1)];
+}
+
 testAssertions.register("equalTokens", (tokenizeFn, input, expected) => {
   if (tokenizeFn === tokenizeEscaped) {
     assert.deepEqual(tokenizeFn(input), expected);

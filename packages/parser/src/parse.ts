@@ -5,19 +5,16 @@ import {
   CSI,
   DCS_OPEN,
   DCS,
-  DEC_OPEN,
   ESC,
   OSC,
   PM_OPEN,
   PM,
-  PRIVATE_OPENERS,
   SOS_OPEN,
   SOS,
   TOKEN_TYPES,
 } from "./constants.ts";
-import { parseCSI, parsePrivateCSI } from "./parsers/csi.ts";
+import { parseCSI } from "./parsers/csi.ts";
 import { parseDCS } from "./parsers/dcs.ts";
-import { parseDEC } from "./parsers/dec.ts";
 import { parseESC } from "./parsers/esc.ts";
 import { parseOSC } from "./parsers/osc.ts";
 import { parseAPC } from "./parsers/apc.ts";
@@ -70,13 +67,7 @@ export function* parser(tokens: Generator<TOKEN>): Generator<CODE> {
 
       switch (introducer.code) {
         case CSI:
-          if (data[0]?.raw.startsWith(DEC_OPEN)) {
-            yield emit(parseDEC(introducer, data, final));
-          } else if (data[0]?.raw && PRIVATE_OPENERS.has(data[0].raw[0])) {
-            yield emit(parsePrivateCSI(introducer, data, final));
-          } else {
-            yield emit(parseCSI(introducer, data, final));
-          }
+          yield emit(parseCSI(introducer, data, final));
           break;
         case OSC:
           yield emit(parseOSC(introducer, data, final));

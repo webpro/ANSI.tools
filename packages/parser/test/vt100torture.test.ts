@@ -836,7 +836,7 @@ test("VT100 torture test (parse)", () => {
     { type: "CSI", pos: 6, command: "H", params: [], raw: "\u001b[H" },
     { type: "CSI", pos: 9, command: "q", params: ["1", "2", "3", "4"], raw: "\u001b[1;2;3;4q" },
     { type: "DCS", pos: 19, command: "", params: ["rEM1"], raw: "\u001bPrEM1\u001b\\" },
-    { type: "DEC", pos: 27, command: "h", params: ["?4"], raw: "\u001b[?4h" },
+    { type: "DEC", pos: 27, command: "h", params: ["4"], raw: "\u001b[?4h" },
     { type: "CSI", pos: 32, command: "m", params: ["0"], raw: "\u001b[0m" },
     { type: "TEXT", pos: 36, raw: "\u000a" },
     { type: "CSI", pos: 37, command: "H", params: [], raw: "\u001b[H" },
