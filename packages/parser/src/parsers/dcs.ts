@@ -1,4 +1,4 @@
-import { CODE_TYPES } from "../constants.ts";
+import { CODE_TYPES, PARAM_SEPARATOR } from "../constants.ts";
 import type { CODE, TOKEN } from "../types.ts";
 
 const DCS_PATTERNS = new Map([
@@ -19,16 +19,7 @@ export function parseDCS(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | 
       const remainder = data.slice(length);
       const params = [];
       if (remainder) {
-        let current = "";
-        for (let i = 0; i < remainder.length; i++) {
-          if (remainder[i] === ";") {
-            params.push(current || "-1");
-            current = "";
-          } else {
-            current += remainder[i];
-          }
-        }
-        params.push(current || "-1");
+        for (const part of remainder.split(PARAM_SEPARATOR)) params.push(part || "-1");
       }
       return { type: CODE_TYPES.DCS, pos: introducer.pos, raw, command: pattern, params };
     }

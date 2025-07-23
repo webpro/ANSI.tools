@@ -58,13 +58,17 @@ test("excessive parameters", t => {
 
 test("DCS interrupted by CSI", t => {
   const input = String.raw`\x1bP\x1b[31m`;
-  const expected: CODE[] = [{ type: "CSI", pos: 5, raw: "\\x1b[31m", command: "m", params: ["31"] }];
+  const expected: CODE[] = [
+    { type: "DCS", pos: 0, raw: "\\x1bP", command: "", params: [] },
+    { type: "CSI", pos: 5, raw: "\\x1b[31m", command: "m", params: ["31"] },
+  ];
   t.assert.equalCodesDual(input, expected);
 });
 
 test("hyperlink with embedded CSI", t => {
   const input = String.raw`\x1b]8;;\x1b[31murl\x07text\x1b]8;;\x07`;
   const expected: CODE[] = [
+    { type: "OSC", pos: 0, raw: "\\x1b]8;;", command: "8", params: ["", ""] },
     { type: "CSI", pos: 8, raw: "\\x1b[31m", command: "m", params: ["31"] },
     { type: "TEXT", pos: 16, raw: "url\\x07text" },
     { type: "OSC", pos: 27, raw: "\\x1b]8;;\\x07", command: "8", params: ["", ""] },
@@ -75,6 +79,7 @@ test("hyperlink with embedded CSI", t => {
 test("DEC interrupted by hyperlink", t => {
   const input = String.raw`\x1b[?1;2;3\x1b]8;;url\x07\x1b[4;5;6h`;
   const expected: CODE[] = [
+    { type: "DEC", pos: 0, raw: "\\x1b[?1;2;3", command: "", params: ["1", "2", "3"] },
     { type: "OSC", pos: 11, raw: "\\x1b]8;;url\\x07", command: "8", params: ["", "url"] },
     { type: "CSI", pos: 26, raw: "\\x1b[4;5;6h", command: "h", params: ["4", "5", "6"] },
   ];

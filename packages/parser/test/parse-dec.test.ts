@@ -64,7 +64,7 @@ test("parseDEC with colon in parameters", () => {
     pos: 0,
     raw: "\\e[?1:2h",
     command: "h",
-    params: ["1:2"],
+    params: ["1", "2"],
   });
 });
 
@@ -77,6 +77,6 @@ test("parseDEC with intermediates and colons", () => {
     pos: 0,
     raw: "\\e[?1:2$p",
     command: "$p",
-    params: ["1:2"],
+    params: ["1", "2"],
   });
 });

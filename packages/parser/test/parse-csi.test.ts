@@ -181,7 +181,7 @@ test("parsePrivateCSI with colon in parameters", () => {
     pos: 0,
     raw: "\\e[<1:2m",
     command: "<m",
-    params: ["1:2"],
+    params: ["1", "2"],
   });
 });
 
