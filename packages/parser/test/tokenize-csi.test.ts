@@ -299,3 +299,17 @@ test("very long sequences", t => {
   ];
   t.assert.equalTokensDual(input, expected);
 });
+
+test("malformed mixed 8-bit and 7-bit CSI", t => {
+  const input = String.raw`\x9b38;5;1mhello\x9b[0m`;
+  const expected = [
+    { type: "INTRODUCER", pos: 0, raw: "\\x9b", code: "\x9b" },
+    { type: "DATA", pos: 4, raw: "38;5;1" },
+    { type: "FINAL", pos: 10, raw: "m" },
+    { type: "TEXT", pos: 11, raw: "hello" },
+    { type: "INTRODUCER", pos: 16, raw: "\\x9b", code: "\x9b" },
+    { type: "FINAL", pos: 20, raw: "[" },
+    { type: "TEXT", pos: 21, raw: "0m" },
+  ];
+  t.assert.equalTokensDual(input, expected);
+});

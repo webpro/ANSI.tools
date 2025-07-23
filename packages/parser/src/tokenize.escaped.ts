@@ -6,11 +6,13 @@ type State = "GROUND" | "SEQUENCE";
 const debug = false;
 
 const CSI_ESCAPED = "\\u009b";
+const CSI_ESCAPED_HEX = "\\x9b";
 const ABANDONED = "ABANDONED";
 
 const INTRODUCERS = [
   ["\\u001b", 6],
   [CSI_ESCAPED, 6],
+  [CSI_ESCAPED_HEX, 4],
   ["\\x1b", 4],
   ["\\033", 4],
   ["\\e", 2],
@@ -115,7 +117,7 @@ export function* tokenizer(input: string): Generator<TOKEN> {
 
             if (isSeqMatch) {
               isMatch = true;
-              if (seq === CSI_ESCAPED) {
+              if (seq === CSI_ESCAPED || seq === CSI_ESCAPED_HEX) {
                 yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: CSI });
                 i += len;
                 setState("SEQUENCE", CSI);
