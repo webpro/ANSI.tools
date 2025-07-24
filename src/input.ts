@@ -1,8 +1,9 @@
 import { html } from "isum/preactive";
 import { examples } from "./examples.ts";
-import "./css/input.css";
 import { appState, rawInput } from "./app-state.ts";
 import { createSettingsStore } from "./util/settings.ts";
+import { getInputFromURL, updateURL } from "./util/url.ts";
+import "./css/input.css";
 
 export const load = async (url: string) => {
   const response = await fetch(url).catch(() => null);
@@ -11,17 +12,21 @@ export const load = async (url: string) => {
 
 export function Input() {
   const settings = createSettingsStore("input", { isClear: false });
-  if (!rawInput.value && !settings.isClear.value) rawInput.value = examples[0].value;
+
+  if (!rawInput.value && !settings.isClear.value) {
+    updateInput(getInputFromURL() || examples[0].value);
+  }
 
   function handleInput(event: InputEvent) {
     const target = event.target as HTMLTextAreaElement;
-    rawInput.value = target.value;
+    updateInput(target.value);
   }
 
-  async function handleExampleClick(value: string) {
+  async function updateInput(value: string) {
     if (settings.isClear.peek()) return;
-    if (value.match(/^\/[a-z.\\]+/)) rawInput.value = await load(value);
-    else rawInput.value = value;
+    const next = value.match(/^\/[a-z.\\]+/) ? await load(value) : value;
+    rawInput.value = next;
+    updateURL(next);
   }
 
   return () => html`
@@ -43,7 +48,10 @@ export function Input() {
             ?checked=${settings.isClear.value}
             @change=${() => {
               settings.isClear.value = !settings.isClear.peek();
-              if (settings.isClear.value) rawInput.value = "";
+              if (settings.isClear.value) {
+                rawInput.value = "";
+                updateURL("");
+              }
             }}
           />
           clear
@@ -54,7 +62,7 @@ export function Input() {
         <div id="example-buttons-container">
           ${examples
             .toReversed()
-            .map(example => html`<button @click=${() => handleExampleClick(example.value)}>${example.label}</button>`)}
+            .map(example => html`<button @click=${() => updateInput(example.value)}>${example.label}</button>`)}
         </div>
       </div>
     </div>
