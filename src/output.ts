@@ -23,7 +23,7 @@ export function Output() {
     const text = printable
       .map(code => code.plain ?? code.raw)
       .join("")
-      .replace(/\\u009b/gi, "\u001b[");
+      .replace(/\\(u009b|x9b)/gi, "\u001b[");
     const normalized = appState.value.isRaw ? text : unescapeInput(text);
     return ansiToPre(normalized);
   });
