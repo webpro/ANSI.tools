@@ -1,6 +1,7 @@
 const SEARCH_PARAM_NAME = "s";
 
 export function getInputFromURL(): string | null {
+  if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   const input = params.get(SEARCH_PARAM_NAME);
   if (!input) return null;
@@ -13,6 +14,7 @@ export function getInputFromURL(): string | null {
 }
 
 export function updateURL(input: string): void {
+  if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
   if (!input.trim()) url.searchParams.delete(SEARCH_PARAM_NAME);
   else url.searchParams.set(SEARCH_PARAM_NAME, encodeURIComponent(input));
