@@ -6,6 +6,7 @@
   "main": "src/main.ts",
   "type": "module",
   "scripts": {
+    "predev": "pnpm -F @ansi-tools/parser dev &",
     "dev": "vite",
     "prebuild": "pnpm -F @ansi-tools/parser build && pnpm type-check && pnpm test",
     "test": "node --test",
