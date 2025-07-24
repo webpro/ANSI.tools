@@ -1,7 +1,8 @@
-import { CODE_TYPES } from "@ansi-tools/parser";
 import type { CODE, CONTROL_CODE } from "@ansi-tools/parser";
-import { sgrMap, csiMap, oscMap, decMap, escMap, dcsMap, stringMap, privateMap, controlCodes } from "../codes.ts";
+import { CODE_TYPES } from "@ansi-tools/parser";
 import { ansiToPre } from "ansi-to-pre";
+import { controlCodes, csiMap, dcsMap, decMap, escMap, oscMap, privateMap, sgrMap, stringMap } from "../codes.ts";
+import { getColorName } from "./color.ts";
 import { ESC, ST } from "./string.ts";
 
 interface TableRow {
@@ -58,8 +59,9 @@ function handleSGR(code: CONTROL_CODE): Match {
       const colorType = param === "38" ? "fg color" : "bg color";
       const colorMode = paramsIterator.next().value;
       if (colorMode === "5") {
-        const color = paramsIterator.next().value;
-        descriptions.push(`${colorType}: 8-bit #${color}`);
+        const palette = paramsIterator.next().value;
+        const colorName = getColorName(Number(palette));
+        descriptions.push(`${colorType}: 8-bit ${colorName} (#${palette})`);
       } else if (colorMode === "2") {
         const r = paramsIterator.next().value;
         const g = paramsIterator.next().value;
