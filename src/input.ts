@@ -60,7 +60,7 @@ export function Input() {
         </label>
       </div>
       <div class="examples-dropdown">
-        <span class="examples-trigger">examples</span>
+        <button class="examples-trigger" type="button">examples</button>
         <div id="example-buttons-container">
           ${examples
             .toReversed()

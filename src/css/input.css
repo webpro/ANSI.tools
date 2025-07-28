@@ -76,11 +76,27 @@ button:hover {
 
 .examples-trigger {
   cursor: pointer;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 0.5rem;
+  white-space: nowrap;
 }
 
 .examples-trigger::after {
-  content: " ▲";
+  content: "▲";
   vertical-align: 1px;
+  display: inline-block;
+  margin-left: 0.5rem;
+  transform: rotate(-90deg);
+  transform-origin: center 60%;
+  transition: transform 0.3s ease;
+}
+
+.examples-dropdown:hover .examples-trigger::after,
+.examples-dropdown:focus-within .examples-trigger::after {
+  transform: rotate(0deg);
 }
 
 #example-buttons-container {
@@ -96,7 +112,8 @@ button:hover {
   align-items: flex-end;
 }
 
-.examples-dropdown:hover #example-buttons-container {
+.examples-dropdown:hover #example-buttons-container,
+.examples-dropdown:focus-within #example-buttons-container {
   display: flex;
   background-color: #333;
 }
