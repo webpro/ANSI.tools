@@ -14,7 +14,9 @@ export function Input() {
   const settings = createSettingsStore("input", { isClear: false });
 
   if (!rawInput.value && !settings.isClear.value) {
-    updateInput(getInputFromURL() || examples[0].value);
+    const input = getInputFromURL();
+    if (input) updateInput(input);
+    else rawInput.value = examples[0].value;
   }
 
   function handleInput(event: InputEvent) {
