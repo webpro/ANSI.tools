@@ -30,7 +30,7 @@ function emit(token: CODE) {
   return token;
 }
 
-export function* parser(tokens: Generator<TOKEN>): Generator<CODE> {
+export function* parser(tokens: IterableIterator<TOKEN>): IterableIterator<CODE> {
   let current = tokens.next();
 
   while (!current.done) {

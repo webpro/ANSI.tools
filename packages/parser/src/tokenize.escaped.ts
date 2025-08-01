@@ -47,7 +47,7 @@ function emit(token: TOKEN) {
   return token;
 }
 
-export function* tokenizer(input: string): Generator<TOKEN> {
+export function* tokenizer(input: string): IterableIterator<TOKEN> {
   const l = input.length;
   let i = 0;
   let state: State = "GROUND";
