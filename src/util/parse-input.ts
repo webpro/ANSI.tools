@@ -1,5 +1,5 @@
-import { parse } from "@ansi-tools/parser/escaped";
-import { parse as parseRaw } from "@ansi-tools/parser";
+import { parse as parseEscaped } from "@ansi-tools/parser/escaped";
+import { parse } from "@ansi-tools/parser";
 import { getSegments, mapDECSpecialGraphics, unescapeInput } from "./string.ts";
 import type { CODE } from "@ansi-tools/parser";
 
@@ -39,7 +39,7 @@ export function parseInput(input: string): ParsedInput {
   let isDECSpecialGraphics = false;
 
   const isRaw = isRawInput(input);
-  const codes: PROCESSED_CODE[] = isRaw ? parseRaw(input) : parse(input);
+  const codes: PROCESSED_CODE[] = isRaw ? parse(input) : parseEscaped(input);
 
   for (const code of codes) {
     const text = code.raw;
