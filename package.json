@@ -8,7 +8,7 @@
   "scripts": {
     "predev": "pnpm -F @ansi-tools/parser dev &",
     "dev": "vite",
-    "prebuild": "pnpm -F @ansi-tools/parser build && pnpm type-check && pnpm test",
+    "prebuild": "pnpm -r build && pnpm type-check && pnpm test",
     "test": "node --test",
     "build": "vite build",
     "postbuild": "node --import isum/no-css scripts/build.ts",
