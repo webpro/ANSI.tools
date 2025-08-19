@@ -22,8 +22,6 @@ type State = "GROUND" | "SEQUENCE";
 
 const debug = false;
 
-const INTRODUCERS = new Set([ESC, CSI, OSC, DCS, APC, PM, SOS]);
-
 function emit(token: TOKEN) {
   if (debug) console.log("token", token);
   return token;
@@ -45,7 +43,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       const textStart = i;
       while (i < input.length) {
         const char = input[i];
-        if (INTRODUCERS.has(char)) {
+        if (char === ESC || char === CSI || char === OSC || char === DCS || char === APC || char === PM || char === SOS) {
           break;
         }
         i++;
