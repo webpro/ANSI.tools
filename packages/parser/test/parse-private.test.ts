@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import type { CODE } from "../src/types.ts";
-import "./helpers.ts";
 
 test("private sequences with parameters", t => {
   const input = String.raw`\x1b[>0;2m\x1b[>1p`;

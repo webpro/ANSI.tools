@@ -23,7 +23,7 @@
     "prebuild": "pnpm type-check && pnpm test",
     "build": "tsdown --dts src/index.ts src/escaped.ts",
     "dev": "tsdown --dts src/index.ts src/escaped.ts --watch",
-    "test": "node --test",
+    "test": "node --import ./test/assertions.ts --test",
     "type-check": "tsc",
     "prepack": "pnpm build"
   },

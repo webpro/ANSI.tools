@@ -2,7 +2,6 @@ import { test } from "node:test";
 import { tokenize } from "../src/tokenize.ts";
 import { tokenize as tokenizeEscaped } from "../src/tokenize.escaped.ts";
 import assert from "node:assert/strict";
-import "./helpers.ts";
 
 test("DCS sequence", t => {
   const input = String.raw`\x1bP1$tcolor\x1b\\`;

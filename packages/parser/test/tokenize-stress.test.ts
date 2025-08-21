@@ -1,5 +1,4 @@
 import { test } from "node:test";
-import "./helpers.ts";
 import { tokenize } from "../src/tokenize.ts";
 import { tokenize as tokenizeEscaped } from "../src/tokenize.escaped.ts";
 

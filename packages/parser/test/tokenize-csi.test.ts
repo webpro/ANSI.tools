@@ -1,5 +1,4 @@
 import { test } from "node:test";
-import "./helpers.ts";
 
 test("basic CSI", t => {
   const input = String.raw`\x1b[31m`;

@@ -1,5 +1,4 @@
 import { test } from "node:test";
-import "./helpers.ts";
 
 test("ESC with charset", t => {
   const input = String.raw`\x1b(B`;

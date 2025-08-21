@@ -1,5 +1,4 @@
 import { test } from "node:test";
-import "./helpers.ts";
 
 test("OSC with BEL", t => {
   const input = String.raw`\x1b]0;title\x07`;

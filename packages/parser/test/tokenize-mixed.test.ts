@@ -1,5 +1,4 @@
 import { test } from "node:test";
-import "./helpers.ts";
 
 test("mixed string sequences with different terminators", t => {
   const input = String.raw`\x1b_app\e\\\x1bP0|data\x1b\\\x1b]0;title\x07`;

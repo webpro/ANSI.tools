@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import type { CODE } from "../src/types.ts";
-import "./helpers.ts";
 
 test("empty", t => {
   const input = String.raw``;

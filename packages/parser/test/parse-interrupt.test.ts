@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import type { CODE } from "../src/types.ts";
-import "./helpers.ts";
 
 test("CAN interrupting DEC sequence", t => {
   const input = String.raw`\u001b[31mRed \u001b[\u0018`;

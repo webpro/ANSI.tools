@@ -2,7 +2,6 @@ import { test } from "node:test";
 import { tokenize } from "../src/tokenize.ts";
 import { tokenize as tokenizeEscaped } from "../src/tokenize.escaped.ts";
 import type { TOKEN } from "../src/types.ts";
-import "./helpers.ts";
 
 test("empty input", t => {
   const input = String.raw``;
