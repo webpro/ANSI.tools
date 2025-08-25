@@ -1,16 +1,16 @@
 import {
   APC_OPEN,
-  APC,
+  APC_CODE,
   CODE_TYPES,
-  CSI,
+  CSI_CODE,
   DCS_OPEN,
-  DCS,
-  ESC,
-  OSC,
+  DCS_CODE,
+  ESC_CODE,
+  OSC_CODE,
   PM_OPEN,
-  PM,
+  PM_CODE,
   SOS_OPEN,
-  SOS,
+  SOS_CODE,
   TOKEN_TYPES,
 } from "./constants.ts";
 import { parseCSI } from "./parsers/csi.ts";
@@ -66,29 +66,29 @@ export function* parser(tokens: IterableIterator<TOKEN>): IterableIterator<CODE>
       }
 
       switch (introducer.code) {
-        case CSI:
+        case CSI_CODE:
           yield emit(parseCSI(introducer, data, final));
           break;
-        case OSC:
+        case OSC_CODE:
           yield emit(parseOSC(introducer, data, final));
           break;
-        case DCS:
+        case DCS_CODE:
         case DCS_OPEN:
           yield emit(parseDCS(introducer, data, final));
           break;
-        case APC:
+        case APC_CODE:
         case APC_OPEN:
           yield emit(parseAPC(introducer, data, final));
           break;
-        case PM:
+        case PM_CODE:
         case PM_OPEN:
           yield emit(parsePM(introducer, data, final));
           break;
-        case SOS:
+        case SOS_CODE:
         case SOS_OPEN:
           yield emit(parseSOS(introducer, data, final));
           break;
-        case ESC:
+        case ESC_CODE:
           yield emit(parseESC(introducer, data, final));
           break;
       }
