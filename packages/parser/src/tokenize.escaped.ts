@@ -65,6 +65,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
   let i = 0;
   let state: State = "GROUND";
   let currentCode: number | undefined;
+  let backslashIndex = input.indexOf(BACKSLASH_CODE);
 
   function setState(next: State, code?: number) {
     if (debug) console.log(`state ${state} → ${next}`);
@@ -76,7 +77,14 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
     if (state === "GROUND") {
       const textStart = i;
       while (i < l) {
-        const backslashIndex = input.indexOf(BACKSLASH_CODE, i);
+        if (backslashIndex === -1) {
+          i = l;
+          break;
+        }
+
+        if (backslashIndex < i) {
+          backslashIndex = input.indexOf(BACKSLASH_CODE, i);
+        }
 
         if (backslashIndex === -1) {
           i = l;
