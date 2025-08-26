@@ -96,13 +96,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         if (candidates) {
           for (const [seq, len] of candidates) {
             if (backslashIndex + len > l) continue;
-            let matched = true;
-            for (let k = 0; k < len && matched; k += 2) {
-              matched = input[backslashIndex + k] === seq[k];
-              if (matched && k + 1 < len) {
-                matched = input[backslashIndex + k + 1] === seq[k + 1];
-              }
-            }
+            const matched = input.startsWith(seq, backslashIndex);
             if (matched) {
               isIntroducer = true;
               break;
@@ -128,13 +122,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           let isMatch = false;
           for (const [seq, len] of candidates) {
             if (i + len > l) continue;
-            let isSeqMatch = true;
-            for (let k = 0; k < len && isSeqMatch; k += 2) {
-              isSeqMatch = input[i + k] === seq[k];
-              if (isSeqMatch && k + 1 < len) {
-                isSeqMatch = input[i + k + 1] === seq[k + 1];
-              }
-            }
+            const isSeqMatch = input.startsWith(seq, i);
 
             if (isSeqMatch) {
               isMatch = true;
