@@ -7,7 +7,7 @@ import { tokenize } from "../src/tokenize.ts";
 import { parse } from "../src/parse.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const tortureFilePath = join(__dirname, "../../../public/torturet.vt");
+const tortureFilePath = join(__dirname, "../../../apps/web/public/torturet.vt");
 const content = readFileSync(tortureFilePath, "utf8");
 
 test("VT100 torture test (tokenize)", () => {

@@ -1,0 +1,34 @@
+{
+  "name": "@ansi-tools/web",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Paste strings containing ANSI escape codes.",
+  "main": "src/main.ts",
+  "type": "module",
+  "scripts": {
+    "predev": "pnpm -F @ansi-tools/parser dev &",
+    "dev": "vite",
+    "prebuild": "pnpm -F @ansi-tools/parser build && pnpm type-check && pnpm test",
+    "test": "node --test src/**/*.test.ts",
+    "build": "vite build",
+    "postbuild": "node --import isum/no-css scripts/build.ts",
+    "type-check": "tsc"
+  },
+  "keywords": [
+    "ansi",
+    "escape codes",
+    "web application"
+  ],
+  "author": "Lars Kappert <lars@webpro.nl>",
+  "license": "ISC",
+  "dependencies": {
+    "@ansi-tools/parser": "workspace:*",
+    "ansi-to-pre": "^1.0.6",
+    "isum": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.13",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4"
+  }
+}

@@ -11,6 +11,6 @@
     "strict": true,
     "target": "esnext"
   },
-  "include": ["src", "scripts"],
+  "include": ["apps/web/src", "scripts"],
   "exclude": ["node_modules", "dist"]
 }
