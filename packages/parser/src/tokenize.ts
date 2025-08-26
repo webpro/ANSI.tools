@@ -1,11 +1,16 @@
 import {
   APC,
   BACKSLASH,
+  BACKSLASH_CODE,
   BELL,
+  BELL_CODE,
   C0_INTERRUPTERS,
   CSI,
   CSI_OPEN,
   DCS,
+  CSI_CODE,
+  OSC_CODE,
+  ESC_CODE,
   ESC,
   INTERRUPTERS,
   OSC,
@@ -13,6 +18,7 @@ import {
   PM,
   SOS,
   ST,
+  ST_CODE,
   STRING_OPENERS,
   TOKEN_TYPES,
 } from "./constants.ts";
@@ -22,8 +28,6 @@ type State = "GROUND" | "SEQUENCE";
 
 const debug = false;
 
-const INTRODUCERS = new Set([ESC, CSI, OSC, DCS, APC, PM, SOS]);
-
 function emit(token: TOKEN) {
   if (debug) console.log("token", token);
   return token;
@@ -32,9 +36,9 @@ function emit(token: TOKEN) {
 export function* tokenizer(input: string): IterableIterator<TOKEN> {
   let i = 0;
   let state: State = "GROUND";
-  let currentCode: string | undefined;
+  let currentCode: number | undefined;
 
-  function setState(next: State, code?: string) {
+  function setState(next: State, code?: number) {
     if (debug) console.log(`state ${state} → ${next}`);
     state = next;
     currentCode = code;
@@ -43,12 +47,16 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
   while (i < input.length) {
     if (state === "GROUND") {
       const textStart = i;
+      let charCode = input.charCodeAt(i);
+      let char = input[i];
+
       while (i < input.length) {
-        const char = input[i];
-        if (INTRODUCERS.has(char)) {
+        if (charCode === ESC || charCode === CSI || charCode === OSC || charCode === DCS || charCode === APC || charCode === PM || charCode === SOS) {
           break;
         }
         i++;
+        charCode = input.charCodeAt(i);
+        char = input[i];
       }
 
       if (i > textStart) {
@@ -56,32 +64,32 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
 
       if (i < input.length) {
-        const char = input[i];
-        if (char === CSI || char === OSC || char === DCS || char === APC || char === PM || char === SOS) {
+        if (charCode === CSI || charCode === OSC || charCode === DCS || charCode === APC || charCode === PM || charCode === SOS) {
           yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: char });
           i++;
-          setState("SEQUENCE", char);
-        } else if (char === ESC) {
+          setState("SEQUENCE", charCode);
+        } else if (charCode === ESC) {
           const next = input[i + 1];
-          if (next === CSI_OPEN) {
-            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: CSI });
+          const nextCode = input.charCodeAt(i + 1);
+          if (nextCode === CSI_OPEN) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: CSI_CODE });
             i += 2;
             setState("SEQUENCE", CSI);
-          } else if (next === OSC_OPEN) {
-            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: OSC });
+          } else if (nextCode === OSC_OPEN) {
+            yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: OSC_CODE });
             i += 2;
             setState("SEQUENCE", OSC);
           } else if (STRING_OPENERS.has(next)) {
             yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + next, code: next });
             i += 2;
-            setState("SEQUENCE", next);
+            setState("SEQUENCE", nextCode);
           } else if (next) {
             let j = i + 1;
             while (j < input.length && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
             if (j < input.length) {
               const is = input.slice(i + 1, j);
-              if (is) yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + is, code: ESC, intermediate: is });
-              else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC });
+              if (is) yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + is, code: ESC_CODE, intermediate: is });
+              else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC_CODE });
               i = j;
               setState("SEQUENCE", ESC);
             } else {
@@ -99,14 +107,14 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
 
       if (code === CSI) {
         while (i < input.length) {
+          const charCode = input.charCodeAt(i);
           const char = input[i];
-          if (INTERRUPTERS.has(char)) {
+          if (INTERRUPTERS.has(charCode)) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             setState("GROUND");
-            if (C0_INTERRUPTERS.has(char)) i++;
+            if (C0_INTERRUPTERS.has(charCode)) i++;
             break;
           }
-          const charCode = char.charCodeAt(0);
           if (charCode >= 0x40 && charCode <= 0x7e) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
@@ -119,10 +127,11 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         }
       } else if (code === ESC) {
         if (i < input.length) {
+          const charCode = input.charCodeAt(i);
           const char = input[i];
-          if (INTERRUPTERS.has(char)) {
+          if (INTERRUPTERS.has(charCode)) {
             setState("GROUND");
-            if (C0_INTERRUPTERS.has(char)) i++;
+            if (C0_INTERRUPTERS.has(charCode)) i++;
           } else {
             yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
             i++;
@@ -132,14 +141,15 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       } else if (code) {
         while (i < input.length) {
           const char = input[i];
+          const charCode = char.charCodeAt(0);
           let terminator: string | undefined;
 
-          if (char === ESC && input[i + 1] === BACKSLASH) {
-            terminator = ESC + BACKSLASH;
-          } else if (char === ST) {
-            terminator = ST;
-          } else if (char === BELL && code === OSC) {
-            terminator = BELL;
+          if (charCode === ESC && input.charCodeAt(i + 1) === BACKSLASH) {
+            terminator = ESC_CODE + BACKSLASH_CODE;
+          } else if (charCode === ST) {
+            terminator = ST_CODE;
+          } else if (charCode === BELL && code === OSC) {
+            terminator = BELL_CODE;
           }
 
           if (terminator) {
@@ -150,10 +160,10 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             break;
           }
 
-          if (INTERRUPTERS.has(char)) {
+          if (INTERRUPTERS.has(charCode)) {
             if (data) yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
             setState("GROUND");
-            if (C0_INTERRUPTERS.has(char)) i++;
+            if (C0_INTERRUPTERS.has(charCode)) i++;
             break;
           }
 
