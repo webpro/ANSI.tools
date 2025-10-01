@@ -24,7 +24,9 @@ export const APC = 159;
 export const APC_CODE = String.fromCharCode(APC);
 
 export const CSI_OPEN = "[".charCodeAt(0);
+export const CSI_OPEN_CODE = String.fromCharCode(CSI_OPEN);
 export const OSC_OPEN = "]".charCodeAt(0);
+export const OSC_OPEN_CODE = String.fromCharCode(OSC_OPEN);
 export const DEC_OPEN = "?".charCodeAt(0);
 export const PRIVATE_OPENERS = new Set(["<", "=", ">"]);
 

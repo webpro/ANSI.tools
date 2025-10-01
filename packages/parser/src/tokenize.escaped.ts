@@ -10,6 +10,8 @@ import {
   OSC_CODE,
   OSC_OPEN,
   STRING_OPENERS,
+  CSI_OPEN_CODE,
+  OSC_OPEN_CODE,
   TOKEN_TYPES
 } from "./constants.ts";
 import type { TOKEN } from "./types.ts";
@@ -132,19 +134,18 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
                 setState("SEQUENCE", CSI);
               } else {
                 const next = input[i + len];
-                const nextCode = input.charCodeAt(i + len);
-                if (nextCode === CSI_OPEN) {
+                if (next === CSI_OPEN_CODE) {
                   yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: CSI_CODE });
                   i += len + 1;
                   setState("SEQUENCE", CSI);
-                } else if (nextCode === OSC_OPEN) {
+                } else if (next === OSC_OPEN_CODE) {
                   yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: OSC_CODE });
                   i += len + 1;
                   setState("SEQUENCE", OSC);
                 } else if (STRING_OPENERS.has(next)) {
                   yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: next });
                   i += len + 1;
-                  setState("SEQUENCE", nextCode);
+                  setState("SEQUENCE", next.charCodeAt(0));
                 } else if (next) {
                   let j = i + len;
                   while (j < l && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
