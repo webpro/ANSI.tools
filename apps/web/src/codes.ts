@@ -371,40 +371,15 @@ export const controlCodes: ControlCodeItem[] = [
   { type: "PRIVATE", code: ">", description: "private sequence", template: ";<params>;<final>", example: { params: "0", final: "c" } },
 ];
 
-export const csiMap = new Map<string, ControlCodeItem>();
-export const dcsMap = new Map<string, ControlCodeItem>();
-export const decMap = new Map<string, ControlCodeItem>();
-export const escMap = new Map<string, ControlCodeItem>();
-export const oscMap = new Map<string, ControlCodeItem>();
-export const privateMap = new Map<string, ControlCodeItem>();
-export const sgrMap = new Map<string, ControlCodeItem>();
-export const stringMap = new Map<string, ControlCodeItem>();
+export const codeMaps = {
+  CSI: new Map<string, ControlCodeItem>(),
+  DCS: new Map<string, ControlCodeItem>(),
+  DEC: new Map<string, ControlCodeItem>(),
+  ESC: new Map<string, ControlCodeItem>(),
+  OSC: new Map<string, ControlCodeItem>(),
+  PRIVATE: new Map<string, ControlCodeItem>(),
+  SGR: new Map<string, ControlCodeItem>(),
+  STRING: new Map<string, ControlCodeItem>(),
+} as const;
 
-for (const code of controlCodes) {
-  switch (code.type) {
-    case "CSI":
-      csiMap.set(code.code, code);
-      break;
-    case "DCS":
-      dcsMap.set(code.code, code);
-      break;
-    case "DEC":
-      decMap.set(code.code, code);
-      break;
-    case "ESC":
-      escMap.set(code.code, code);
-      break;
-    case "OSC":
-      oscMap.set(code.code, code);
-      break;
-    case "PRIVATE":
-      privateMap.set(code.code, code);
-      break;
-    case "SGR":
-      sgrMap.set(code.code, code);
-      break;
-    case "STRING":
-      stringMap.set(code.code, code);
-      break;
-  }
-}
+for (const code of controlCodes) codeMaps[code.type].set(code.code, code);
