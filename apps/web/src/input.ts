@@ -25,10 +25,13 @@ export function Input() {
   }
 
   async function updateInput(value: string) {
-    if (settings.isClear.peek()) return;
     const next = value.match(/^\/[a-z.\\]+/) ? await load(value) : value;
     rawInput.value = next;
     updateURL(next);
+  }
+
+  function setExample(value: string) {
+    if (!settings.isClear.peek()) updateInput(value);
   }
 
   return () => html`
@@ -64,7 +67,7 @@ export function Input() {
         <div id="example-buttons-container">
           ${examples
             .toReversed()
-            .map(example => html`<button @click=${() => updateInput(example.value)}>${example.label}</button>`)}
+            .map(example => html`<button @click=${() => setExample(example.value)}>${example.label}</button>`)}
         </div>
       </div>
     </div>
