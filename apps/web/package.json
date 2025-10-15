@@ -8,10 +8,10 @@
   "scripts": {
     "predev": "pnpm -F @ansi-tools/parser dev &",
     "dev": "vite",
-    "prebuild": "pnpm -F @ansi-tools/parser build && pnpm type-check && pnpm test",
-    "test": "node --test src/**/*.test.ts",
+    "prebuild": "pnpm -F @ansi-tools/parser build",
     "build": "vite build",
     "postbuild": "node --import isum/no-css scripts/build.ts",
+    "test": "pnpm type-check && node --test src/**/*.test.ts",
     "type-check": "tsc"
   },
   "keywords": [

@@ -1,0 +1,15 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm --dir packages/parser run build
+      - run: pnpm --dir packages/parser run test
+      - run: pnpm --dir apps/web run test
