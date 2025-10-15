@@ -45,8 +45,8 @@
     "directory": "packages/parser"
   },
   "devDependencies": {
-    "@types/node": "^24.0.13",
-    "tsdown": "^0.12.9",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.7.2",
+    "tsdown": "^0.15.7",
+    "typescript": "^5.9.3"
   }
 }
