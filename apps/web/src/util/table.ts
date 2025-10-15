@@ -1,7 +1,7 @@
 import type { CODE, CONTROL_CODE } from "@ansi-tools/parser";
 import { CODE_TYPES } from "@ansi-tools/parser";
 import { ansiToPre } from "ansi-to-pre";
-import { controlCodes, csiMap, dcsMap, decMap, escMap, oscMap, privateMap, sgrMap, stringMap } from "../codes.ts";
+import { controlCodes, codeMaps } from "../codes.ts";
 import { getColorName } from "./color.ts";
 import { ESC, ST } from "./string.ts";
 
@@ -51,7 +51,7 @@ function handleSGR(code: CONTROL_CODE): Match {
 
   while (!current.done) {
     const param = String(Number(current.value));
-    const item = sgrMap.get(param);
+    const item = codeMaps.SGR.get(param);
 
     if (item) {
       descriptions.push(item.description);
@@ -80,7 +80,7 @@ function handleSGR(code: CONTROL_CODE): Match {
 function handleDEC(code: CONTROL_CODE): Match {
   const param = code.params?.[0] || "";
   const command = code.command;
-  const item = decMap.get(param);
+  const item = codeMaps.DEC.get(param);
 
   let description: string;
   if (!item) {
@@ -97,7 +97,7 @@ function handleDEC(code: CONTROL_CODE): Match {
 }
 
 function handleCSI(code: CONTROL_CODE): Match {
-  const item = csiMap.get(code.command);
+  const item = codeMaps.CSI.get(code.command);
   let description = `${ERROR_SIGN} CSI sequence`;
   if (item) {
     description = item.description;
@@ -123,7 +123,7 @@ function handleCSI(code: CONTROL_CODE): Match {
 }
 
 function handleOSC(code: CONTROL_CODE): Match {
-  const item = oscMap.get(code.command);
+  const item = codeMaps.OSC.get(code.command);
   const url = code.params.length > 1 ? code.params[1] : "";
   const description = item
     ? code.command === "8" && url
@@ -138,19 +138,19 @@ function handleOSC(code: CONTROL_CODE): Match {
 
 function handleESC(code: CONTROL_CODE): Match {
   const key = code.params?.[0] ? `${code.command}${code.params[0]}` : `${code.command}`;
-  const item = escMap.get(key);
+  const item = codeMaps.ESC.get(key);
   const description = item ? item.description : `${ERROR_SIGN} escape sequence`;
   return { sort: code.command, mnemonic: item?.mnemonic || "", description };
 }
 
 function handleDCS(code: CONTROL_CODE): Match {
-  const item = dcsMap.get(code.command);
+  const item = codeMaps.DCS.get(code.command);
   const description = item ? item.description : `device control string`;
   return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
 }
 
 function handleSTR(code: CONTROL_CODE): Match {
-  const item = stringMap.get(code.command);
+  const item = codeMaps.STRING.get(code.command);
   const description = item ? item.description : `string sequence (${code.command})`;
   return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
 }
@@ -158,7 +158,7 @@ function handleSTR(code: CONTROL_CODE): Match {
 function handlePRIVATE(code: CONTROL_CODE): Match {
   const command = code.command;
   const prefix = command[0];
-  const item = privateMap.get(prefix);
+  const item = codeMaps.PRIVATE.get(prefix);
   const known: Record<string, string> = {
     "<m": "private mouse SGR sequence",
     ">c": "secondary device attributes request",
