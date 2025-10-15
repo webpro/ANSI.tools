@@ -118,10 +118,9 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
     } else if (state === "SEQUENCE") {
       const pos = i;
-      const code = currentCode;
       let data = "";
 
-      if (code === CSI) {
+      if (currentCode === CSI) {
         while (i < input.length) {
           const charCode = input.charCodeAt(i);
           const char = input[i];
@@ -141,20 +140,19 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           data += char;
           i++;
         }
-      } else if (code === ESC) {
+      } else if (currentCode === ESC) {
         if (i < input.length) {
           const charCode = input.charCodeAt(i);
-          const char = input[i];
           if (INTERRUPTERS.has(charCode)) {
             setState("GROUND");
             if (C0_INTERRUPTERS.has(charCode)) i++;
           } else {
-            yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: char });
+            yield emit({ type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] });
             i++;
             setState("GROUND");
           }
         }
-      } else if (code) {
+      } else if (currentCode) {
         while (i < input.length) {
           const char = input[i];
           const charCode = char.charCodeAt(0);
@@ -164,7 +162,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             terminator = ESC_CODE + BACKSLASH_CODE;
           } else if (charCode === ST) {
             terminator = ST_CODE;
-          } else if (charCode === BELL && code === OSC) {
+          } else if (charCode === BELL && currentCode === OSC) {
             terminator = BELL_CODE;
           }
 

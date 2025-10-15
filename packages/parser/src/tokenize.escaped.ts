@@ -181,11 +181,9 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       let terminator = "";
       let terminatorPos = -1;
       const pos = i;
-      const code = currentCode;
 
       while (!terminator && i < l) {
-        const charCode = input.charCodeAt(i);
-        if (charCode === BACKSLASH) {
+        if (input.charCodeAt(i) === BACKSLASH) {
           const next = input[i + 1];
           if (next) {
             const interrupters = INTERRUPTER_LOOKUP.get(next);
@@ -211,9 +209,9 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           }
           if (terminator) break;
 
-          if (code !== CSI && code !== ESC) {
+          if (currentCode !== CSI && currentCode !== ESC) {
             if (next === "a" && i + 2 <= l) {
-              if (code === OSC && input[i + 1] === "a") {
+              if (currentCode === OSC && input[i + 1] === "a") {
                 terminator = "\\a";
                 terminatorPos = i;
                 i += 2;
@@ -222,7 +220,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
               if (i + 4 <= l) {
                 const char3 = input[i + 2];
                 const char4 = input[i + 3];
-                if (char3 === "0" && char4 === "7" && code === OSC) {
+                if (char3 === "0" && char4 === "7" && currentCode === OSC) {
                   terminator = "\\x07";
                   terminatorPos = i;
                   i += 4;
@@ -242,7 +240,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
                   i += 6;
                 }
               }
-            } else if (next === "u" && code === OSC && i + 6 <= l) {
+            } else if (next === "u" && currentCode === OSC && i + 6 <= l) {
               if (input[i + 2] === "0" && input[i + 3] === "0" && input[i + 4] === "0" && input[i + 5] === "7") {
                 terminator = "\\u0007";
                 terminatorPos = i;
@@ -279,17 +277,15 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
               }
             }
           }
-        } else if (code === CSI) {
+        } else if (currentCode === CSI) {
           const charCode = input.charCodeAt(i);
           if (charCode >= 0x40 && charCode <= 0x7e) {
-            const char = input[i];
-            terminator = char;
+            terminator = input[i];
             terminatorPos = i;
             i++;
           }
-        } else if (code === ESC) {
-          const char = input[i];
-          terminator = char;
+        } else if (currentCode === ESC) {
+          terminator = input[i];
           terminatorPos = i;
           i++;
         }
@@ -300,8 +296,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
 
       if (terminatorPos > pos) {
-        const data = input.substring(pos, terminatorPos);
-        yield emit({ type: TOKEN_TYPES.DATA, pos, raw: data });
+        yield emit({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, terminatorPos) });
       }
 
       if (terminator && terminator !== ABANDONED) {
