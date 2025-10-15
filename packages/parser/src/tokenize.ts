@@ -6,14 +6,14 @@ import {
   BELL_CODE,
   C0_INTERRUPTERS,
   CSI,
+  CSI_CODE,
   CSI_OPEN,
   DCS,
-  CSI_CODE,
-  OSC_CODE,
-  ESC_CODE,
   ESC,
+  ESC_CODE,
   INTERRUPTERS,
   OSC,
+  OSC_CODE,
   OSC_OPEN,
   PM,
   SOS,
@@ -51,7 +51,15 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       let char = input[i];
 
       while (i < input.length) {
-        if (charCode === ESC || charCode === CSI || charCode === OSC || charCode === DCS || charCode === APC || charCode === PM || charCode === SOS) {
+        if (
+          charCode === ESC ||
+          charCode === CSI ||
+          charCode === OSC ||
+          charCode === DCS ||
+          charCode === APC ||
+          charCode === PM ||
+          charCode === SOS
+        ) {
           break;
         }
         i++;
@@ -64,7 +72,14 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
 
       if (i < input.length) {
-        if (charCode === CSI || charCode === OSC || charCode === DCS || charCode === APC || charCode === PM || charCode === SOS) {
+        if (
+          charCode === CSI ||
+          charCode === OSC ||
+          charCode === DCS ||
+          charCode === APC ||
+          charCode === PM ||
+          charCode === SOS
+        ) {
           yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: char });
           i++;
           setState("SEQUENCE", charCode);
@@ -88,7 +103,8 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             while (j < input.length && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
             if (j < input.length) {
               const is = input.slice(i + 1, j);
-              if (is) yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + is, code: ESC_CODE, intermediate: is });
+              if (is)
+                yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char + is, code: ESC_CODE, intermediate: is });
               else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: char, code: ESC_CODE });
               i = j;
               setState("SEQUENCE", ESC);

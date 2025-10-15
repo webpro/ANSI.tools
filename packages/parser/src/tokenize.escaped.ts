@@ -3,16 +3,14 @@ import {
   BACKSLASH_CODE,
   CSI,
   CSI_CODE,
-  CSI_OPEN,
+  CSI_OPEN_CODE,
   ESC,
   ESC_CODE,
   OSC,
   OSC_CODE,
-  OSC_OPEN,
-  STRING_OPENERS,
-  CSI_OPEN_CODE,
   OSC_OPEN_CODE,
-  TOKEN_TYPES
+  STRING_OPENERS,
+  TOKEN_TYPES,
 } from "./constants.ts";
 import type { TOKEN } from "./types.ts";
 
@@ -152,7 +150,13 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
                   if (j < l) {
                     const is = input.slice(i + len, j);
                     if (is)
-                      yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + is, code: ESC_CODE, intermediate: is });
+                      yield emit({
+                        type: TOKEN_TYPES.INTRODUCER,
+                        pos: i,
+                        raw: seq + is,
+                        code: ESC_CODE,
+                        intermediate: is,
+                      });
                     else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
                     i = j;
                     setState("SEQUENCE", ESC);

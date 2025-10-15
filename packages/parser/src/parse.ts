@@ -1,23 +1,23 @@
 import {
-  APC_OPEN,
   APC_CODE,
+  APC_OPEN,
   CODE_TYPES,
   CSI_CODE,
-  DCS_OPEN,
   DCS_CODE,
+  DCS_OPEN,
   ESC_CODE,
   OSC_CODE,
-  PM_OPEN,
   PM_CODE,
-  SOS_OPEN,
+  PM_OPEN,
   SOS_CODE,
+  SOS_OPEN,
   TOKEN_TYPES,
 } from "./constants.ts";
+import { parseAPC } from "./parsers/apc.ts";
 import { parseCSI } from "./parsers/csi.ts";
 import { parseDCS } from "./parsers/dcs.ts";
 import { parseESC } from "./parsers/esc.ts";
 import { parseOSC } from "./parsers/osc.ts";
-import { parseAPC } from "./parsers/apc.ts";
 import { parsePM } from "./parsers/pm.ts";
 import { parseSOS } from "./parsers/sos.ts";
 import { tokenizer } from "./tokenize.ts";

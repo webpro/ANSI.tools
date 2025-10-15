@@ -36,7 +36,7 @@ export const SOS_OPEN = "^";
 export const PM_OPEN = "X";
 export const STRING_OPENERS = new Set([DCS_OPEN, APC_OPEN, SOS_OPEN, PM_OPEN]);
 
-export const INTERRUPTERS = new Set<number>([CAN, SUB, ESC, CSI, OSC, DCS, APC, PM, SOS]);
+export const INTERRUPTERS = new Set([CAN, SUB, ESC, CSI, OSC, DCS, APC, PM, SOS]);
 export const C0_INTERRUPTERS = new Set([CAN, SUB]);
 
 export const PARAM_SEPARATOR = /[;:]/;
