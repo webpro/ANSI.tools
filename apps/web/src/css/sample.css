@@ -1,0 +1,105 @@
+.sample-shadow {
+  text-shadow: 0.05em 0.05em 0 currentColor;
+}
+
+.sample-overstrike {
+  text-decoration-line: line-through;
+}
+
+.sample-underline-none {
+  text-decoration: none;
+}
+
+.sample-underline-double {
+  text-decoration-line: underline;
+  text-decoration-style: double;
+}
+
+.sample-underline-wavy {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+}
+
+.sample-underline-dotted {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+}
+
+.sample-underline-dashed {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+}
+
+.sample-foreground-colored-24bit {
+  color: #ff69b4;
+}
+
+.sample-foreground-colored-8bit {
+  color: #ff8700;
+}
+
+.sample-background-colored-24bit {
+  background-color: #ff69b4;
+}
+
+.sample-background-colored-8bit {
+  background-color: #ff8700;
+}
+
+.sample-underline-colored-24bit {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0.15em;
+  text-decoration-color: #ff69b4;
+  text-decoration-skip-ink: none;
+}
+
+.sample-underline-colored-8bit {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0.15em;
+  text-decoration-color: #ff8700;
+  text-decoration-skip-ink: none;
+}
+
+.sample-superscript {
+  position: relative;
+  top: -0.17em;
+  font-size: 0.83em;
+}
+
+.sample-subscript {
+  position: relative;
+  top: 0.17em;
+  font-size: 0.83em;
+}
+
+.sample-blink-slow {
+  animation: ansi-blink-slow 1s steps(1, end) infinite;
+}
+
+.sample-blink-fast {
+  animation: ansi-blink-fast 0.5s steps(1, end) infinite;
+}
+
+@keyframes ansi-blink-slow {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ansi-blink-fast {
+  0%,
+  24% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    opacity: 0;
+  }
+}

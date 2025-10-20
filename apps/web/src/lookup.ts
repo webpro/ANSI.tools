@@ -1,9 +1,13 @@
 import { computed, document, effect, html, raw, render, signal } from "isum/preactive";
 import { createRowsFromCodes, sortControlCodes } from "./util/table.ts";
+import { theme } from "ansi-to-pre";
 import "./css/global.css";
 import "./css/input.css";
 import "./css/lookup.css";
 import "./css/table.css";
+import "./css/sample.css";
+
+theme({ defaultColor: "#ffffff" });
 
 const getSearchParams = () => new URLSearchParams(typeof location === "undefined" ? "" : location.search);
 const getSearchParam = (param: string): string => (getSearchParams().get(param) ?? "").trim().toLowerCase();

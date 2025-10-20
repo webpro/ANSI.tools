@@ -4,6 +4,7 @@ import { ansiToPre } from "ansi-to-pre";
 import { controlCodes, codeMaps } from "../codes.ts";
 import { getColorName } from "./color.ts";
 import { ESC, ST } from "./string.ts";
+import { SGR_MAP, render } from "./sgr-map.ts";
 
 interface TableRow {
   type: CONTROL_CODE["type"];
@@ -208,8 +209,8 @@ export function createRowsFromCodes() {
       case CODE_TYPES.SGR: {
         const { description, template } = item;
         const code = `${PREFIX}[${item.code}${template ?? ""}m`;
-        const raw = `${PREFIX_RAW}[${item.code}${tpl(item.template, item.example)}m`;
-        const example = item.code.includes(":") ? "" : ansiToPre(`${raw}Sample\u001b[0m`);
+        const raw = `${PREFIX_RAW}[${item.code}${tpl(template, item.example)}m`;
+        const example = item.code in SGR_MAP ? render(SGR_MAP[item.code]) : ansiToPre(`${raw}Sample\u001b[0m`);
         rows.push({ type, sort: item.code, code, mnemonic: "", description, example });
         break;
       }
