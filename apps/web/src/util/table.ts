@@ -37,7 +37,8 @@ export function sortControlCodes<T extends TableRow | LookupTableRow>(rows: T[])
     const typeComparison = typeOrder[a.type] - typeOrder[b.type];
     if (typeComparison !== 0) return typeComparison;
     if (typeof a.sort === "number" && typeof b.sort === "number") return a.sort - b.sort;
-    if (typeof a.sort === "string" && typeof b.sort === "string") return a.sort.localeCompare(b.sort);
+    if (typeof a.sort === "string" && typeof b.sort === "string")
+      return a.sort.localeCompare(b.sort, undefined, { numeric: true });
     if (!a.sort) return 1;
     if (!b.sort) return -1;
     return a.sort.toString().localeCompare(b.sort.toString());
@@ -93,7 +94,9 @@ function handleDEC(code: CONTROL_CODE): Match {
     description = item.description;
   }
 
-  return { sort: Number(item), mnemonic: item?.mnemonic ?? "", description };
+  const numericSort = Number.parseInt(param, 10);
+  const sort = Number.isNaN(numericSort) ? param : numericSort;
+  return { sort, mnemonic: item?.mnemonic ?? "", description };
 }
 
 function handleCSI(code: CONTROL_CODE): Match {
