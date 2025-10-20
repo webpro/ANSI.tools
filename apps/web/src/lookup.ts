@@ -55,20 +55,22 @@ export function renderLookupTable() {
             <input type="search" placeholder="Filter" autocomplete="off" .value=${query.value} @input=${handleSearch} />
           </div>
         </div>
-        <table class="ansi-codes">
-          <thead>
-            <tr>
-              <th>code</th>
-              <th>type</th>
-              <th>mnemonic</th>
-              <th>description</th>
-              <th>example</th>
-            </tr>
-          </thead>
-          <tbody id="ansi-codes-tbody">
-            ${rows.value}
-          </tbody>
-        </table>
+        <div class="table-wrapper">
+          <table class="ansi-codes">
+            <thead>
+              <tr>
+                <th>code</th>
+                <th>type</th>
+                <th>mnemonic</th>
+                <th>description</th>
+                <th>example</th>
+              </tr>
+            </thead>
+            <tbody id="ansi-codes-tbody">
+              ${rows.value}
+            </tbody>
+          </table>
+        </div>
 
         <p>
           Something missing or incorrect?
