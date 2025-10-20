@@ -13,7 +13,7 @@
       }
     },
     {
-      "files": "src/codes.ts",
+      "files": "apps/web/src/codes.ts",
       "options": {
         "printWidth": 500
       }
