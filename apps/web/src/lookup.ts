@@ -1,14 +1,17 @@
-import { computed, document, html, raw, render, signal } from "isum/preactive";
+import { computed, document, effect, html, raw, render, signal } from "isum/preactive";
 import { createRowsFromCodes, sortControlCodes } from "./util/table.ts";
 import "./css/global.css";
 import "./css/input.css";
 import "./css/lookup.css";
 import "./css/table.css";
 
+const getSearchParams = () => new URLSearchParams(typeof location === "undefined" ? "" : location.search);
+const getSearchParam = (param: string): string => (getSearchParams().get(param) ?? "").trim().toLowerCase();
+
 export function renderLookupTable() {
   const container = document.getElementById("lookup-container");
   const rowData = sortControlCodes(createRowsFromCodes());
-  const query = signal("");
+  const query = signal(getSearchParam("q"));
 
   const rows = computed(() => {
     const q = query.value;
@@ -29,6 +32,16 @@ export function renderLookupTable() {
   function handleSearch(event: InputEvent) {
     query.value = (event.target as HTMLInputElement).value.trim().toLowerCase();
   }
+
+  effect(() => {
+    if (typeof location === "undefined") return;
+    const params = new URLSearchParams(location.search);
+    if (query.value) params.set("q", query.value);
+    else params.delete("q");
+    const search = params.toString();
+    const next = `${location.pathname}${search ? `?${search}` : ""}`;
+    if (`${location.pathname}${location.search}` !== next) history.replaceState(null, "", next);
+  });
 
   render(
     container,
