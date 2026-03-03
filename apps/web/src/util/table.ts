@@ -75,8 +75,32 @@ function handleSGR(code: CONTROL_CODE): Match {
     }
     current = paramsIterator.next();
   }
-  const sort = code.params.length > 1 ? Number(code.params[0]) + Number(code.params[1]) / 10 : Number(code.params[0]);
+  const sort = buildSgrSortKey(code.params);
   return { sort, mnemonic: "", description: descriptions.join(", ") };
+}
+
+function parseSgrParamValue(segment: string): number {
+  const value = Number.parseInt(segment, 10);
+  return Number.isNaN(value) ? 0 : value;
+}
+
+function normalizeSgrParams(params: readonly string[]): number[] {
+  const values: number[] = [];
+  for (const param of params) {
+    if (param === undefined) continue;
+    const parts = param.split(":");
+    for (const part of parts) values.push(parseSgrParamValue(part));
+  }
+
+  if (values.length === 0) return [0];
+
+  values.sort((a, b) => b - a);
+  return values;
+}
+
+function buildSgrSortKey(params: readonly string[]): string {
+  const normalized = normalizeSgrParams(params);
+  return normalized.map(value => value.toString().padStart(4, "0")).join(" ");
 }
 
 function handleDEC(code: CONTROL_CODE): Match {
