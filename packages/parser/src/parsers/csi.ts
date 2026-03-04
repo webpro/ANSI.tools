@@ -1,54 +1,55 @@
-import { CODE_TYPES, PARAM_SEPARATOR, PRIVATE_OPENERS } from "../constants.ts";
+import { CODE_TYPES, PRIVATE_OPENERS } from "../constants.ts";
 import type { CODE, CONTROL_CODE_TYPE, TOKEN } from "../types.ts";
 
 export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
-  const data = dataTokens.map(t => t.raw).join("");
-  const raw = introducer.raw + data + (final?.raw || "");
-  const params = [];
+  const data = dataTokens.length === 1 ? dataTokens[0].raw : dataTokens.length === 0 ? "" : dataTokens.map(t => t.raw).join("");
+  const finalRaw = final?.raw ?? "";
+  const raw = introducer.raw + data + finalRaw;
+  const params: string[] = [];
 
   let type: CONTROL_CODE_TYPE = CODE_TYPES.CSI;
-  let intermediates = "";
-  let paramSection = "";
+  let paramEnd = 0;
 
   if (data) {
-    let i = 0;
-    while (i < data.length) {
-      const charCode = data.charCodeAt(i);
-      if (charCode >= 0x30 && charCode <= 0x3f) {
-        paramSection += data[i];
-        i++;
-      } else {
-        break;
-      }
+    while (paramEnd < data.length) {
+      const charCode = data.charCodeAt(paramEnd);
+      if (charCode < 0x30 || charCode > 0x3f) break;
+      paramEnd++;
     }
-    intermediates = data.slice(i);
   }
+
+  const paramSection = paramEnd > 0 ? data.substring(0, paramEnd) : "";
+  const intermediates = paramEnd < data.length ? data.substring(paramEnd) : "";
 
   if (paramSection) {
-    for (const part of paramSection.split(PARAM_SEPARATOR)) {
-      params.push(part || "0");
+    let start = 0;
+    for (let i = 0; i <= paramSection.length; i++) {
+      if (i === paramSection.length || paramSection.charCodeAt(i) === 0x3b || paramSection.charCodeAt(i) === 0x3a) {
+        params.push(i > start ? paramSection.substring(start, i) : "0");
+        start = i + 1;
+      }
     }
   }
 
-  const command = intermediates + (final?.raw ?? "");
-  const start = params[0];
+  const command = intermediates + finalRaw;
+  const first = params[0];
 
-  if (start?.startsWith("?")) {
+  if (first !== undefined && first.charCodeAt(0) === 0x3f) {
     type = CODE_TYPES.DEC;
-    if (start.length > 1) params[0] = start.slice(1);
+    if (first.length > 1) params[0] = first.substring(1);
     else params.shift();
     return { type, pos: introducer.pos, raw, command, params };
   }
 
   for (const param of params) {
-    if (param && param.length > 0 && PRIVATE_OPENERS.has(param[0])) {
+    if (param.length > 0 && PRIVATE_OPENERS.has(param[0])) {
       type = CODE_TYPES.PRIVATE;
       const privateCommand = param[0] + command;
 
       for (let i = 0; i < params.length; i++) {
-        if (params[i] && params[i].length > 0 && PRIVATE_OPENERS.has(params[i][0])) {
+        if (params[i].length > 0 && PRIVATE_OPENERS.has(params[i][0])) {
           if (params[i].length > 1) {
-            params[i] = params[i].slice(1);
+            params[i] = params[i].substring(1);
           } else {
             params.splice(i, 1);
           }
@@ -60,7 +61,7 @@ export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | 
     }
   }
 
-  if (command === "m" && params.length === 5 && params[1] === "2" && (start === "38" || start === "48")) {
+  if (command === "m" && params.length === 5 && params[1] === "2" && (first === "38" || first === "48")) {
     params.splice(2, 0, "0");
   }
 
