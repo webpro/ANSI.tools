@@ -23,13 +23,6 @@ import { parseSOS } from "./parsers/sos.ts";
 import { tokenizer } from "./tokenize.ts";
 import type { CODE, TOKEN } from "./types.ts";
 
-const debug = false;
-
-function emit(token: CODE) {
-  if (debug) console.log("code", token);
-  return token;
-}
-
 export function* parser(tokens: IterableIterator<TOKEN>): IterableIterator<CODE> {
   let current = tokens.next();
 
@@ -37,7 +30,7 @@ export function* parser(tokens: IterableIterator<TOKEN>): IterableIterator<CODE>
     const token = current.value;
 
     if (token.type === TOKEN_TYPES.TEXT) {
-      yield emit({ type: CODE_TYPES.TEXT, pos: token.pos, raw: token.raw });
+      yield { type: CODE_TYPES.TEXT, pos: token.pos, raw: token.raw };
       current = tokens.next();
       continue;
     }
@@ -57,47 +50,46 @@ export function* parser(tokens: IterableIterator<TOKEN>): IterableIterator<CODE>
           final = nextToken;
           current = tokens.next();
           break;
-        } else if (nextToken.type === TOKEN_TYPES.INTRODUCER) {
-          break;
-        } else if (nextToken.type === TOKEN_TYPES.TEXT) {
+        } else {
           break;
         }
         current = tokens.next();
       }
 
-      switch (introducer.code) {
-        case CSI_CODE:
-          yield emit(parseCSI(introducer, data, final));
-          break;
-        case OSC_CODE:
-          yield emit(parseOSC(introducer, data, final));
-          break;
-        case DCS_CODE:
-        case DCS_OPEN:
-          yield emit(parseDCS(introducer, data, final));
-          break;
-        case APC_CODE:
-        case APC_OPEN:
-          yield emit(parseAPC(introducer, data, final));
-          break;
-        case PM_CODE:
-        case PM_OPEN:
-          yield emit(parsePM(introducer, data, final));
-          break;
-        case SOS_CODE:
-        case SOS_OPEN:
-          yield emit(parseSOS(introducer, data, final));
-          break;
-        case ESC_CODE:
-          yield emit(parseESC(introducer, data, final));
-          break;
-      }
+      yield emitCode(introducer, data, final);
     } else {
       current = tokens.next();
     }
   }
 }
 
+function emitCode(introducer: TOKEN, data: TOKEN[], final: TOKEN | undefined): CODE {
+  switch (introducer.code) {
+    case CSI_CODE:
+      return parseCSI(introducer, data, final);
+    case OSC_CODE:
+      return parseOSC(introducer, data, final);
+    case DCS_CODE:
+    case DCS_OPEN:
+      return parseDCS(introducer, data, final);
+    case APC_CODE:
+    case APC_OPEN:
+      return parseAPC(introducer, data, final);
+    case PM_CODE:
+    case PM_OPEN:
+      return parsePM(introducer, data, final);
+    case SOS_CODE:
+    case SOS_OPEN:
+      return parseSOS(introducer, data, final);
+    case ESC_CODE:
+      return parseESC(introducer, data, final);
+    default:
+      return { type: CODE_TYPES.TEXT, pos: introducer.pos, raw: introducer.raw };
+  }
+}
+
 export function parse(input: string): CODE[] {
-  return Array.from(parser(tokenizer(input)));
+  const result: CODE[] = [];
+  for (const code of parser(tokenizer(input))) result.push(code);
+  return result;
 }
