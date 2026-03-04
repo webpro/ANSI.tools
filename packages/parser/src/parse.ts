@@ -20,6 +20,7 @@ import { parseESC } from "./parsers/esc.ts";
 import { parseOSC } from "./parsers/osc.ts";
 import { parsePM } from "./parsers/pm.ts";
 import { parseSOS } from "./parsers/sos.ts";
+import { tokenize } from "./tokenize.ts";
 import { tokenizer } from "./tokenize.ts";
 import type { CODE, TOKEN } from "./types.ts";
 
@@ -89,7 +90,46 @@ function emitCode(introducer: TOKEN, data: TOKEN[], final: TOKEN | undefined): C
 }
 
 export function parse(input: string): CODE[] {
+  const tokens = tokenize(input);
   const result: CODE[] = [];
-  for (const code of parser(tokenizer(input))) result.push(code);
+  let ti = 0;
+  const tlen = tokens.length;
+
+  while (ti < tlen) {
+    const token = tokens[ti];
+
+    if (token.type === TOKEN_TYPES.TEXT) {
+      result.push({ type: CODE_TYPES.TEXT, pos: token.pos, raw: token.raw });
+      ti++;
+      continue;
+    }
+
+    if (token.type === TOKEN_TYPES.INTRODUCER) {
+      const introducer = token;
+      const data: TOKEN[] = [];
+      let final: TOKEN | undefined;
+
+      ti++;
+
+      while (ti < tlen) {
+        const nextToken = tokens[ti];
+        if (nextToken.type === TOKEN_TYPES.DATA) {
+          data.push(nextToken);
+        } else if (nextToken.type === TOKEN_TYPES.FINAL) {
+          final = nextToken;
+          ti++;
+          break;
+        } else {
+          break;
+        }
+        ti++;
+      }
+
+      result.push(emitCode(introducer, data, final));
+    } else {
+      ti++;
+    }
+  }
+
   return result;
 }
