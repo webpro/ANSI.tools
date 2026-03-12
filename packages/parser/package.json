@@ -2,8 +2,25 @@
   "name": "@ansi-tools/parser",
   "version": "1.0.12",
   "description": "Tokenize and parse strings containing ANSI escape sequences and control codes",
-  "main": "./dist/index.js",
+  "keywords": [
+    "ansi",
+    "escape codes",
+    "web application"
+  ],
+  "homepage": "https://github.com/webpro/ANSI.tools/tree/main/packages/parser",
+  "bugs": "https://github.com/webpro/ANSI.tools/issues",
+  "license": "ISC",
+  "author": "Lars Kappert <lars@webpro.nl>",
+  "repository": {
+    "type": "git",
+    "url": "github:webpro/ANSI.tools",
+    "directory": "packages/parser"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,37 +33,18 @@
       "default": "./dist/escaped.js"
     }
   },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "prebuild": "pnpm type-check && pnpm test",
-    "build": "tsdown --dts src/index.ts src/escaped.ts",
-    "dev": "tsdown --dts src/index.ts src/escaped.ts --watch",
-    "test": "node --import ./test/assertions.ts --test",
-    "type-check": "tsc",
-    "prepack": "pnpm build"
-  },
-  "keywords": [
-    "ansi",
-    "escape codes",
-    "web application"
-  ],
-  "author": "Lars Kappert <lars@webpro.nl>",
-  "license": "ISC",
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/webpro/ANSI.tools/tree/main/packages/parser",
-  "bugs": "https://github.com/webpro/ANSI.tools/issues",
-  "repository": {
-    "type": "git",
-    "url": "github:webpro/ANSI.tools",
-    "directory": "packages/parser"
+  "scripts": {
+    "prebuild": "pnpm test",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --import ./test/assertions.ts --test",
+    "prepack": "pnpm build"
   },
   "devDependencies": {
-    "@types/node": "^24.7.2",
-    "tsdown": "^0.15.7",
+    "@types/node": "^24.12.0",
     "mitata": "^1.0.34",
     "typescript": "^5.9.3"
   }

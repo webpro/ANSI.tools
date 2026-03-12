@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { TOKEN } from "../src/types.ts";
 import { parseCSI } from "../src/parsers/csi.ts";
 import { tokenizeWithFinalizer } from "./helpers.ts";
 

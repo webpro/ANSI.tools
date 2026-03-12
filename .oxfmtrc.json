@@ -1,21 +1,17 @@
 {
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 120,
   "singleQuote": false,
   "trailingComma": "es5",
   "arrowParens": "avoid",
   "proseWrap": "always",
+  "ignorePatterns": ["apps/web/src/codes.ts"],
   "overrides": [
     {
-      "files": "*.md",
+      "files": ["*.md"],
       "options": {
         "printWidth": 80,
         "proseWrap": "always"
-      }
-    },
-    {
-      "files": "apps/web/src/codes.ts",
-      "options": {
-        "printWidth": 500
       }
     }
   ]

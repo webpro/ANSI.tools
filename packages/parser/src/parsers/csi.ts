@@ -2,7 +2,8 @@ import { CODE_TYPES, PRIVATE_OPENERS } from "../constants.ts";
 import type { CODE, CONTROL_CODE_TYPE, TOKEN } from "../types.ts";
 
 export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
-  const data = dataTokens.length === 1 ? dataTokens[0].raw : dataTokens.length === 0 ? "" : dataTokens.map(t => t.raw).join("");
+  const data =
+    dataTokens.length === 1 ? dataTokens[0].raw : dataTokens.length === 0 ? "" : dataTokens.map(t => t.raw).join("");
   const finalRaw = final?.raw ?? "";
   const raw = introducer.raw + data + finalRaw;
   const params: string[] = [];

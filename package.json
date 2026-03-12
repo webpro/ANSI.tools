@@ -1,8 +1,16 @@
 {
   "name": "ansi-tools",
-  "private": true,
   "version": "0.0.0",
-  "author": "Lars Kappert <lars@webpro.nl>",
+  "private": true,
   "license": "ISC",
-  "packageManager": "pnpm@10.18.3"
+  "author": "Lars Kappert <lars@webpro.nl>",
+  "scripts": {
+    "lint": "oxlint",
+    "format": "oxfmt"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.40.0",
+    "oxlint": "^1.55.0"
+  },
+  "packageManager": "pnpm@10.32.1"
 }

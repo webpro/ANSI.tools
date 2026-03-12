@@ -21,6 +21,7 @@ export function createSettingsStore<T extends object>(key: string, defaults: T):
   ) as unknown as Store<T>;
 
   effect(() => {
+    // oxlint-disable-next-line no-unused-expressions
     typeof localStorage !== "undefined" && localStorage.setItem(storageKey, JSON.stringify(store));
   });
 

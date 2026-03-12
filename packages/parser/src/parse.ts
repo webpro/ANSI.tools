@@ -21,7 +21,6 @@ import { parseOSC } from "./parsers/osc.ts";
 import { parsePM } from "./parsers/pm.ts";
 import { parseSOS } from "./parsers/sos.ts";
 import { tokenize } from "./tokenize.ts";
-import { tokenizer } from "./tokenize.ts";
 import type { CODE, TOKEN } from "./types.ts";
 
 export function* parser(tokens: IterableIterator<TOKEN>): IterableIterator<CODE> {

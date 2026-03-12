@@ -228,7 +228,13 @@ export function tokenize(input: string): TOKEN[] {
           if (j < len) {
             if (j > i + 1) {
               const intermediate = input.substring(i + 1, j);
-              result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE, intermediate });
+              result.push({
+                type: TOKEN_TYPES.INTRODUCER,
+                pos: i,
+                raw: input.substring(i, j),
+                code: ESC_CODE,
+                intermediate,
+              });
             } else {
               result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE });
             }
