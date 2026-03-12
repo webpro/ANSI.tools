@@ -37,15 +37,17 @@
     "access": "public"
   },
   "scripts": {
-    "prebuild": "pnpm test",
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "prebuild": "pnpm type-check && pnpm test",
+    "build": "tsdown --dts --minify src/index.ts src/escaped.ts",
+    "dev": "tsdown --dts src/index.ts src/escaped.ts --watch",
     "test": "node --import ./test/assertions.ts --test",
+    "type-check": "tsc --noEmit",
     "prepack": "pnpm build"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
     "mitata": "^1.0.34",
+    "tsdown": "^0.15.7",
     "typescript": "^5.9.3"
   }
 }
