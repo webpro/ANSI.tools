@@ -1,6 +1,6 @@
 {
   "name": "@ansi-tools/parser",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Tokenize and parse strings containing ANSI escape sequences and control codes",
   "keywords": [
     "ansi",
