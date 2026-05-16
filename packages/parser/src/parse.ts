@@ -88,8 +88,7 @@ function emitCode(introducer: TOKEN, data: TOKEN[], final: TOKEN | undefined): C
   }
 }
 
-export function parse(input: string): CODE[] {
-  const tokens = tokenize(input);
+export function parseTokens(tokens: TOKEN[]): CODE[] {
   const result: CODE[] = [];
   let ti = 0;
   const tlen = tokens.length;
@@ -131,4 +130,8 @@ export function parse(input: string): CODE[] {
   }
 
   return result;
+}
+
+export function parse(input: string): CODE[] {
+  return parseTokens(tokenize(input));
 }
