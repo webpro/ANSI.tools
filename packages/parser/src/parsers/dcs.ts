@@ -1,5 +1,6 @@
 import { CODE_TYPES, PARAM_SEPARATOR } from "../constants.ts";
 import type { CODE, TOKEN } from "../types.ts";
+import { join } from "./data.ts";
 
 const DCS_PATTERNS = new Map([
   ["$q", 2],
@@ -10,7 +11,7 @@ const DCS_PATTERNS = new Map([
 ]);
 
 export function parseDCS(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
-  const data = dataTokens.map(t => t.raw).join("");
+  const data = join(dataTokens);
   const raw = introducer.raw + data + (final?.raw ?? "");
   if (!data) return { type: CODE_TYPES.DCS, pos: introducer.pos, raw, command: "", params: [] };
 
