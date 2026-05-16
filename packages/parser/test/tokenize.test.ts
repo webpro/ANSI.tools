@@ -33,7 +33,7 @@ test("tab", t => {
 
 test("incomplete", t => {
   const input1 = String.raw`\x1b`;
-  const expected1: TOKEN[] = [];
+  const expected1: TOKEN[] = [{ pos: 0, raw: `\\x1b`, type: "INTRODUCER", code: "\x1b" }];
   t.assert.equalTokensDual(input1, expected1);
   t.assert.equalTokensDual(input1, expected1);
 
@@ -43,21 +43,30 @@ test("incomplete", t => {
   t.assert.equalTokensDual(input2, expected2);
 
   const input3 = String.raw`\x1b[31;42`;
-  const expected3 = [{ pos: 0, raw: `\\x1b[`, type: "INTRODUCER", code: "\x9b" }];
+  const expected3 = [
+    { pos: 0, raw: `\\x1b[`, type: "INTRODUCER", code: "\x9b" },
+    { pos: 5, raw: "31;42", type: "DATA" },
+  ];
   t.assert.equalTokensDual(input3, expected3);
   t.assert.equalTokensDual(input3, expected3);
 });
 
 test("mixed sequences", t => {
   const input = String.raw`\x1b]0;title`;
-  const expected = [{ pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" }];
+  const expected = [
+    { pos: 0, raw: "\\x1b]", type: "INTRODUCER", code: "\x9d" },
+    { pos: 5, raw: "0;title", type: "DATA" },
+  ];
   t.assert.equalTokensDual(input, expected);
   t.assert.equalTokensDual(input, expected);
 });
 
 test("boundary conditions", t => {
   const input = String.raw`text\x1b`;
-  const expected = [{ pos: 0, raw: "text", type: "TEXT" }];
+  const expected = [
+    { pos: 0, raw: "text", type: "TEXT" },
+    { pos: 4, raw: "\\x1b", type: "INTRODUCER", code: "\x1b" },
+  ];
   t.assert.equalTokensDual(input, expected);
   t.assert.equalTokensDual(input, expected);
 });
@@ -74,7 +83,7 @@ test("incomplete sequence", t => {
 
 test("just introducer", t => {
   const input = String.raw`\x1b`;
-  const expected: TOKEN[] = [];
+  const expected: TOKEN[] = [{ pos: 0, raw: `\\x1b`, type: "INTRODUCER", code: "\x1b" }];
   t.assert.equalTokensDual(input, expected);
 });
 
@@ -136,10 +145,12 @@ test("terminator edge cases", t => {
   const expectedRaw = [
     { pos: 0, raw: "\\x1bP", type: "INTRODUCER", code: "P" },
     { pos: 2, raw: " data", type: "DATA" },
+    { pos: 7, raw: "\\x1b", type: "INTRODUCER", code: "\x1b" },
   ];
   const expectedEscaped = [
     { pos: 0, raw: "\\x1bP", type: "INTRODUCER", code: "P" },
     { pos: 5, raw: " data", type: "DATA" },
+    { pos: 10, raw: "\\x1b", type: "INTRODUCER", code: "\x1b" },
   ];
   t.assert.equalTokens(tokenize, input, expectedRaw);
   t.assert.equalTokens(tokenizeEscaped, input, expectedEscaped);

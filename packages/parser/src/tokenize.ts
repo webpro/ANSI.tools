@@ -89,20 +89,19 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         } else if (i + 1 < len) {
           let j = i + 1;
           while (j < len && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
+          if (j > i + 1) {
+            const intermediate = input.substring(i + 1, j);
+            yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE, intermediate };
+          } else {
+            yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
+          }
+          i = j;
           if (j < len) {
-            if (j > i + 1) {
-              const intermediate = input.substring(i + 1, j);
-              yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE, intermediate };
-            } else {
-              yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
-            }
-            i = j;
             state = 1;
             currentCode = ESC;
-          } else {
-            i = j;
           }
         } else {
+          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
           i++;
         }
       }
@@ -128,6 +127,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           }
           i++;
         }
+        if (state === 1 && i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
       } else if (currentCode === ESC) {
         if (i < len) {
           const charCode = input.charCodeAt(i);
@@ -171,6 +171,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
 
           i++;
         }
+        if (state === 1 && i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
       }
 
       if (state === 1) state = 0;
@@ -225,26 +226,25 @@ export function tokenize(input: string): TOKEN[] {
         } else if (i + 1 < len) {
           let j = i + 1;
           while (j < len && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
+          if (j > i + 1) {
+            const intermediate = input.substring(i + 1, j);
+            result.push({
+              type: TOKEN_TYPES.INTRODUCER,
+              pos: i,
+              raw: input.substring(i, j),
+              code: ESC_CODE,
+              intermediate,
+            });
+          } else {
+            result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE });
+          }
+          i = j;
           if (j < len) {
-            if (j > i + 1) {
-              const intermediate = input.substring(i + 1, j);
-              result.push({
-                type: TOKEN_TYPES.INTRODUCER,
-                pos: i,
-                raw: input.substring(i, j),
-                code: ESC_CODE,
-                intermediate,
-              });
-            } else {
-              result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE });
-            }
-            i = j;
             state = 1;
             currentCode = ESC;
-          } else {
-            i = j;
           }
         } else {
+          result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE });
           i++;
         }
       }
@@ -270,6 +270,7 @@ export function tokenize(input: string): TOKEN[] {
           }
           i++;
         }
+        if (state === 1 && i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
       } else if (currentCode === ESC) {
         if (i < len) {
           const charCode = input.charCodeAt(i);
@@ -313,6 +314,7 @@ export function tokenize(input: string): TOKEN[] {
 
           i++;
         }
+        if (state === 1 && i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
       }
 
       if (state === 1) state = 0;

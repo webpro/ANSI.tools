@@ -147,23 +147,20 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
                 } else if (next) {
                   let j = i + len;
                   while (j < l && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
-                  if (j < l) {
-                    const is = input.slice(i + len, j);
-                    if (is)
-                      yield emit({
-                        type: TOKEN_TYPES.INTRODUCER,
-                        pos: i,
-                        raw: seq + is,
-                        code: ESC_CODE,
-                        intermediate: is,
-                      });
-                    else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
-                    i = j;
-                    setState("SEQUENCE", ESC);
-                  } else {
-                    i = j;
-                  }
+                  const is = input.slice(i + len, j);
+                  if (is)
+                    yield emit({
+                      type: TOKEN_TYPES.INTRODUCER,
+                      pos: i,
+                      raw: seq + is,
+                      code: ESC_CODE,
+                      intermediate: is,
+                    });
+                  else yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
+                  i = j;
+                  if (j < l) setState("SEQUENCE", ESC);
                 } else {
+                  yield emit({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
                   i += len;
                 }
               }
@@ -297,6 +294,8 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
 
       if (terminatorPos > pos) {
         yield emit({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, terminatorPos) });
+      } else if (!terminator && i > pos) {
+        yield emit({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, i) });
       }
 
       if (terminator && terminator !== ABANDONED) {

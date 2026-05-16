@@ -127,6 +127,7 @@ test("OSC interrupted by DCS", t => {
     { type: "INTRODUCER", pos: 0, raw: "\\x1b]", code: "\x9d" },
     { type: "DATA", pos: 5, raw: "0;title" },
     { type: "INTRODUCER", pos: 12, raw: "\\x1bP", code: "P" },
+    { type: "DATA", pos: 17, raw: "new" },
   ];
   t.assert.equalTokensDual(input, expected);
 });
@@ -149,6 +150,7 @@ test("CSI interrupted by incomplete CSI", t => {
     { type: "INTRODUCER", pos: 0, raw: "\\x1b[", code: "\x9b" },
     { type: "DATA", pos: 5, raw: "31" },
     { type: "INTRODUCER", pos: 7, raw: "\\x1b[", code: "\x9b" },
+    { type: "DATA", pos: 12, raw: "32" },
   ];
   t.assert.equalTokensDual(input, expected);
 });
