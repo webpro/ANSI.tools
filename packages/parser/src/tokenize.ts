@@ -115,7 +115,10 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           if (isInterrupter(charCode)) {
             if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
             state = 0;
-            if (isC0Interrupter(charCode)) i++;
+            if (isC0Interrupter(charCode)) {
+              yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
+              i++;
+            }
             break;
           }
           if (charCode >= 0x40 && charCode <= 0x7e) {
@@ -133,7 +136,10 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           const charCode = input.charCodeAt(i);
           if (isInterrupter(charCode)) {
             state = 0;
-            if (isC0Interrupter(charCode)) i++;
+            if (isC0Interrupter(charCode)) {
+              yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
+              i++;
+            }
           } else {
             yield { type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] };
             i++;
@@ -165,7 +171,10 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           if (isInterrupter(charCode)) {
             if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
             state = 0;
-            if (isC0Interrupter(charCode)) i++;
+            if (isC0Interrupter(charCode)) {
+              yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
+              i++;
+            }
             break;
           }
 
@@ -258,7 +267,10 @@ export function tokenize(input: string): TOKEN[] {
           if (isInterrupter(charCode)) {
             if (i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
             state = 0;
-            if (isC0Interrupter(charCode)) i++;
+            if (isC0Interrupter(charCode)) {
+              result.push({ type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] });
+              i++;
+            }
             break;
           }
           if (charCode >= 0x40 && charCode <= 0x7e) {
@@ -276,7 +288,10 @@ export function tokenize(input: string): TOKEN[] {
           const charCode = input.charCodeAt(i);
           if (isInterrupter(charCode)) {
             state = 0;
-            if (isC0Interrupter(charCode)) i++;
+            if (isC0Interrupter(charCode)) {
+              result.push({ type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] });
+              i++;
+            }
           } else {
             result.push({ type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] });
             i++;
@@ -308,7 +323,10 @@ export function tokenize(input: string): TOKEN[] {
           if (isInterrupter(charCode)) {
             if (i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
             state = 0;
-            if (isC0Interrupter(charCode)) i++;
+            if (isC0Interrupter(charCode)) {
+              result.push({ type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] });
+              i++;
+            }
             break;
           }
 

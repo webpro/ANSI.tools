@@ -168,6 +168,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
     } else if (state === "SEQUENCE") {
       let terminator = "";
       let terminatorPos = -1;
+      let abandoned = "";
       const pos = i;
 
       while (!terminator && i < l) {
@@ -188,6 +189,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
                   if (matched) {
                     terminator = ABANDONED;
                     terminatorPos = i;
+                    abandoned = input.substring(i, i + len);
                     i += len;
                     break;
                   }
@@ -292,6 +294,8 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       if (terminator && terminator !== ABANDONED) {
         yield { type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator };
       }
+
+      if (abandoned) yield { type: TOKEN_TYPES.TEXT, pos: terminatorPos, raw: abandoned };
 
       state = "GROUND";
       currentCode = undefined;
@@ -411,6 +415,7 @@ export function tokenize(input: string): TOKEN[] {
     } else if (state === "SEQUENCE") {
       let terminator = "";
       let terminatorPos = -1;
+      let abandoned = "";
       const pos = i;
 
       while (!terminator && i < l) {
@@ -431,6 +436,7 @@ export function tokenize(input: string): TOKEN[] {
                   if (matched) {
                     terminator = ABANDONED;
                     terminatorPos = i;
+                    abandoned = input.substring(i, i + len);
                     i += len;
                     break;
                   }
@@ -535,6 +541,8 @@ export function tokenize(input: string): TOKEN[] {
       if (terminator && terminator !== ABANDONED) {
         result.push({ type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator });
       }
+
+      if (abandoned) result.push({ type: TOKEN_TYPES.TEXT, pos: terminatorPos, raw: abandoned });
 
       state = "GROUND";
       currentCode = undefined;
