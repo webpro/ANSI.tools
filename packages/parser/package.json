@@ -1,11 +1,23 @@
 {
   "name": "@ansi-tools/parser",
   "version": "1.0.16",
-  "description": "Tokenize and parse strings containing ANSI escape sequences and control codes",
+  "description": "ANSI escape code parser and tokenizer. Parse terminal control sequences (CSI, SGR, OSC, DCS) from strings. Zero dependencies.",
   "keywords": [
     "ansi",
-    "escape codes",
-    "web application"
+    "ansi-parser",
+    "ansi-escape-codes",
+    "escape-codes",
+    "escape-sequences",
+    "control-codes",
+    "parser",
+    "parse",
+    "tokenizer",
+    "tokenize",
+    "terminal",
+    "vt100",
+    "csi",
+    "sgr",
+    "osc"
   ],
   "homepage": "https://github.com/webpro/ANSI.tools/tree/main/packages/parser",
   "bugs": "https://github.com/webpro/ANSI.tools/issues",
