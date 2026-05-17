@@ -40,6 +40,8 @@
     "prebuild": "pnpm type-check && pnpm test",
     "build": "tsdown --dts --minify src/index.ts src/escaped.ts",
     "dev": "tsdown --dts src/index.ts src/escaped.ts --watch",
+    "gen": "node scripts/gen-tokenize.ts",
+    "pretest": "pnpm gen && git diff --exit-code -- src/tokenize.gen.ts src/tokenize.escaped.gen.ts",
     "test": "node --import ./test/assertions.ts --test",
     "type-check": "tsc --noEmit",
     "prepack": "pnpm build"

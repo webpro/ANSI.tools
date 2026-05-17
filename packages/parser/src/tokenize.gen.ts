@@ -1,3 +1,5 @@
+// AUTO-GENERATED from src/tokenize.ts. Do not edit.
+
 import {
   BACKSLASH,
   BACKSLASH_CODE,
@@ -19,7 +21,9 @@ import {
 import type { TOKEN } from "./types.ts";
 import { is8BitIntroducer, isC0Interrupter, isInterrupter, isSequenceStart } from "./tokenize.helpers.ts";
 
-export function* tokenizer(input: string): IterableIterator<TOKEN> {
+export function tokenize(input: string): TOKEN[] {
+  const result: TOKEN[] = [];
+
   let i = 0;
   let state = 0; // 0 = GROUND, 1 = SEQUENCE
   let currentCode = 0;
@@ -35,13 +39,13 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
 
       if (i > textStart) {
-        yield { type: TOKEN_TYPES.TEXT, pos: textStart, raw: input.substring(textStart, i) };
+        result.push({ type: TOKEN_TYPES.TEXT, pos: textStart, raw: input.substring(textStart, i) });
       }
 
       if (i >= len) break;
 
       if (is8BitIntroducer(charCode)) {
-        yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: input[i] };
+        result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: input[i] });
         i++;
         state = 1;
         currentCode = charCode;
@@ -49,17 +53,17 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         // ESC
         const nextCode = input.charCodeAt(i + 1);
         if (nextCode === CSI_OPEN) {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: CSI_CODE };
+          result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: CSI_CODE });
           i += 2;
           state = 1;
           currentCode = CSI;
         } else if (nextCode === OSC_OPEN) {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: OSC_CODE };
+          result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: OSC_CODE });
           i += 2;
           state = 1;
           currentCode = OSC;
         } else if (i + 1 < len && STRING_OPENERS.has(input[i + 1])) {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: input[i + 1] };
+          result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: input[i + 1] });
           i += 2;
           state = 1;
           currentCode = nextCode;
@@ -68,9 +72,9 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           while (j < len && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
           if (j > i + 1) {
             const intermediate = input.substring(i + 1, j);
-            yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE, intermediate };
+            result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE, intermediate });
           } else {
-            yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
+            result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE });
           }
           i = j;
           if (j < len) {
@@ -78,7 +82,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             currentCode = ESC;
           }
         } else {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
+          result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE });
           i++;
         }
       }
@@ -90,35 +94,35 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         while (i < len) {
           const charCode = input.charCodeAt(i);
           if (isInterrupter(charCode)) {
-            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+            if (i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
             state = 0;
             if (isC0Interrupter(charCode)) {
-              yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
+              result.push({ type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] });
               i++;
             }
             break;
           }
           if (charCode >= 0x40 && charCode <= 0x7e) {
-            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
-            yield { type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] };
+            if (i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
+            result.push({ type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] });
             i++;
             state = 0;
             break;
           }
           i++;
         }
-        if (state === 1 && i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+        if (state === 1 && i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
       } else if (currentCode === ESC) {
         if (i < len) {
           const charCode = input.charCodeAt(i);
           if (isInterrupter(charCode)) {
             state = 0;
             if (isC0Interrupter(charCode)) {
-              yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
+              result.push({ type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] });
               i++;
             }
           } else {
-            yield { type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] };
+            result.push({ type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] });
             i++;
             state = 0;
           }
@@ -138,18 +142,18 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           }
 
           if (terminator) {
-            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
-            yield { type: TOKEN_TYPES.FINAL, pos: i, raw: terminator };
+            if (i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
+            result.push({ type: TOKEN_TYPES.FINAL, pos: i, raw: terminator });
             i += terminator.length;
             state = 0;
             break;
           }
 
           if (isInterrupter(charCode)) {
-            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+            if (i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
             state = 0;
             if (isC0Interrupter(charCode)) {
-              yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
+              result.push({ type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] });
               i++;
             }
             break;
@@ -157,12 +161,12 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
 
           i++;
         }
-        if (state === 1 && i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+        if (state === 1 && i > dataStart) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) });
       }
 
       if (state === 1) state = 0;
     }
   }
-}
 
-export { tokenize } from "./tokenize.gen.ts";
+  return result;
+}

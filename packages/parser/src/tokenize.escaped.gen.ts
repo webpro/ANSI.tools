@@ -1,3 +1,5 @@
+// AUTO-GENERATED from src/tokenize.escaped.ts. Do not edit.
+
 import {
   BACKSLASH,
   BACKSLASH_CODE,
@@ -22,7 +24,9 @@ import {
   type State,
 } from "./tokenize.escaped.shared.ts";
 
-export function* tokenizer(input: string): IterableIterator<TOKEN> {
+export function tokenize(input: string): TOKEN[] {
+  const result: TOKEN[] = [];
+
   const l = input.length;
   let i = 0;
   let state: State = "GROUND";
@@ -69,7 +73,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
 
       if (i > textStart) {
-        yield { type: TOKEN_TYPES.TEXT, pos: textStart, raw: input.substring(textStart, i) };
+        result.push({ type: TOKEN_TYPES.TEXT, pos: textStart, raw: input.substring(textStart, i) });
       }
 
       if (i < l) {
@@ -83,24 +87,24 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             if (isSeqMatch) {
               isMatch = true;
               if (seq === CSI_ESCAPED || seq === CSI_ESCAPED_HEX) {
-                yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: CSI_CODE };
+                result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: CSI_CODE });
                 i += len;
                 state = "SEQUENCE";
                 currentCode = CSI;
               } else {
                 const next = input[i + len];
                 if (next === CSI_OPEN_CODE) {
-                  yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: CSI_CODE };
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: CSI_CODE });
                   i += len + 1;
                   state = "SEQUENCE";
                   currentCode = CSI;
                 } else if (next === OSC_OPEN_CODE) {
-                  yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: OSC_CODE };
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: OSC_CODE });
                   i += len + 1;
                   state = "SEQUENCE";
                   currentCode = OSC;
                 } else if (STRING_OPENERS.has(next)) {
-                  yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: next };
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: next });
                   i += len + 1;
                   state = "SEQUENCE";
                   currentCode = next.charCodeAt(0);
@@ -109,21 +113,21 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
                   while (j < l && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
                   const is = input.slice(i + len, j);
                   if (is)
-                    yield {
+                    result.push({
                       type: TOKEN_TYPES.INTRODUCER,
                       pos: i,
                       raw: seq + is,
                       code: ESC_CODE,
                       intermediate: is,
-                    };
-                  else yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE };
+                    });
+                  else result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
                   i = j;
                   if (j < l) {
                     state = "SEQUENCE";
                     currentCode = ESC;
                   }
                 } else {
-                  yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE };
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
                   i += len;
                 }
               }
@@ -258,21 +262,21 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       }
 
       if (terminatorPos > pos) {
-        yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, terminatorPos) };
+        result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, terminatorPos) });
       } else if (!terminator && i > pos) {
-        yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, i) };
+        result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, i) });
       }
 
       if (terminator && terminator !== ABANDONED) {
-        yield { type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator };
+        result.push({ type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator });
       }
 
-      if (abandoned) yield { type: TOKEN_TYPES.TEXT, pos: terminatorPos, raw: abandoned };
+      if (abandoned) result.push({ type: TOKEN_TYPES.TEXT, pos: terminatorPos, raw: abandoned });
 
       state = "GROUND";
       currentCode = undefined;
     }
   }
-}
 
-export { tokenize } from "./tokenize.escaped.gen.ts";
+  return result;
+}
