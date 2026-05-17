@@ -1,6 +1,6 @@
 {
   "name": "@ansi-tools/parser",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "ANSI escape code parser and tokenizer. Parse terminal control sequences (CSI, SGR, OSC, DCS) from strings. Zero dependencies.",
   "keywords": [
     "ansi",
