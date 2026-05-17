@@ -45,7 +45,8 @@
     "pretest": "pnpm gen && git diff --exit-code -- src/tokenize.gen.ts src/tokenize.escaped.gen.ts",
     "test": "node --import ./test/assertions.ts --test",
     "type-check": "tsc --noEmit",
-    "prepack": "pnpm build"
+    "check-pack": "node scripts/check-pack.ts",
+    "prepack": "pnpm build && pnpm check-pack"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
