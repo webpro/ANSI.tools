@@ -49,9 +49,9 @@
     "prepack": "pnpm build && pnpm check-pack"
   },
   "devDependencies": {
-    "@types/node": "^24.12.0",
+    "@types/node": "^24.12.4",
     "mitata": "^1.0.34",
-    "tsdown": "^0.15.7",
-    "typescript": "^5.9.3"
+    "tsdown": "^0.22.0",
+    "typescript": "^6.0.3"
   }
 }

@@ -9,8 +9,8 @@
     "format": "oxfmt"
   },
   "devDependencies": {
-    "oxfmt": "^0.40.0",
-    "oxlint": "^1.55.0"
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.65.0"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@11.1.2"
 }
