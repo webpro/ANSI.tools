@@ -25,7 +25,7 @@ if (!base) {
 
 const pct = ((unpackedSize - base.unpackedSize) / base.unpackedSize) * 100;
 console.error(
-  `check-pack: ${entryCount} files / ${unpackedSize} B vs published ${base.fileCount} / ${base.unpackedSize} B (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%).`,
+  `check-pack: ${entryCount} files / ${unpackedSize} B vs published ${base.fileCount} / ${base.unpackedSize} B (${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%).`
 );
 
 if ((entryCount !== base.fileCount || pct > 10) && process.stdin.isTTY) {

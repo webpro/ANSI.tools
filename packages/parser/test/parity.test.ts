@@ -4,7 +4,9 @@ import { parse } from "../src/parse.ts";
 import type { CODE } from "../src/types.ts";
 
 function semantic(codes: CODE[]) {
-  return codes.map(c => (c.type === "TEXT" ? { type: c.type } : { type: c.type, command: c.command, params: c.params }));
+  return codes.map(c =>
+    c.type === "TEXT" ? { type: c.type } : { type: c.type, command: c.command, params: c.params }
+  );
 }
 
 function rawJoin(codes: CODE[]): string {

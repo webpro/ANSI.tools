@@ -61,10 +61,10 @@ test("DCS Sixel (generic DCS fallback, payload preserved)", () => {
 test("escaped path: OSC 52 and DCS DECRQSS match raw path", () => {
   assert.deepEqual(
     parseEscaped(String.raw`\x1b]52;c;SGVsbG8=\x07`).map(c => ({ type: c.type, raw: c.raw })),
-    [{ type: "OSC", raw: String.raw`\x1b]52;c;SGVsbG8=\x07` }],
+    [{ type: "OSC", raw: String.raw`\x1b]52;c;SGVsbG8=\x07` }]
   );
   assert.deepEqual(
     parseEscaped(String.raw`\x1bP$qm\x1b\\`).map(c => ({ type: c.type, raw: c.raw })),
-    [{ type: "DCS", raw: String.raw`\x1bP$qm\x1b\\` }],
+    [{ type: "DCS", raw: String.raw`\x1bP$qm\x1b\\` }]
   );
 });

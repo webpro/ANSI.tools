@@ -43,8 +43,7 @@ for (const { src, out } of targets) {
     inner = inner.slice(0, e.start - innerStart) + e.text + inner.slice(e.end - innerStart);
   }
 
-  const banner =
-    `// AUTO-GENERATED from ${src}. Do not edit.\n`;
+  const banner = `// AUTO-GENERATED from ${src}. Do not edit.\n`;
 
   const result =
     `${banner}\n${imports.join("\n")}\n\n` +
