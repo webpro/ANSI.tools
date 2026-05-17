@@ -9,8 +9,9 @@
     "outDir": "./dist",
     "skipLibCheck": true,
     "strict": true,
-    "target": "esnext"
+    "target": "esnext",
+    "types": ["node", "vite/client"]
   },
-  "include": ["apps/web/src", "scripts"],
+  "include": ["src", "scripts"],
   "exclude": ["node_modules", "dist"]
 }
