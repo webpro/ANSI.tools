@@ -14,6 +14,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm --dir packages/parser run build
+      - run: pnpm --dir packages/parser run lint:publish
       - run: pnpm --dir packages/parser run check-pack
       - run: pnpm --dir packages/parser run test
       - run: pnpm --dir apps/web run test

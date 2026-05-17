@@ -13,7 +13,7 @@
   "author": "Lars Kappert <lars@webpro.nl>",
   "repository": {
     "type": "git",
-    "url": "github:webpro/ANSI.tools",
+    "url": "git+https://github.com/webpro/ANSI.tools.git",
     "directory": "packages/parser"
   },
   "files": [
@@ -46,11 +46,13 @@
     "test": "node --import ./test/assertions.ts --test",
     "type-check": "tsc --noEmit",
     "check-pack": "node scripts/check-pack.ts",
-    "prepack": "pnpm build && pnpm check-pack"
+    "lint:publish": "publint --strict",
+    "prepack": "pnpm build && pnpm lint:publish && pnpm check-pack"
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
     "mitata": "^1.0.34",
+    "publint": "^0.3.21",
     "tsdown": "^0.22.0",
     "typescript": "^6.0.3"
   }
