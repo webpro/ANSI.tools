@@ -45,7 +45,7 @@ function bench(ref: string): BenchResult {
     sh(`node bench/run.ts ${file} 2>/dev/null`);
     return JSON.parse(readFileSync(file, "utf8"));
   } finally {
-    sh("git checkout HEAD -- src/");
+    sh("git checkout HEAD -- src/ && git reset -q -- src/ && git clean -fdq src/");
   }
 }
 
