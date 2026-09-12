@@ -6,6 +6,7 @@ import { getColorName } from "./color.ts";
 import { ESC, ST } from "./string.ts";
 import { SGR_MAP, render } from "./sgr-map.ts";
 import { getParameters, parameterKey } from "./parameters.ts";
+import { describeOSC } from "./describe-osc.ts";
 import { describeCSI, describeDEC, describePRIVATE } from "./describe-csi.ts";
 
 interface TableRow {
@@ -110,20 +111,6 @@ function buildSgrSortKey(params: readonly string[]): string {
   return normalized.map(value => value.toString().padStart(4, "0")).join(" ");
 }
 
-function handleOSC(code: CONTROL_CODE): Match {
-  const item = codeMaps.OSC.get(code.command);
-  const url = code.params.length > 1 ? code.params[1] : "";
-  const description = item
-    ? code.command === "8" && url
-      ? `hyperlink: ${url}`
-      : code.command === "8"
-        ? "hyperlink (end)"
-        : item.description
-    : `unknown OSC command: ${code.command}`;
-  const sort = Number.parseInt(code.command, 10);
-  return { sort, mnemonic: item?.mnemonic ?? "", description };
-}
-
 function handleESC(code: CONTROL_CODE): Match {
   const key = code.params?.[0] ? `${code.command}${code.params[0]}` : `${code.command}`;
   const item = codeMaps.ESC.get(key);
@@ -151,7 +138,7 @@ export function extractControlCodes(codes: CODE[]): TableRow[] {
     else if (code.type === "DCS") rows.push({ type: "DCS", code: code.raw, ...handleDCS(code) });
     else if (code.type === "DEC") rows.push({ type: "DEC", code: code.raw, ...describeDEC(code) });
     else if (code.type === "ESC") rows.push({ type: "ESC", code: code.raw, ...handleESC(code) });
-    else if (code.type === "OSC") rows.push({ type: "OSC", code: code.raw, ...handleOSC(code) });
+    else if (code.type === "OSC") rows.push({ type: "OSC", code: code.raw, ...describeOSC(code) });
     else if (code.type === "PRIVATE") rows.push({ type: "PRIVATE", code: code.raw, ...describePRIVATE(code) });
     else if (code.type === "STRING") rows.push({ type: "STRING", code: code.raw, ...handleSTR(code) });
   }

@@ -360,6 +360,8 @@ export const controlCodes: ControlCodeItem[] = [
   { type: "OSC", code: "17", mnemonic: "OSC 17", description: "change highlight color" },
   { type: "OSC", code: "18", mnemonic: "OSC 18", description: "change Tektronix cursor color" },
   { type: "OSC", code: "19", mnemonic: "OSC 19", description: "change highlight foreground color" },
+  { type: "OSC", code: "21", mnemonic: "OSC 21", description: "set window title (DEC) or set/read colors (Kitty)", template: ";<data>" },
+  { type: "OSC", code: "22", mnemonic: "OSC 22", description: "pointer shape control (xterm/Kitty)", template: ";<shape>", example: { shape: "crosshair" } },
   { type: "OSC", code: "46", mnemonic: "OSC 46", description: "set log file" },
   { type: "OSC", code: "50", mnemonic: "OSC 50", description: "set font" },
   { type: "OSC", code: "51", mnemonic: "OSC 51", description: "reserved for emacs shell" },
