@@ -5,6 +5,8 @@ import { controlCodes, codeMaps } from "../codes.ts";
 import { getColorName } from "./color.ts";
 import { ESC, ST } from "./string.ts";
 import { SGR_MAP, render } from "./sgr-map.ts";
+import { getParameters, parameterKey } from "./parameters.ts";
+import { describeCSI, describeDEC, describePRIVATE } from "./describe-csi.ts";
 
 interface TableRow {
   type: CONTROL_CODE["type"];
@@ -31,8 +33,6 @@ const typeOrder: Record<TableRow["type"], number> = {
   STRING: 8,
 };
 
-export const ERROR_SIGN = "🚫";
-
 export function sortControlCodes<T extends TableRow | LookupTableRow>(rows: T[]): T[] {
   return rows.toSorted((a, b) => {
     const typeComparison = typeOrder[a.type] - typeOrder[b.type];
@@ -48,37 +48,44 @@ export function sortControlCodes<T extends TableRow | LookupTableRow>(rows: T[])
 
 function handleSGR(code: CONTROL_CODE): Match {
   const descriptions: string[] = [];
-  const paramsIterator = code.params[Symbol.iterator]();
-  let current = paramsIterator.next();
+  const params = getParameters(code);
+  if (params.length === 0) descriptions.push(codeMaps.SGR.get("0")!.description);
 
-  while (!current.done) {
-    const param = String(Number(current.value));
-    const item = codeMaps.SGR.get(param);
-
-    if (item) {
-      descriptions.push(item.description);
-    } else if (param === "38" || param === "48") {
-      const colorType = param === "38" ? "fg color" : "bg color";
-      const colorMode = paramsIterator.next().value;
-      if (colorMode === "5") {
-        const palette = paramsIterator.next().value;
-        const colorName = getColorName(Number(palette));
-        descriptions.push(`${colorType}: 8-bit ${colorName} (#${palette})`);
-      } else if (colorMode === "2") {
-        const r = paramsIterator.next().value;
-        const g = paramsIterator.next().value;
-        const b = paramsIterator.next().value;
-        descriptions.push(`${colorType}: 24-bit rgb(${r}, ${g}, ${b})`);
+  for (let i = 0; i < params.length; i++) {
+    const parts = params[i].split(":");
+    const param = parameterKey(parts[0]) || "0";
+    if (param === "38" || param === "48" || param === "58") {
+      const colorType = param === "38" ? "fg color" : param === "48" ? "bg color" : "underline color";
+      const isColon = parts.length > 1;
+      const mode = isColon ? parts[1] : params[++i];
+      const modeKey = parameterKey(mode);
+      if (modeKey === "5") {
+        const value = isColon ? parts[2] : params[++i];
+        descriptions.push(
+          value === undefined || value === ""
+            ? `incomplete ${colorType}`
+            : `${colorType}: 8-bit ${getColorName(Number(value))} (#${value})`
+        );
+      } else if (modeKey === "2") {
+        const values = isColon
+          ? parts.slice(parts.length >= 6 ? 3 : 2, parts.length >= 6 ? 6 : 5)
+          : params.slice(i + 1, i + 4);
+        if (!isColon) i += 3;
+        descriptions.push(
+          values.length !== 3 || values.some(value => value === "")
+            ? `incomplete ${colorType}`
+            : `${colorType}: 24-bit rgb(${values.join(", ")})`
+        );
+      } else {
+        descriptions.push(mode === undefined ? `incomplete ${colorType}` : `unknown ${colorType} format: ${mode}`);
       }
     } else {
-      descriptions.push(`${ERROR_SIGN} SGR parameter: ${param}`);
+      const key = parts.length === 1 ? param : [param, ...parts.slice(1).map(parameterKey)].join(":");
+      descriptions.push(codeMaps.SGR.get(key)?.description ?? `unknown SGR parameter: ${key}`);
     }
-    current = paramsIterator.next();
   }
-  const sort = buildSgrSortKey(code.params);
-  return { sort, mnemonic: "", description: descriptions.join(", ") };
+  return { sort: buildSgrSortKey(params), mnemonic: "", description: descriptions.join(", ") };
 }
-
 function parseSgrParamValue(segment: string): number {
   const value = Number.parseInt(segment, 10);
   return Number.isNaN(value) ? 0 : value;
@@ -103,53 +110,6 @@ function buildSgrSortKey(params: readonly string[]): string {
   return normalized.map(value => value.toString().padStart(4, "0")).join(" ");
 }
 
-function handleDEC(code: CONTROL_CODE): Match {
-  const param = code.params?.[0] || "";
-  const command = code.command;
-  const item = codeMaps.DEC.get(param);
-
-  let description: string;
-  if (!item) {
-    description = `${ERROR_SIGN} DEC mode ${param}`;
-  } else if (command === "h") {
-    description = `enable ${item.description}`;
-  } else if (command === "l") {
-    description = `disable ${item.description}`;
-  } else {
-    description = item.description;
-  }
-
-  const numericSort = Number.parseInt(param, 10);
-  const sort = Number.isNaN(numericSort) ? param : numericSort;
-  return { sort, mnemonic: item?.mnemonic ?? "", description };
-}
-
-function handleCSI(code: CONTROL_CODE): Match {
-  const item = codeMaps.CSI.get(code.command);
-  let description = `${ERROR_SIGN} CSI sequence`;
-  if (item) {
-    description = item.description;
-    const param = code.params[0];
-    if (item.params && item.params[param] !== undefined) {
-      description += `: ${item.params[param]}`;
-    } else if (item.template && code.params.length > 0) {
-      let view = item.template;
-      const params = item.template.match(/<([^>]+)>/g);
-      if (params && params.length > 0) {
-        for (let i = 0; i < params.length && i < code.params.length; i++) {
-          const paramName = params[i].slice(1, -1);
-          const rawValue = code.params[i];
-          const value = rawValue || (item.defaults?.[paramName] ?? "1");
-          view = view.replace(`<${paramName}>`, value);
-        }
-        description += ` (${view})`;
-      }
-    }
-  }
-  const sort = `${code.command}${(code.params?.[0] ?? "0").padStart(3, "0")}`;
-  return { sort, mnemonic: item?.mnemonic || "", description };
-}
-
 function handleOSC(code: CONTROL_CODE): Match {
   const item = codeMaps.OSC.get(code.command);
   const url = code.params.length > 1 ? code.params[1] : "";
@@ -159,7 +119,7 @@ function handleOSC(code: CONTROL_CODE): Match {
       : code.command === "8"
         ? "hyperlink (end)"
         : item.description
-    : `${ERROR_SIGN} OSC command: ${code.raw}`;
+    : `unknown OSC command: ${code.command}`;
   const sort = Number.parseInt(code.command, 10);
   return { sort, mnemonic: item?.mnemonic ?? "", description };
 }
@@ -167,7 +127,7 @@ function handleOSC(code: CONTROL_CODE): Match {
 function handleESC(code: CONTROL_CODE): Match {
   const key = code.params?.[0] ? `${code.command}${code.params[0]}` : `${code.command}`;
   const item = codeMaps.ESC.get(key);
-  const description = item ? item.description : `${ERROR_SIGN} escape sequence`;
+  const description = item ? item.description : "unknown escape sequence";
   return { sort: code.command, mnemonic: item?.mnemonic || "", description };
 }
 
@@ -183,31 +143,16 @@ function handleSTR(code: CONTROL_CODE): Match {
   return { sort: code.command, mnemonic: item?.mnemonic ?? "", description };
 }
 
-function handlePRIVATE(code: CONTROL_CODE): Match {
-  const command = code.command;
-  const prefix = command[0];
-  const item = codeMaps.PRIVATE.get(prefix);
-  const known: Record<string, string> = {
-    "<m": "private mouse SGR sequence",
-    ">c": "secondary device attributes request",
-    ">m": "private SGR sequence",
-    ">p": "private mode sequence",
-  };
-  const key = prefix + command.slice(-1);
-  const description = known[key] ?? (item ? `${item.description} (${command})` : `private sequence (${command})`);
-  return { sort: command, mnemonic: "", description };
-}
-
 export function extractControlCodes(codes: CODE[]): TableRow[] {
   const rows: TableRow[] = [];
   for (const code of codes) {
     if (code.type === "CSI" && code.command === "m") rows.push({ type: "SGR", code: code.raw, ...handleSGR(code) });
-    else if (code.type === "CSI") rows.push({ type: "CSI", code: code.raw, ...handleCSI(code) });
+    else if (code.type === "CSI") rows.push({ type: "CSI", code: code.raw, ...describeCSI(code) });
     else if (code.type === "DCS") rows.push({ type: "DCS", code: code.raw, ...handleDCS(code) });
-    else if (code.type === "DEC") rows.push({ type: "DEC", code: code.raw, ...handleDEC(code) });
+    else if (code.type === "DEC") rows.push({ type: "DEC", code: code.raw, ...describeDEC(code) });
     else if (code.type === "ESC") rows.push({ type: "ESC", code: code.raw, ...handleESC(code) });
     else if (code.type === "OSC") rows.push({ type: "OSC", code: code.raw, ...handleOSC(code) });
-    else if (code.type === "PRIVATE") rows.push({ type: "PRIVATE", code: code.raw, ...handlePRIVATE(code) });
+    else if (code.type === "PRIVATE") rows.push({ type: "PRIVATE", code: code.raw, ...describePRIVATE(code) });
     else if (code.type === "STRING") rows.push({ type: "STRING", code: code.raw, ...handleSTR(code) });
   }
   return rows;
@@ -217,6 +162,11 @@ function tpl(template?: string, example?: { [key: string]: string }) {
   if (!template) return "";
   if (!example) return template;
   return template.replace(/<([^>]+)>/g, (_, name) => example[name]);
+}
+
+function csiSequence(command: string, parameters: string): string {
+  const prefix = "?<=>".includes(command[0]) ? command[0] : "";
+  return `${prefix}${parameters}${command.slice(prefix.length)}`;
 }
 
 export function createRowsFromCodes() {
@@ -243,13 +193,14 @@ export function createRowsFromCodes() {
         const { params, mnemonic, description, template } = item;
         if (params) {
           for (const [param, desc] of Object.entries(params)) {
-            const code = `${PREFIX}[${param}${item.code}`;
+            const code = `${PREFIX}[${csiSequence(item.code, param)}`;
             rows.push({ type, sort: item.code, code, mnemonic, description: `${description}: ${desc}`, example: "" });
           }
         } else {
           const templateParams = template ? (template.match(/<[^>]+>/g)?.join(";") ?? "") : "";
-          const code = `${PREFIX}[${templateParams}${item.code}`;
-          const example = template && item.example ? `\\u001b[${tpl(templateParams, item.example)}${item.code}` : "";
+          const code = `${PREFIX}[${csiSequence(item.code, templateParams)}`;
+          const example =
+            template && item.example ? `\\u001b[${csiSequence(item.code, tpl(templateParams, item.example))}` : "";
           rows.push({ type, sort: item.code, code, mnemonic, description, example });
         }
         break;
