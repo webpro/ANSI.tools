@@ -32,8 +32,8 @@ export const PRIVATE_OPENERS = new Set(["<", "=", ">"]);
 
 export const DCS_OPEN = "P";
 export const APC_OPEN = "_";
-export const SOS_OPEN = "^";
-export const PM_OPEN = "X";
+export const SOS_OPEN = "X";
+export const PM_OPEN = "^";
 export const STRING_OPENERS = new Set([DCS_OPEN, APC_OPEN, SOS_OPEN, PM_OPEN]);
 
 export const INTERRUPTERS = new Set([CAN, SUB, ESC, CSI, OSC, DCS, APC, PM, SOS]);
