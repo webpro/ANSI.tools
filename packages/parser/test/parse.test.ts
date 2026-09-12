@@ -15,7 +15,16 @@ test("plain text", t => {
 
 test("colon delimited parameters", t => {
   const input = String.raw`\x1b[0:1:2:3m`;
-  const expected = [{ type: "CSI", pos: 0, raw: "\\x1b[0:1:2:3m", command: "m", params: ["0", "1", "2", "3"] }];
+  const expected = [
+    {
+      type: "CSI",
+      pos: 0,
+      raw: "\\x1b[0:1:2:3m",
+      command: "m",
+      params: ["0", "1", "2", "3"],
+      parameterGroups: [["0", "1", "2", "3"]],
+    },
+  ];
   t.assert.equalCodesDual(input, expected);
 });
 
@@ -36,6 +45,25 @@ test("semicolons", t => {
       raw: "\\x1b[;;;;;;;;;;;;;;;;m",
       command: "m",
       params: ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+      parameterGroups: [
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+      ],
     },
   ];
   t.assert.equalCodesDual(input, expected);
@@ -110,7 +138,14 @@ test("unicode in OSC title", t => {
 test("24-bit color with combining chars", t => {
   const input = String.raw`\x1b[38;2;255;0;128m🌈\u0301\u0302\u0303\x1b[0m`;
   const expected: CODE[] = [
-    { type: "CSI", pos: 0, raw: "\\x1b[38;2;255;0;128m", command: "m", params: ["38", "2", "0", "255", "0", "128"] },
+    {
+      type: "CSI",
+      pos: 0,
+      raw: "\\x1b[38;2;255;0;128m",
+      command: "m",
+      params: ["38", "2", "0", "255", "0", "128"],
+      parameterGroups: [["38"], ["2"], ["255"], ["0"], ["128"]],
+    },
     { type: "TEXT", pos: 20, raw: "🌈\\u0301\\u0302\\u0303" },
     { type: "CSI", pos: 40, raw: "\\x1b[0m", command: "m", params: ["0"] },
   ];

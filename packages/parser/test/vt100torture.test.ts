@@ -1298,7 +1298,7 @@ test("VT100 torture test (parse)", () => {
     { type: "TEXT", pos: 3123, raw: "\u000a   This test created by Joe Smith, 8-May-85   " },
     { type: "CSI", pos: 3170, command: "m", params: ["0"], raw: "\u001b[0m" },
     { type: "TEXT", pos: 3174, raw: "\u000a" },
-    { type: "CSI", pos: 3175, command: "r", params: ["1", "-1"], raw: "\u001b[1;r" },
+    { type: "CSI", pos: 3175, command: "r", params: ["1", "-1"], parameterGroups: [["1"], [""]], raw: "\u001b[1;r" },
     { type: "CSI", pos: 3180, command: "H", params: ["22", "1"], raw: "\u001b[22;1H" },
     { type: "TEXT", pos: 3187, raw: "\u000a\u000a" },
   ];

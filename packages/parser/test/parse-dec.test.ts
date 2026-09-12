@@ -22,6 +22,7 @@ test("parseCSI with missing parameters", () => {
     raw: "\\e[?;h",
     command: "h",
     params: ["0"],
+    parameterGroups: [[""], [""]],
   });
 });
 
@@ -55,6 +56,7 @@ test("parseCSI with colon in parameters", () => {
     raw: "\\e[?1:2h",
     command: "h",
     params: ["1", "2"],
+    parameterGroups: [["1", "2"]],
   });
 });
 
@@ -66,5 +68,6 @@ test("parseCSI with intermediates and colons", () => {
     raw: "\\e[?1:2$p",
     command: "$p",
     params: ["1", "2"],
+    parameterGroups: [["1", "2"]],
   });
 });

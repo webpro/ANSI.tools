@@ -15,6 +15,7 @@ export type CONTROL_CODE = {
   command: string;
   raw: string;
   params: string[];
+  parameterGroups?: string[][];
   pos: number;
 };
 

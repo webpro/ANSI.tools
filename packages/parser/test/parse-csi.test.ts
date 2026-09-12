@@ -33,6 +33,7 @@ test("parseCSI with missing parameters", () => {
     raw: "\\e[;31m",
     command: "m",
     params: ["0", "31"],
+    parameterGroups: [[""], ["31"]],
   });
 });
 
@@ -44,6 +45,7 @@ test("parseCSI with trailing semicolon", () => {
     raw: "\\e[31;m",
     command: "m",
     params: ["31", "0"],
+    parameterGroups: [["31"], [""]],
   });
 });
 
@@ -55,6 +57,7 @@ test("parseCSI with colon-delimited SGR", () => {
     raw: "\\e[38:2:10:20:30m",
     command: "m",
     params: ["38", "2", "0", "10", "20", "30"],
+    parameterGroups: [["38", "2", "10", "20", "30"]],
   });
 });
 
@@ -66,6 +69,7 @@ test("parseCSI with leading semicolon", () => {
     raw: "\\e[;m",
     command: "m",
     params: ["0", "0"],
+    parameterGroups: [[""], [""]],
   });
 });
 
@@ -77,6 +81,7 @@ test("parseCSI with subparameters", () => {
     raw: "\\e[38;2;255;128;0m",
     command: "m",
     params: ["38", "2", "0", "255", "128", "0"],
+    parameterGroups: [["38"], ["2"], ["255"], ["128"], ["0"]],
   });
 });
 
@@ -88,6 +93,7 @@ test("parseCSI with 48;2 background color", () => {
     raw: "\\e[48;2;128;64;32m",
     command: "m",
     params: ["48", "2", "0", "128", "64", "32"],
+    parameterGroups: [["48"], ["2"], ["128"], ["64"], ["32"]],
   });
 });
 
@@ -154,6 +160,7 @@ test("parseCSI with colon in parameters", () => {
     raw: "\\e[<1:2m",
     command: "<m",
     params: ["1", "2"],
+    parameterGroups: [["1", "2"]],
   });
 });
 
