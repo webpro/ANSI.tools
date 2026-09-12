@@ -22,6 +22,8 @@ import {
   INTERRUPTER_LOOKUP,
   INTRODUCER_LOOKUP,
   nulLength,
+  startsTerminator,
+  STRING_TERMINATORS,
   type State,
 } from "./tokenize.escaped.shared.ts";
 
@@ -155,6 +157,7 @@ export function tokenize(input: string): TOKEN[] {
       }
     } else if (state === "SEQUENCE") {
       let terminator = "";
+      let finalCode: string | undefined;
       let terminatorPos = -1;
       let abandoned = "";
       let pos = i;
@@ -172,6 +175,13 @@ export function tokenize(input: string): TOKEN[] {
         }
         if (input.charCodeAt(i) === BACKSLASH) {
           const next = input[i + 1];
+          if (currentCode === ESC && next === BACKSLASH_CODE) {
+            terminator = input.substring(i, i + 2);
+            finalCode = BACKSLASH_CODE;
+            terminatorPos = i;
+            i += 2;
+            break;
+          }
           if (next) {
             const interrupters = INTERRUPTER_LOOKUP.get(next);
             if (interrupters) {
@@ -197,49 +207,21 @@ export function tokenize(input: string): TOKEN[] {
           }
           if (terminator) break;
 
-          if (currentCode !== CSI && currentCode !== ESC) {
-            if (next === "a" && i + 2 <= l) {
-              if (currentCode === OSC && input[i + 1] === "a") {
-                terminator = "\\a";
-                terminatorPos = i;
-                i += 2;
+          if (currentCode !== CSI && currentCode !== ESC && startsTerminator(next)) {
+            for (const candidate of STRING_TERMINATORS) {
+              if (input.startsWith(candidate, i)) {
+                terminator = candidate;
+                break;
               }
-            } else if (next === "x") {
-              if (i + 4 <= l) {
-                const char3 = input[i + 2];
-                const char4 = input[i + 3];
-                if (char3 === "0" && char4 === "7" && currentCode === OSC) {
-                  terminator = "\\x07";
-                  terminatorPos = i;
-                  i += 4;
-                } else if (char3 === "9" && char4 === "c") {
-                  terminator = "\\x9c";
-                  terminatorPos = i;
-                  i += 4;
-                } else if (
-                  char3 === "1" &&
-                  char4 === "b" &&
-                  i + 6 <= l &&
-                  input.charCodeAt(i + 4) === BACKSLASH &&
-                  input.charCodeAt(i + 5) === BACKSLASH
-                ) {
-                  terminator = "\\x1b\\\\";
-                  terminatorPos = i;
-                  i += 6;
-                }
-              }
-            } else if (next === "u" && currentCode === OSC && i + 6 <= l) {
-              if (input[i + 2] === "0" && input[i + 3] === "0" && input[i + 4] === "0" && input[i + 5] === "7") {
-                terminator = "\\u0007";
-                terminatorPos = i;
-                i += 6;
-              }
-            } else if (next === "e" && i + 4 <= l) {
-              if (input.charCodeAt(i + 2) === BACKSLASH && input.charCodeAt(i + 3) === BACKSLASH) {
-                terminator = "\\e\\\\";
-                terminatorPos = i;
-                i += 4;
-              }
+            }
+            if (!terminator && currentCode === OSC) {
+              if (input.startsWith("\\a", i)) terminator = "\\a";
+              else if (input.startsWith("\\x07", i)) terminator = "\\x07";
+              else if (input.startsWith("\\u0007", i)) terminator = "\\u0007";
+            }
+            if (terminator) {
+              terminatorPos = i;
+              i += terminator.length;
             }
           }
 
@@ -290,7 +272,9 @@ export function tokenize(input: string): TOKEN[] {
       }
 
       if (terminator && terminator !== ABANDONED) {
-        result.push({ type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator });
+        if (finalCode !== undefined)
+          result.push({ type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator, code: finalCode });
+        else result.push({ type: TOKEN_TYPES.FINAL, pos: terminatorPos, raw: terminator });
       }
 
       if (abandoned) result.push({ type: TOKEN_TYPES.TEXT, pos: terminatorPos, raw: abandoned });

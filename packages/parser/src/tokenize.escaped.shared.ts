@@ -13,6 +13,12 @@ export function nulLength(input: string, pos: number): number {
   return 0;
 }
 
+export const STRING_TERMINATORS = ["\\e\\\\", "\\x1b\\\\", "\\u001b\\\\", "\\033\\\\", "\\x9c", "\\u009c"];
+
+export function startsTerminator(next: string): boolean {
+  return next === "e" || next === "x" || next === "u" || next === "0" || next === "a";
+}
+
 const INTRODUCERS = [
   ["\\u001b", 6],
   [CSI_ESCAPED, 6],

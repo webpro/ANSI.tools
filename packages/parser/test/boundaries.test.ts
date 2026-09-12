@@ -26,6 +26,54 @@ test("SOS and PM match their 7-bit and C1 introducers", () => {
   }
 });
 
+test("escaped string terminators preserve following text across string families", () => {
+  const terminators = [
+    [String.raw`\e\\`, 4],
+    [String.raw`\x1b\\`, 6],
+    [String.raw`\u001b\\`, 8],
+    [String.raw`\033\\`, 6],
+    [String.raw`\x9c`, 4],
+    [String.raw`\u009c`, 6],
+  ] as const;
+  for (const opener of ["]", "P", "_", "X", "^"]) {
+    for (const [terminator, length] of terminators) {
+      const sequence = "\\e" + opener + "hello" + terminator;
+      const input = sequence + "tail";
+      const tokens = tokenizeEscaped(input);
+      assert.deepEqual(tokens, [
+        { type: "INTRODUCER", pos: 0, raw: "\\e" + opener, code: opener === "]" ? "\x9d" : opener },
+        { type: "DATA", pos: 3, raw: "hello" },
+        { type: "FINAL", pos: 8, raw: terminator },
+        { type: "TEXT", pos: 8 + length, raw: "tail" },
+      ]);
+      assert.deepEqual(Array.from(tokenizerEscaped(input)), tokens);
+      const codes = parseEscaped(input);
+      assert.equal(codes.length, 2);
+      assert.equal(codes[0].raw, sequence);
+      assert.deepEqual(codes[1], { type: "TEXT", pos: 8 + length, raw: "tail" });
+      assert.deepEqual(Array.from(parser(tokenizerEscaped(input))), codes);
+    }
+  }
+});
+
+test("standalone escaped ST consumes only its backslash", () => {
+  for (const [input, length] of [
+    [String.raw`\e\\tail`, 4],
+    [String.raw`\x1b\\tail`, 6],
+    [String.raw`\u001b\\tail`, 8],
+    [String.raw`\033\\tail`, 6],
+  ] as const) {
+    const codes = parseEscaped(input);
+    assert.equal(codes.length, 2);
+    assert.equal(codes[0].type, "ESC");
+    assert.equal("command" in codes[0] && codes[0].command, "\\");
+    assert.deepEqual(codes[1], { type: "TEXT", pos: length, raw: "tail" });
+    assert.equal(codes.map(code => code.raw).join(""), input);
+    assert.deepEqual(Array.from(parser(tokenizerEscaped(input))), codes);
+    assert.deepEqual(Array.from(tokenizerEscaped(input)), tokenizeEscaped(input));
+  }
+});
+
 test("NUL is ignored inside raw ESC and CSI without moving sequence boundaries", () => {
   for (const [input, command, params, tailPos] of [
     ["\x1b\x00Dtail", "D", [], 3],
