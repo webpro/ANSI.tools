@@ -216,7 +216,7 @@ export function extractControlCodes(codes: CODE[]): TableRow[] {
 function tpl(template?: string, example?: { [key: string]: string }) {
   if (!template) return "";
   if (!example) return template;
-  return template.replace(/([a-zA-Z ]*)<([^>]+)> ?([a-zA-Z]*)/g, (_, _prefix, varName, _suffix) => example[varName]);
+  return template.replace(/<([^>]+)>/g, (_, name) => example[name]);
 }
 
 export function createRowsFromCodes() {
@@ -249,7 +249,7 @@ export function createRowsFromCodes() {
         } else {
           const templateParams = template ? (template.match(/<[^>]+>/g)?.join(";") ?? "") : "";
           const code = `${PREFIX}[${templateParams}${item.code}`;
-          const example = template && item.example ? `\\u001b[${tpl(template, item.example)}${item.code}` : "";
+          const example = template && item.example ? `\\u001b[${tpl(templateParams, item.example)}${item.code}` : "";
           rows.push({ type, sort: item.code, code, mnemonic, description, example });
         }
         break;
@@ -273,8 +273,16 @@ export function createRowsFromCodes() {
 
       case CODE_TYPES.DEC: {
         const shared = { type, sort: item.code, mnemonic: item.mnemonic ?? "", example: "" };
-        rows.push({ ...shared, code: `${PREFIX}[?${item.code}h`, description: `enable ${item.description}` });
-        rows.push({ ...shared, code: `${PREFIX}[?${item.code}l`, description: `disable ${item.description}` });
+        rows.push({
+          ...shared,
+          code: `${PREFIX}[?${item.code}h`,
+          description: item.resetDescription ? item.description : `enable ${item.description}`,
+        });
+        rows.push({
+          ...shared,
+          code: `${PREFIX}[?${item.code}l`,
+          description: item.resetDescription ?? `disable ${item.description}`,
+        });
         break;
       }
 
@@ -285,9 +293,11 @@ export function createRowsFromCodes() {
       }
 
       case CODE_TYPES.DCS: {
-        const { code, mnemonic, description, template } = item;
-        const dcsCode = `${PREFIX}P${template ?? ""}${code}${ST}`;
-        const example = template && item.example ? `\\u001bP${tpl(template, item.example)}${code}\\u001b\\\\` : "";
+        const { code, mnemonic, description, template, header } = item;
+        const dcsCode = `${PREFIX}P${header ?? ""}${code}${template ?? ""}${ST}`;
+        const example = item.example
+          ? `\\u001bP${tpl(header, item.example)}${code}${tpl(template, item.example)}\\u001b\\\\`
+          : "";
         rows.push({ type, sort: code, code: dcsCode, mnemonic, description, example });
         break;
       }
