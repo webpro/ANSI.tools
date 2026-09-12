@@ -163,7 +163,8 @@ export function tokenize(input: string): TOKEN[] {
       let pos = i;
 
       while (!terminator && i < l) {
-        if (currentCode === CSI) {
+        const charCode = input.charCodeAt(i);
+        if (currentCode === CSI && (charCode === 0 || charCode === BACKSLASH)) {
           const ignored = nulLength(input, i);
           if (ignored) {
             if (i > pos) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, i) });
@@ -173,7 +174,7 @@ export function tokenize(input: string): TOKEN[] {
             continue;
           }
         }
-        if (input.charCodeAt(i) === BACKSLASH) {
+        if (charCode === BACKSLASH) {
           const next = input[i + 1];
           if (currentCode === ESC && next === BACKSLASH_CODE) {
             terminator = input.substring(i, i + 2);
@@ -248,7 +249,6 @@ export function tokenize(input: string): TOKEN[] {
             }
           }
         } else if (currentCode === CSI) {
-          const charCode = input.charCodeAt(i);
           if (charCode >= 0x40 && charCode <= 0x7e) {
             terminator = input[i];
             terminatorPos = i;

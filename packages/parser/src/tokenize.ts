@@ -17,7 +17,7 @@ import {
   TOKEN_TYPES,
 } from "./constants.ts";
 import type { TOKEN } from "./types.ts";
-import { is8BitIntroducer, isC0Interrupter, isInterrupter, isSequenceStart } from "./tokenize.helpers.ts";
+import { is8BitIntroducer, isC0Interrupter, isInterrupter } from "./tokenize.helpers.ts";
 
 export function* tokenizer(input: string): IterableIterator<TOKEN> {
   let i = 0;
@@ -30,7 +30,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
       const textStart = i;
       let charCode = input.charCodeAt(i);
 
-      while (i < len && !isSequenceStart(charCode)) {
+      while (i < len && charCode !== ESC && (charCode < 0x90 || !is8BitIntroducer(charCode))) {
         charCode = input.charCodeAt(++i);
       }
 
@@ -96,6 +96,10 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         let dataStart = i;
         while (i < len) {
           const charCode = input.charCodeAt(i);
+          if (charCode >= 0x20 && charCode < 0x40) {
+            i++;
+            continue;
+          }
           if (charCode === 0) {
             if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos: dataStart, raw: input.substring(dataStart, i) };
             yield { type: TOKEN_TYPES.DATA, pos: i, raw: input[i], code: "" };
