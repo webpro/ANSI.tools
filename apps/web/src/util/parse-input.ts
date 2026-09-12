@@ -1,5 +1,5 @@
 import { parse as parseEscaped } from "@ansi-tools/parser/escaped";
-import { parse } from "@ansi-tools/parser";
+import { APC_CODE, CSI_CODE, DCS_CODE, ESC_CODE, OSC_CODE, PM_CODE, SOS_CODE, parse } from "@ansi-tools/parser";
 import { getSegments, mapDECSpecialGraphics, unescapeInput } from "./string.ts";
 import type { CODE } from "@ansi-tools/parser";
 
@@ -17,8 +17,10 @@ interface ParsedInput {
   isRaw: boolean;
 }
 
+const RAW_INTRODUCERS = [ESC_CODE, CSI_CODE, OSC_CODE, DCS_CODE, APC_CODE, SOS_CODE, PM_CODE];
+
 function isRawInput(input: string): boolean {
-  return input.includes("\u001b");
+  return RAW_INTRODUCERS.some(code => input.includes(code));
 }
 
 function getNewlineLength(text: string[], index: number): number {
