@@ -11,7 +11,7 @@ test("parseDCS simple sequence", () => {
     type: "DCS",
     pos: 0,
     raw: "\\eP0;1|name\\e\\\\",
-    command: "",
+    command: "|",
     params: ["0;1|name"],
   });
 });
