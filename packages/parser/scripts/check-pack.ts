@@ -8,7 +8,8 @@ const run = (args: string[], timeout?: number) =>
     timeout,
   });
 
-const { name, entryCount, unpackedSize } = JSON.parse(run(["pack", "--dry-run", "--json", "--ignore-scripts"]))[0];
+const packed = JSON.parse(run(["pack", "--dry-run", "--json", "--ignore-scripts"]));
+const { name, entryCount, unpackedSize } = (Array.isArray(packed) ? packed : Object.values(packed))[0];
 
 let base: { fileCount: number; unpackedSize: number } | undefined;
 try {
