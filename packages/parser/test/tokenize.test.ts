@@ -134,7 +134,8 @@ test("control characters", t => {
   const input = String.raw`\x1b[\x00\x01\x02m`;
   const expected = [
     { pos: 0, raw: "\\x1b[", type: "INTRODUCER", code: "\x9b" },
-    { pos: 2, raw: "\\x00\\x01\\x02", type: "DATA" },
+    { pos: 2, raw: "\\x00", type: "DATA", code: "" },
+    { pos: 3, raw: "\\x01\\x02", type: "DATA" },
     { pos: 5, raw: "m", type: "FINAL" },
   ];
   t.assert.equalTokens(tokenize, input, expected);

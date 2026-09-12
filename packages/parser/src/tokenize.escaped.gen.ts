@@ -21,6 +21,7 @@ import {
   CSI_ESCAPED_HEX,
   INTERRUPTER_LOOKUP,
   INTRODUCER_LOOKUP,
+  nulLength,
   type State,
 } from "./tokenize.escaped.shared.ts";
 
@@ -92,43 +93,54 @@ export function tokenize(input: string): TOKEN[] {
                 state = "SEQUENCE";
                 currentCode = CSI;
               } else {
-                const next = input[i + len];
+                let nextPos = i + len;
+                let ignored = nulLength(input, nextPos);
+                while (ignored) {
+                  nextPos += ignored;
+                  ignored = nulLength(input, nextPos);
+                }
+                const next = input[nextPos];
                 if (next === CSI_OPEN_CODE) {
-                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: CSI_CODE });
-                  i += len + 1;
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos + 1), code: CSI_CODE });
+                  i = nextPos + 1;
                   state = "SEQUENCE";
                   currentCode = CSI;
                 } else if (next === OSC_OPEN_CODE) {
-                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: OSC_CODE });
-                  i += len + 1;
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos + 1), code: OSC_CODE });
+                  i = nextPos + 1;
                   state = "SEQUENCE";
                   currentCode = OSC;
                 } else if (STRING_OPENERS.has(next)) {
-                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq + next, code: next });
-                  i += len + 1;
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos + 1), code: next });
+                  i = nextPos + 1;
                   state = "SEQUENCE";
                   currentCode = next.charCodeAt(0);
                 } else if (next) {
-                  let j = i + len;
-                  while (j < l && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
-                  const is = input.slice(i + len, j);
+                  let j = nextPos;
+                  let is = "";
+                  while (j < l) {
+                    const ignored = nulLength(input, j);
+                    if (ignored) j += ignored;
+                    else if (input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) is += input[j++];
+                    else break;
+                  }
                   if (is)
                     result.push({
                       type: TOKEN_TYPES.INTRODUCER,
                       pos: i,
-                      raw: seq + is,
+                      raw: input.substring(i, j),
                       code: ESC_CODE,
                       intermediate: is,
                     });
-                  else result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
+                  else result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE });
                   i = j;
                   if (j < l) {
                     state = "SEQUENCE";
                     currentCode = ESC;
                   }
                 } else {
-                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: seq, code: ESC_CODE });
-                  i += len;
+                  result.push({ type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos), code: ESC_CODE });
+                  i = nextPos;
                 }
               }
               break;
@@ -145,9 +157,19 @@ export function tokenize(input: string): TOKEN[] {
       let terminator = "";
       let terminatorPos = -1;
       let abandoned = "";
-      const pos = i;
+      let pos = i;
 
       while (!terminator && i < l) {
+        if (currentCode === CSI) {
+          const ignored = nulLength(input, i);
+          if (ignored) {
+            if (i > pos) result.push({ type: TOKEN_TYPES.DATA, pos, raw: input.substring(pos, i) });
+            result.push({ type: TOKEN_TYPES.DATA, pos: i, raw: input.substring(i, i + ignored), code: "" });
+            i += ignored;
+            pos = i;
+            continue;
+          }
+        }
         if (input.charCodeAt(i) === BACKSLASH) {
           const next = input[i + 1];
           if (next) {

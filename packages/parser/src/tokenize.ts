@@ -47,30 +47,37 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
         currentCode = charCode;
       } else {
         // ESC
-        const nextCode = input.charCodeAt(i + 1);
+        let nextPos = i + 1;
+        while (nextPos < len && input.charCodeAt(nextPos) === 0) nextPos++;
+        const nextCode = input.charCodeAt(nextPos);
         if (nextCode === CSI_OPEN) {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: CSI_CODE };
-          i += 2;
+          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos + 1), code: CSI_CODE };
+          i = nextPos + 1;
           state = 1;
           currentCode = CSI;
         } else if (nextCode === OSC_OPEN) {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: OSC_CODE };
-          i += 2;
+          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos + 1), code: OSC_CODE };
+          i = nextPos + 1;
           state = 1;
           currentCode = OSC;
-        } else if (i + 1 < len && STRING_OPENERS.has(input[i + 1])) {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, i + 2), code: input[i + 1] };
-          i += 2;
+        } else if (nextPos < len && STRING_OPENERS.has(input[nextPos])) {
+          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos + 1), code: input[nextPos] };
+          i = nextPos + 1;
           state = 1;
           currentCode = nextCode;
-        } else if (i + 1 < len) {
-          let j = i + 1;
-          while (j < len && input.charCodeAt(j) >= 0x20 && input.charCodeAt(j) <= 0x2f) j++;
-          if (j > i + 1) {
-            const intermediate = input.substring(i + 1, j);
+        } else if (nextPos < len) {
+          let j = nextPos;
+          let intermediate = "";
+          while (j < len) {
+            const code = input.charCodeAt(j);
+            if (code === 0) j++;
+            else if (code >= 0x20 && code <= 0x2f) intermediate += input[j++];
+            else break;
+          }
+          if (intermediate) {
             yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE, intermediate };
           } else {
-            yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
+            yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, j), code: ESC_CODE };
           }
           i = j;
           if (j < len) {
@@ -78,19 +85,25 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             currentCode = ESC;
           }
         } else {
-          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input[i], code: ESC_CODE };
-          i++;
+          yield { type: TOKEN_TYPES.INTRODUCER, pos: i, raw: input.substring(i, nextPos), code: ESC_CODE };
+          i = nextPos;
         }
       }
     } else {
       const pos = i;
 
       if (currentCode === CSI) {
-        const dataStart = i;
+        let dataStart = i;
         while (i < len) {
           const charCode = input.charCodeAt(i);
+          if (charCode === 0) {
+            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos: dataStart, raw: input.substring(dataStart, i) };
+            yield { type: TOKEN_TYPES.DATA, pos: i, raw: input[i], code: "" };
+            dataStart = ++i;
+            continue;
+          }
           if (isInterrupter(charCode)) {
-            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos: dataStart, raw: input.substring(dataStart, i) };
             state = 0;
             if (isC0Interrupter(charCode)) {
               yield { type: TOKEN_TYPES.TEXT, pos: i, raw: input[i] };
@@ -99,7 +112,7 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
             break;
           }
           if (charCode >= 0x40 && charCode <= 0x7e) {
-            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+            if (i > dataStart) yield { type: TOKEN_TYPES.DATA, pos: dataStart, raw: input.substring(dataStart, i) };
             yield { type: TOKEN_TYPES.FINAL, pos: i, raw: input[i] };
             i++;
             state = 0;
@@ -107,7 +120,8 @@ export function* tokenizer(input: string): IterableIterator<TOKEN> {
           }
           i++;
         }
-        if (state === 1 && i > dataStart) yield { type: TOKEN_TYPES.DATA, pos, raw: input.substring(dataStart, i) };
+        if (state === 1 && i > dataStart)
+          yield { type: TOKEN_TYPES.DATA, pos: dataStart, raw: input.substring(dataStart, i) };
       } else if (currentCode === ESC) {
         if (i < len) {
           const charCode = input.charCodeAt(i);

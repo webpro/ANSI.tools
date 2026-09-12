@@ -1,11 +1,11 @@
 import { CODE_TYPES, PRIVATE_OPENERS } from "../constants.ts";
 import type { CODE, CONTROL_CODE_TYPE, TOKEN } from "../types.ts";
-import { join } from "./data.ts";
+import { join, joinData } from "./data.ts";
 
 export function parseCSI(introducer: TOKEN, dataTokens: TOKEN[], final: TOKEN | undefined): CODE {
-  const data = join(dataTokens);
+  const data = joinData(dataTokens);
   const finalRaw = final?.raw ?? "";
-  const raw = introducer.raw + data + finalRaw;
+  const raw = introducer.raw + join(dataTokens) + finalRaw;
   const params: string[] = [];
 
   let type: CONTROL_CODE_TYPE = CODE_TYPES.CSI;

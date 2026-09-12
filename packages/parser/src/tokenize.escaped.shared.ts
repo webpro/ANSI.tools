@@ -4,6 +4,15 @@ export const CSI_ESCAPED = "\\u009b";
 export const CSI_ESCAPED_HEX = "\\x9b";
 export const ABANDONED = "ABANDONED";
 
+export function nulLength(input: string, pos: number): number {
+  const code = input.charCodeAt(pos);
+  if (code === 0) return 1;
+  if (code !== 92) return 0;
+  if (input.startsWith("\\x00", pos)) return 4;
+  if (input.startsWith("\\u0000", pos)) return 6;
+  return 0;
+}
+
 const INTRODUCERS = [
   ["\\u001b", 6],
   [CSI_ESCAPED, 6],
