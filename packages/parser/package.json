@@ -62,10 +62,10 @@
     "prepack": "pnpm build && pnpm lint:publish && pnpm check-pack"
   },
   "devDependencies": {
-    "@types/node": "^24.12.4",
+    "@types/node": "^26.5.1",
     "mitata": "^1.0.34",
-    "publint": "^0.3.21",
-    "tsdown": "^0.22.0",
+    "publint": "^0.3.24",
+    "tsdown": "^0.23.0",
     "typescript": "^6.0.3"
   }
 }
